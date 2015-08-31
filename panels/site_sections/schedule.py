@@ -1,4 +1,4 @@
-from uber.common import *
+from panels import *
 
 
 @all_renderable(c.STUFF)
