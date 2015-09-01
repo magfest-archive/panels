@@ -10,6 +10,9 @@
     var showOrHideAffiliations = function () {
         setVisible($.field('affiliations').parents('.form-group'), $.field('has_affiliations').prop('checked'));
     };
+    var showOrHideOtherPresentation = function () {
+        setVisible($.field('other_presentation').parents('.form-group'), $.val('presentation') === {{ c.OTHER }});
+    };
     var showOrHideOtherPanelists = function () {
         var count = $.val('other_panelists');
         var $ops = $('#other-panelist-data tbody tr');
@@ -33,9 +36,11 @@
         showOrHideHeldBefore();
         showOrHideAffiliations();
         showOrHideOtherPanelists();
+        showOrHideOtherPresentation();
         $.field('held_before').on('click', showOrHideHeldBefore);
         $.field('has_affiliations').on('click', showOrHideAffiliations);
         $.field('other_panelists').on('change', showOrHideOtherPanelists);
+        $.field('presentation').on('change', showOrHideOtherPresentation);
     });
 </script>
 
@@ -166,7 +171,20 @@
                 <input type="checkbox" name="verify_waiting" {% if verify_waiting %}checked{% endif %} /> I understand that I will not hear back until {{ c.EXPECTED_RESPONSE }}, <b>and I will not prematurely e-mail {{ c.EVENT_NAME }} to check my panel status.</b>
             </div>
         </div>
-
+        <div class="form-group">
+            <label class="col-sm-2 control-label">Type of Panel:</label>
+            <div class="col-sm-6">
+                <select name="presentation" class="form-control">
+                    {% options c.PRESENTATION_OPTS app.presentation %}
+                </select>
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="col-sm-2 control-label">Please Describe:</label>
+            <div class="col-sm-6">
+                <input type="input" class="form-control" name="other_presentation" value="{{ app.other_presentation }}" />
+            </div>
+        </div>
         <div class="form-group">
             <label class="col-sm-2 control-label">Technical Needs</label>
             <div class="col-sm-6">

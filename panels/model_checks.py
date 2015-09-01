@@ -42,3 +42,9 @@ def pa_phone(pa):
     from uber.model_checks import _invalid_phone_number
     if (pa.submitter or pa.cellphone) and _invalid_phone_number(pa.cellphone):
         return 'Please enter a valid phone number'
+
+
+@validation.PanelApplication
+def pa_other(pa):
+    if pa.presentation == c.OTHER and not pa.other_presentation:
+        return 'Since you selected "Other" for your type of panel, please describe it'

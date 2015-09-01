@@ -48,6 +48,8 @@ class PanelApplication(MagModel):
     affiliations = Column(UnicodeText)
     past_attendance = Column(UnicodeText)
 
+    presentation = Column(Choice(c.PRESENTATION_OPTS))
+    other_presentation = Column(UnicodeText)
     tech_needs = Column(MultiChoice(c.TECH_NEED_OPTS))
     other_tech_needs = Column(UnicodeText)
 
