@@ -1,0 +1,5 @@
+%syntax-version=1.0.0
+%project=panels
+%uri=https://github.com/magfest/panels
+
+add-panels-plugin 2015-09-01T14:15:58Z vagrant <vagrant@localhost> # Add initial panels plugin.
