@@ -31,6 +31,10 @@ class Event(MagModel):
         if self.start_time:
             return int((self.start_time_local - c.EPOCH).total_seconds() / (60 * 30))
 
+    @property
+    def end_time(self):
+        return self.start_time + timedelta(minutes=self.minutes)
+
 
 class AssignedPanelist(MagModel):
     attendee_id = Column(UUID, ForeignKey('attendee.id', ondelete='cascade'))
