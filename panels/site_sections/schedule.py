@@ -95,6 +95,24 @@ class Root:
                               ' / '.join(ap.attendee.full_name for ap in sorted(event.assigned_panelists, key=lambda ap: ap.attendee.full_name))])
 
     @unrestricted
+    def panels_json(self, session):
+        cherrypy.response.headers['Content-Type'] = 'application/json'
+        return json.dumps([
+            {
+                'name': event.name,
+                'location': event.location_label,
+                'start': event.start_time.strftime('%I%p %a').lstrip('0'),
+                'end': event.end_time.strftime('%I%p %a').lstrip('0'),
+                'start_unix': int(mktime(event.start_time.timetuple())),
+                'end_unix': int(mktime(event.end_time.timetuple())),
+                'duration': event.duration,
+                'description': event.description,
+                'panelists': [panelist.attendee.full_name for panelist in event.assigned_panelists]
+            }
+            for event in sorted(session.query(Event).all(), key=lambda e: [e.start_time, e.location_label])
+        ], indent=4).encode('utf-8')
+
+    @unrestricted
     def now(self, session, when=None):
         if when:
             now = c.EVENT_TIMEZONE.localize(datetime(*map(int, when.split(','))))
