@@ -105,7 +105,7 @@ class Root:
                 'end': event.end_time.strftime('%I%p %a').lstrip('0'),
                 'start_unix': int(mktime(event.start_time.timetuple())),
                 'end_unix': int(mktime(event.end_time.timetuple())),
-                'duration': event.duration,
+                'duration': event.minutes,
                 'description': event.description,
                 'panelists': [panelist.attendee.full_name for panelist in event.assigned_panelists]
             }
