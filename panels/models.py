@@ -2,8 +2,8 @@ from panels import *
 
 
 @Session.model_mixin
-class Attendee:
-    assigned_panelists = relationship('AssignedPanelist', backref='attendee')
+class Registration:
+    assigned_panelists = relationship('AssignedPanelist', backref='registration')
 
 
 class Event(MagModel):
@@ -37,11 +37,11 @@ class Event(MagModel):
 
 
 class AssignedPanelist(MagModel):
-    attendee_id = Column(UUID, ForeignKey('attendee.id', ondelete='cascade'))
+    attendee_id = Column(UUID, ForeignKey('registration.id', ondelete='cascade'))
     event_id    = Column(UUID, ForeignKey('event.id', ondelete='cascade'))
 
     def __repr__(self):
-        return '<{self.attendee.full_name} panelisting {self.event.name}>'.format(self=self)
+        return '<{self.registration.attendee.full_name} panelisting {self.event.name}>'.format(self=self)
 
 
 class PanelApplication(MagModel):
