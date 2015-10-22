@@ -4,10 +4,40 @@
 
 <h2>Panel Applications</h2>
 
-<ul>
+<div style="text-align:center">
+    You have cast {{ vote_count }} votes.
+</div>
+
+<script>$.fn.dataTable.defaults.pageLength = 100;</script>
+<table class="table datatable">
+<thead>
+    <tr>
+        <th>Panel Name</th>
+        <th>Panel Type</th>
+        <th>Applied</th>
+        <th>Yes Votes</th>
+        <th>No Votes</th>
+        <th>My Vote</th>
+    </tr>
+</thead>
+<tbody>
 {% for app in apps %}
-    <li>{{ app.name }}</li>
+    <tr>
+        <td><a href="app?id={{ app.id }}">{{ app.name }}</a></td>
+        <td>{{ app.presentation_label }}</td>
+        <td>{{ app.applied_local|datetime:"%Y-%m-%d" }}</td>
+        <td>{{ app.vote_counts.accept }}</td>
+        <td>{{ app.vote_counts.decline }}</td>
+        <td>
+            {% if app.curr_admin_vote %}
+                {{ app.curr_admin_vote.vote_label }}
+            {% else %}
+                not voted yet
+            {% endif %}
+        </td>
+    </tr>
 {% endfor %}
-</ul>
+</tbody>
+</table>
 
 {% endblock %}
