@@ -1,0 +1,109 @@
+{% extends "base-admin.html" %}
+{% block title %}Panel Submission{% endblock %}}
+{% block content %}
+
+<style type="text/css">
+    .app-display {
+        font-family: Courier;
+    }
+</style>
+
+<h2>Panel Applications</h2>
+
+<form method="post" action="app" role="form" class="form-horizontal">
+    <input type="hidden" name="id" value="{{ app.id }}" />
+    {% csrf_token %}
+
+    <div class="form-group">
+        <label class="col-sm-3 control-label">Panel Name:</label>
+        <div class="col-sm-6 app-display">
+            {{ app.name }}
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label class="col-sm-3 control-label">Description:</label>
+        <div class="col-sm-6 app-display">
+            {{ app.description|linebreaksbr }}
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label class="col-sm-3 control-label">Panel Type:</label>
+        <div class="col-sm-6 app-display">
+            {{ app.presentation_label }}
+            {% if app.presentation == c.OTHER %}
+                <br/> {{ app.other_presentation }}
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label class="col-sm-3 control-label">Expected Length:</label>
+        <div class="col-sm-6 app-display">
+            {{ app.length }}
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label class="col-sm-3 control-label">Unavailability:</label>
+        <div class="col-sm-6 app-display">
+            {{ app.unavailable|linebreaksbr }}
+        </div>
+    </div>
+
+    {% if app.tech_needs or app.other_tech_needs %}
+        <div class="form-group">
+            <label class="col-sm-3 control-label">Tech Needs:</label>
+            <div class="col-sm-6 app-display">
+                {{ app.tech_needs_labels|join:' / ' }}
+                {% if app.other_tech_needs %}
+                    <br/> {{ app.other_tech_needs }}
+                {% endif %}
+            </div>
+        </div>
+    {% endif %}
+
+    {% if app.affiliations %}
+        <div class="form-group">
+            <label class="col-sm-3 control-label">Affiliations:</label>
+            <div class="col-sm-6 app-display">
+                {{ app.affiliations|linebreaksbr }}
+            </div>
+        </div>
+    {% endif %}
+
+    {% if app.past_attendance %}
+        <div class="form-group">
+            <label class="col-sm-3 control-label">Past Attendance:</label>
+            <div class="col-sm-6 app-display">
+                {{ app.past_attendance }}
+            </div>
+        </div>
+    {% endif %}
+
+    <div class="form-group">
+        <label class="col-sm-3 control-label">Your Vote:</label>
+        <div class="col-sm-6">
+            <select name="vote" class="form-control">
+                <option value="">How Do You Vote?</option>
+                {% options c.PANEL_VOTE_OPTS panel_vote.vote %}
+            </select>
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label class="col-sm-3 control-label">Explanation:</label>
+        <div class="col-sm-6">
+            <textarea class="form-control" name="explanation" rows="4">{{ panel_vote.explanation }}</textarea>
+        </div>
+    </div>
+
+    <div class="form-group">
+        <div class="col-sm-6 col-sm-offset-3">
+            <button type="submit" class="btn btn-primary">Cast Your Vote</button>
+        </div>
+    </div>
+</form>
+
+{% endblock %}

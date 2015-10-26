@@ -1,9 +1,14 @@
-from panels import *    
+from panels import *
 
 
 @Session.model_mixin
 class Attendee:
     assigned_panelists = relationship('AssignedPanelist', backref='attendee')
+
+
+@Session.model_mixin
+class AdminAccount:
+    panel_votes = relationship('PanelVote', backref='account')
 
 
 class Event(MagModel):
@@ -59,6 +64,7 @@ class PanelApplication(MagModel):
 
     applied = Column(UTCDateTime, server_default=utcnow())
 
+    votes = relationship('PanelVote', backref='application')
     applicants = relationship('PanelApplicant', backref='application')
 
     @property
@@ -74,6 +80,15 @@ class PanelApplication(MagModel):
         else:
             return submitter
 
+    @cached_property
+    def vote_counts(self):
+        counts = defaultdict(int)
+        for vote in self.votes:
+            for var in c.PANEL_VOTE_VARS:
+                if vote.vote == getattr(c, var):
+                    counts[var.lower()] += 1
+        return counts
+
 
 class PanelApplicant(MagModel):
     app_id = Column(UUID, ForeignKey('panel_application.id', ondelete='cascade'))
@@ -83,3 +98,10 @@ class PanelApplicant(MagModel):
     last_name  = Column(UnicodeText)
     email      = Column(UnicodeText)
     cellphone  = Column(UnicodeText)
+
+
+class PanelVote(MagModel):
+    app_id = Column(UUID, ForeignKey('panel_application.id', ondelete='cascade'))
+    account_id = Column(UUID, ForeignKey('admin_account.id', ondelete='cascade'))
+    vote = Column(Choice(c.PANEL_VOTE_OPTS))
+    explanation = Column(UnicodeText)
