@@ -1,7 +1,7 @@
 from panels import *
 
 
-@all_renderable(c.STUFF)
+@all_renderable(c.PANEL_APPS)
 class Root:
     def index(self, session, message=''):
         curr_admin_votes = {pv.application: pv for pv in session.admin_attendee().admin_account.panel_votes}
@@ -15,7 +15,7 @@ class Root:
             'vote_count': len(curr_admin_votes)
         }
 
-    def app(self, session, id, message='', csrf_token='', vote=None):
+    def app(self, session, id, message='', csrf_token='', vote=None, explanation=None):
         app = session.panel_application(id)
         account = session.admin_attendee().admin_account
         panel_vote = session.query(PanelVote).filter_by(account_id=account.id, app_id=app.id).first()
@@ -24,12 +24,14 @@ class Root:
 
         if vote is not None:
             check_csrf(csrf_token)
-            if not vote:
+            panel_vote.vote = int(vote or 0)
+            panel_vote.explanation = explanation.strip()
+            if not panel_vote.vote:
                 message = 'You did not indicate your vote'
+            elif not panel_vote.explanation:
+                message = 'You must provide an explanation of your vote'
             else:
-                panel_vote.vote = int(vote)
                 session.add(panel_vote)
-                log.error('{}', panel_vote.to_dict())
                 raise HTTPRedirect('index?message={}{}', 'Vote cast for ', app.name)
 
         return {

@@ -10,3 +10,8 @@ c.EVENT_DURATION_OPTS = [(i, '%.1f hour%s' % (i/2, 's' if i != 2 else '')) for i
 c.ORDERED_EVENT_LOCS = [loc for loc, desc in c.EVENT_LOCATION_OPTS]
 c.EVENT_BOOKED = {'colspan': 0}
 c.EVENT_OPEN   = {'colspan': 1}
+
+# This can go away if/when we implement plugin enum merging
+c.ACCESS.update(c.PANEL_ACCESS_LEVELS)
+c.ACCESS_OPTS.extend(c.PANEL_ACCESS_LEVEL_OPTS)
+c.ACCESS_VARS.extend(c.PANEL_ACCESS_LEVEL_VARS)

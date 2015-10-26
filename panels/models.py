@@ -104,3 +104,4 @@ class PanelVote(MagModel):
     app_id = Column(UUID, ForeignKey('panel_application.id', ondelete='cascade'))
     account_id = Column(UUID, ForeignKey('admin_account.id', ondelete='cascade'))
     vote = Column(Choice(c.PANEL_VOTE_OPTS))
+    explanation = Column(UnicodeText)
