@@ -99,6 +99,10 @@ class PanelApplicant(MagModel):
     email      = Column(UnicodeText)
     cellphone  = Column(UnicodeText)
 
+    @property
+    def full_name(self):
+        return self.first_name + ' ' + self.last_name
+
 
 class PanelVote(MagModel):
     app_id = Column(UUID, ForeignKey('panel_application.id', ondelete='cascade'))
