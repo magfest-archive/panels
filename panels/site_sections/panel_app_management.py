@@ -5,7 +5,7 @@ from panels import *
 class Root:
     def index(self, session, message=''):
         curr_admin_votes = {pv.application: pv for pv in session.admin_attendee().admin_account.panel_votes}
-        apps = session.query(PanelApplication).order_by('applied').all()
+        apps = session.panel_apps()
         for app in apps:
             app.curr_admin_vote = curr_admin_votes.get(app)
 
@@ -39,3 +39,26 @@ class Root:
             'message': message,
             'panel_vote': panel_vote
         }
+
+    @csv_file
+    def everything(self, out, session):
+        out.writerow(['Panel Name', 'Description', 'Expected Length', 'Unavailability', 'Past Attendance', 'Affiliations', 'Type of Panel', 'Technical Needs', 'Applied', 'Panelists'])
+        for app in session.panel_apps():
+            panelists = []
+            for panelist in app.applicants:
+                panelists.extend([
+                    panelist.full_name,
+                    panelist.email,
+                    panelist.cellphone
+                ])
+            out.writerow([
+                app.name,
+                app.description,
+                app.length,
+                app.unavailable,
+                app.past_attendance,
+                app.affiliations,
+                app.other_presentation if app.presentation == c.OTHER else app.presentation_label,
+                ' / '.join(app.tech_needs_labels) + (' / ' if app.other_tech_needs else '') + app.other_tech_needs,
+                app.applied.strftime('%Y-%m-%d')
+            ] + panelists)

@@ -2,6 +2,12 @@ from panels import *
 
 
 @Session.model_mixin
+class SessionMixin:
+    def panel_apps(self):
+        return self.query(PanelApplication).order_by('applied').all()
+
+
+@Session.model_mixin
 class Attendee:
     assigned_panelists = relationship('AssignedPanelist', backref='attendee')
 
