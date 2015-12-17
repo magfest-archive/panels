@@ -19,7 +19,7 @@ class Root:
             applicant = {attr: params.get('{}_{}'.format(attr, i)) for attr in ['first_name', 'last_name', 'email']}
             other_panelists.append(PanelApplicant(application=app, **applicant))
 
-        if 'name' in params:
+        if cherrypy.request.method == 'POST':
             message = check(panelist) or check(app) or check_ops(other_panelists)
             if not message:
                 if 'verify_unavailable' not in params:

@@ -48,3 +48,9 @@ def pa_phone(pa):
 def pa_other(pa):
     if pa.presentation == c.OTHER and not pa.other_presentation:
         return 'Since you selected "Other" for your type of panel, please describe it'
+
+
+@validation.PanelApplication
+def pa_deadline(pa):
+    if localized_now() > c.PANEL_APP_DEADLINE:
+        return 'We are now past the deadline and are no longer accepting panel applications'
