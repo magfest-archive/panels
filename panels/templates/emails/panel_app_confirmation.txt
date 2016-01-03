@@ -1,4 +1,4 @@
-{{ panelapplication.submitter.first_name }},
+{{ app.submitter.first_name }},
 
 We've recieved your application for a {{ c.EVENT_NAME }} panel.
 

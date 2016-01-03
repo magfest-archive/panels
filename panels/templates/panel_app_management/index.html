@@ -8,8 +8,7 @@
     You have cast {{ vote_count }} votes out of {{ apps|length }} applications.
 </div>
 
-<script>$.fn.dataTable.defaults.pageLength = 'All';</script>
-<table class="table datatable">
+<table class="table datatable" data-page-length="-1">
 <thead>
     <tr>
         <th>Panel Name</th>
@@ -19,6 +18,7 @@
         <th>Yes Votes</th>
         <th>No Votes</th>
         <th>My Vote</th>
+        <th>Status</th>
     </tr>
 </thead>
 <tbody>
@@ -37,6 +37,7 @@
                 not voted yet
             {% endif %}
         </td>
+        <td>{{ app.status_label }}</td>
     </tr>
 {% endfor %}
 </tbody>
