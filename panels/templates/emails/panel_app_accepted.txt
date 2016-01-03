@@ -1,0 +1,7 @@
+{{ app.submitter.first_name }},
+
+Thanks again for applying to run a panel at this coming {{ c.EVENT_NAME }}.  Your panel application ({{ app.name }}) has been accepted, so you{% if app.applicants|length > 1 %} and all of the other panelists you listed in your application{% endif %} have been registered and we will be sending additional emails with links to fill out the rest of the necessary information.
+
+We'll be in touch closer to the event about your panel's timeslot, which we expect to be within the ranges of times you indicated in your application.
+
+{{ c.PEGLEGS_EMAIL_SIGNATURE }}

@@ -70,8 +70,12 @@ class PanelApplication(MagModel):
 
     applied = Column(UTCDateTime, server_default=utcnow())
 
+    status = Column(Choice(c.PANEL_APP_STATUS_OPTS), default=c.PENDING, admin_only=True)
+
     votes = relationship('PanelVote', backref='application')
     applicants = relationship('PanelApplicant', backref='application')
+
+    email_model_name = 'app'
 
     @property
     def email(self):
@@ -95,6 +99,10 @@ class PanelApplication(MagModel):
                     counts[var.lower()] += 1
         return counts
 
+    @property
+    def matching_attendees(self):
+        return [a.matching_attendee for a in self.applicants if a.matching_attendee]
+
 
 class PanelApplicant(MagModel):
     app_id = Column(UUID, ForeignKey('panel_application.id', ondelete='cascade'))
@@ -108,6 +116,14 @@ class PanelApplicant(MagModel):
     @property
     def full_name(self):
         return self.first_name + ' ' + self.last_name
+
+    @cached_property
+    def matching_attendee(self):
+        return self.session.query(Attendee).filter(
+            func.lower(Attendee.first_name) == self.first_name.lower(),
+            func.lower(Attendee.last_name) == self.last_name.lower(),
+            func.lower(Attendee.email) == self.email.lower()
+        ).first()
 
 
 class PanelVote(MagModel):

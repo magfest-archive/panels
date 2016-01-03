@@ -1,0 +1,5 @@
+{{ app.submitter.first_name }},
+
+Thanks again for applying to run a panel at this coming {{ c.EVENT_NAME }}.  Unfortunately, due to the overwhelming volume of applications we received, we were unable to find a slot for your panel ({{ app.name }}).  We hope to still see you at this coming {{ c.EVENT_NAME }}.
+
+{{ c.PEGLEGS_EMAIL_SIGNATURE }}

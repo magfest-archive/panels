@@ -40,6 +40,49 @@ class Root:
             'panel_vote': panel_vote
         }
 
+    def mark(self, session, status, **params):
+        app = session.panel_application(params)
+        if app.status != c.PENDING:
+            raise HTTPRedirect('index?message={}{}', 'That panel was already marked as ', app.status_label)
+
+        app.status = int(status)
+        create_group = len(app.applicants) - len(app.matching_attendees) > 1 and not getattr(app.submitter.matching_attendee, 'group_id', None)
+        if cherrypy.request.method == 'POST':
+            leader = None
+            group = Group(name='Panelists for ' + app.name, cost=0, auto_recalc=False) if create_group else None
+            for applicant in app.applicants:
+                if applicant.matching_attendee:
+                    if group and not applicant.matching_attendee.group_id:
+                        applicant.matching_attendee.group = group
+                else:
+                    attendee = Attendee(
+                        group=group,
+                        placeholder=True,
+                        ribbon=c.PANELIST_RIBBON,
+                        badge_type=c.ATTENDEE_BADGE,
+                        paid=c.PAID_BY_GROUP if group else c.NEED_NOT_PAY,
+                        first_name=applicant.first_name,
+                        last_name=applicant.last_name,
+                        cellphone=applicant.cellphone,
+                        email=applicant.email
+                    )
+                    if group and applicant.submitter:
+                        leader = attendee
+                    session.add(attendee)
+
+            if group:
+                session.add(group)
+                session.commit()
+                group.leader_id = leader.id
+                session.commit()
+
+            raise HTTPRedirect('index?message={}{}{}', app.name, ' was marked as ', app.status_label)
+
+        return {
+            'app': app,
+            'group': create_group
+        }
+
     @csv_file
     def everything(self, out, session):
         out.writerow(['Panel Name', 'Description', 'Expected Length', 'Unavailability', 'Past Attendance', 'Affiliations', 'Type of Panel', 'Technical Needs', 'Applied', 'Panelists'])

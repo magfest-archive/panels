@@ -16,6 +16,19 @@
     {% csrf_token %}
 
     <div class="form-group">
+        <label class="col-sm-3 control-label">Panel Status:</label>
+        <div class="col-sm-6 app-display">
+            {% if app.status == c.PENDING %}
+                <a href="mark?id={{ app.id }}&status={{ c.ACCEPTED }}">Accept</a>
+                or
+                <a href="mark?id={{ app.id }}&status={{ c.DECLINED }}">Decline</a>
+            {% else %}
+                <b>{{ app.status_label }}</b>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="form-group">
         <label class="col-sm-3 control-label">Panel Name:</label>
         <div class="col-sm-6 app-display">
             {{ app.name }}
@@ -92,22 +105,24 @@
         </div>
     </div>
 
-    <div class="form-group">
-        <label class="col-sm-3 control-label">Your Vote:</label>
-        <div class="col-sm-6">
-            <select name="vote" class="form-control">
-                <option value="">How Do You Vote?</option>
-                {% options c.PANEL_VOTE_OPTS panel_vote.vote %}
-            </select>
+    {% if app.status == c.PENDING %}
+        <div class="form-group">
+            <label class="col-sm-3 control-label">Your Vote:</label>
+            <div class="col-sm-6">
+                <select name="vote" class="form-control">
+                    <option value="">How Do You Vote?</option>
+                    {% options c.PANEL_VOTE_OPTS panel_vote.vote %}
+                </select>
+            </div>
         </div>
-    </div>
 
-    <div class="form-group">
-        <label class="col-sm-3 control-label">Explanation:</label>
-        <div class="col-sm-6">
-            <textarea class="form-control" name="explanation" rows="4">{{ panel_vote.explanation }}</textarea>
+        <div class="form-group">
+            <label class="col-sm-3 control-label">Explanation:</label>
+            <div class="col-sm-6">
+                <textarea class="form-control" name="explanation" rows="4">{{ panel_vote.explanation }}</textarea>
+            </div>
         </div>
-    </div>
+    {% endif %}
 
     <div class="form-group">
         <div class="col-sm-6 col-sm-offset-3">
