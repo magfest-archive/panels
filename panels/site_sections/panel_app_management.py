@@ -52,6 +52,8 @@ class Root:
             group = Group(name='Panelists for ' + app.name, cost=0, auto_recalc=False) if create_group else None
             for applicant in app.applicants:
                 if applicant.matching_attendee:
+                    if applicant.matching_attendee.ribbon == c.NO_RIBBON:
+                        applicant.matching_attendee.ribbon = c.PANELIST_RIBBON
                     if group and not applicant.matching_attendee.group_id:
                         applicant.matching_attendee.group = group
                 else:
