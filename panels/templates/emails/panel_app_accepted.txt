@@ -1,7 +1,14 @@
 {{ app.submitter.first_name }},
 
-Thanks again for applying to run a panel at this coming {{ c.EVENT_NAME }}.  Your panel application ({{ app.name }}) has been accepted, so you{% if app.applicants|length > 1 %} and all of the other panelists you listed in your application{% endif %} have been registered and we will be sending additional emails with links to fill out the rest of the necessary information.
+Congratulations, "({{ app.name }})", the panel you submitted for {{ c.EVENT_NAME }}, has been approved.  We will send you another e-mail to confirm your availability on our schedule.
 
-We'll be in touch closer to the event about your panel's timeslot, which we expect to be within the ranges of times you indicated in your application.
+Yourself and all panelists will receive free admissions.  If you have not yet registered you will receive a notification that we have begun registering you for the event, and you will need to follow the instruction in that email to finish your registration. 
+
+Important: If you or any others on your panel have purchased badges, {{ c.EVENT_NAME }} will refund the purchase price.  Please let us know if this is the case so we can get your refund sooner. As a reminder {{ c.EVENT_NAME }} will be held {{ c.EPOCH|datetime:"%A, %B %-d" }} through {{ c.ESCHATON|datetime:"%A, %B %-d" }} at {{ c.EVENT_LOCATION }}.
+
+If you have any questions or concerns, please don't hesitate to send them to {{ c.PANELS_EMAIL }}.
+
+Congratulations again, and we look forward to seeing you at {{ c.EVENT_NAME }}!
 
 {{ c.PEGLEGS_EMAIL_SIGNATURE }}
+

@@ -28,6 +28,15 @@
         </div>
     </div>
 
+    {% if app.status == c.ACCEPTED %}
+        <div class="form-group">
+            <label class="col-sm-3 control-label">Event:</label>
+            <div class="col-sm-6 app-display">
+                <i>this is not implemented yet, but in a few days this is where you'll click to associate this panel with an event on the schedule</i>
+            </div>
+        </div>
+    {% endif %}
+
     <div class="form-group">
         <label class="col-sm-3 control-label">Panel Name:</label>
         <div class="col-sm-6 app-display">
@@ -100,7 +109,12 @@
         <label class="col-sm-3 control-label">Panelists:</label>
         <div class="col-sm-6 app-display">
             {% for panelist in app.applicants %}
-                <div>{{ panelist.full_name }}</div>
+                <div>
+                    {{ panelist.full_name }} ({{ panelist.email }})
+                    {% if panelist.cellphone %}
+                        [{{ panelist.cellphone }}]
+                    {% endif %}
+                </div>
             {% endfor %}
         </div>
     </div>
@@ -122,13 +136,13 @@
                 <textarea class="form-control" name="explanation" rows="4">{{ panel_vote.explanation }}</textarea>
             </div>
         </div>
-    {% endif %}
 
-    <div class="form-group">
-        <div class="col-sm-6 col-sm-offset-3">
-            <button type="submit" class="btn btn-primary">Cast Your Vote</button>
+        <div class="form-group">
+            <div class="col-sm-6 col-sm-offset-3">
+                <button type="submit" class="btn btn-primary">Cast Your Vote</button>
+            </div>
         </div>
-    </div>
+    {% endif %}
 </form>
 
 {% endblock %}
