@@ -21,6 +21,8 @@
             {% if app.status == c.PENDING %}
                 <a href="mark?id={{ app.id }}&status={{ c.ACCEPTED }}">Accept</a>
                 or
+                <a href="mark?id={{ app.id }}&status={{ c.WAITLISTED }}">Waitlist</a>
+                or
                 <a href="mark?id={{ app.id }}&status={{ c.DECLINED }}">Decline</a>
             {% else %}
                 <b>{{ app.status_label }}</b>
@@ -32,7 +34,11 @@
         <div class="form-group">
             <label class="col-sm-3 control-label">Event:</label>
             <div class="col-sm-6 app-display">
-                <i>this is not implemented yet, but in a few days this is where you'll click to associate this panel with an event on the schedule</i>
+                {% if app.event_id %}
+                    <a href="../schedule/form?id={{ app.event_id }}">{{ app.event.name }}</a>
+                {% else %}
+                    <a href="associate?id={{ app.id }}">Click here</a> to associate this application with an event on the schedule
+                {% endif %}
             </div>
         </div>
     {% endif %}

@@ -11,6 +11,8 @@ c.ORDERED_EVENT_LOCS = [loc for loc, desc in c.EVENT_LOCATION_OPTS]
 c.EVENT_BOOKED = {'colspan': 0}
 c.EVENT_OPEN   = {'colspan': 1}
 
+c.PANEL_ROOMS = [getattr(c, room.upper()) for room in c.PANEL_ROOMS]
+
 # This can go away if/when we implement plugin enum merging
 c.ACCESS.update(c.PANEL_ACCESS_LEVELS)
 c.ACCESS_OPTS.extend(c.PANEL_ACCESS_LEVEL_OPTS)
