@@ -1,0 +1,41 @@
+{% extends "base-admin.html" %}
+{% block title %}Panel Submission{% endblock %}}
+{% block content %}
+
+<h2>Associate "{{ app.name }}" with an event on the schedule</h2>
+
+Use the form below to associate this application with an event on the schedule.  Doing so will have two effects:
+<br/> <br/>
+<ol>
+    <li>
+        The primary contact for this panel ({{ app.submitter.full_name }}) will be emailed to let them know the start/stop time
+        of their panel and its location (e.g. "Panels 1").
+        <br/> </br>
+    </li>
+    <li>
+        Each panelist will be added to the list of assigned panelists for this event, which is mainly used to detect when
+        multiple panels have been scheduled simultaneously with the same people.  Here is a list of everyone who will be
+        added as an assigned panelist to this event:
+        <ul>
+        {% for attendee in app.matching_attendees %}
+            <li>{{ attendee|form_link }}</li>
+        {% endfor %}
+        </ul>
+        <br/>
+    </li>
+</ol>
+
+<form method="post" action="associate">
+    {% csrf_token %}
+    <input type="hidden" name="id" value="{{ app.id }}" />
+    <select name="event_id">
+        <option value="">Select an event</option>
+        {% for event in panels %}
+            <option value="{{ event.id }}">{{ event.name }} ({% timespan event %})</option>
+        {% endfor %}
+    </select>
+    <input type="submit" value="Associate" />
+</form>
+
+
+{% endblock %}
