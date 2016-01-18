@@ -37,7 +37,13 @@
                 not voted yet
             {% endif %}
         </td>
-        <td>{{ app.status_label }}</td>
+        <td>
+            {% if app.event_id %}
+                <a href="../schedule/form?id={{ app.event_id }}">{{ app.status_label }}</a>
+            {% else %}
+                {{ app.status_label }}
+            {% endif %}
+        </td>
     </tr>
 {% endfor %}
 </tbody>

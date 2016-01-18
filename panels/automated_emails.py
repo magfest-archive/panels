@@ -16,3 +16,9 @@ PanelAppEmail('Your {EVENT_NAME} Panel Application Has Been Accepted', 'panel_ap
 
 PanelAppEmail('Your {EVENT_NAME} Panel Application Has Been Declined', 'panel_app_declined.txt',
               lambda app: app.status == c.DECLINED)
+
+PanelAppEmail('Your {EVENT_NAME} Panel Application Has Been Waitlisted', 'panel_app_waitlisted.txt',
+              lambda app: app.status == c.WAITLISTED)
+
+PanelAppEmail('Your {EVENT_NAME} Panel Has Been Scheduled', 'panel_app_scheduled.txt',
+              lambda app: app.event_id)

@@ -25,6 +25,7 @@ class Event(MagModel):
     description = Column(UnicodeText)
 
     assigned_panelists = relationship('AssignedPanelist', backref='event')
+    application = relationship('PanelApplication', backref='event')
 
     @property
     def half_hours(self):
@@ -56,6 +57,8 @@ class AssignedPanelist(MagModel):
 
 
 class PanelApplication(MagModel):
+    event_id = Column(UUID, ForeignKey('event.id'), nullable=True)
+
     name = Column(UnicodeText)
     length = Column(UnicodeText)
     description = Column(UnicodeText)
