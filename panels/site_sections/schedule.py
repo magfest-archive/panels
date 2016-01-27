@@ -210,3 +210,12 @@ class Root:
             'events':  events,
             'message': message
         }
+
+    def panelists_owed_refunds(self, session):
+        return {
+            'panelists': [a for a in session.query(Attendee)
+                                            .filter_by(ribbon=c.PANELIST_RIBBON)
+                                            .options(joinedload(Attendee.group))
+                                            .order_by(Attendee.full_name).all()
+                          if a.paid == c.HAS_PAID or a.paid == c.PAID_BY_GROUP and a.group and a.group.amount_paid]
+        }
