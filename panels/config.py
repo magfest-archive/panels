@@ -11,7 +11,13 @@ c.ORDERED_EVENT_LOCS = [loc for loc, desc in c.EVENT_LOCATION_OPTS]
 c.EVENT_BOOKED = {'colspan': 0}
 c.EVENT_OPEN   = {'colspan': 1}
 
-c.PANEL_ROOMS = [getattr(c, room.upper()) for room in c.PANEL_ROOMS]
+invalid_panel_rooms = [room for room in c.PANEL_ROOMS if not getattr(c, room.upper(), None)]
+
+for room in invalid_panel_rooms:
+    log.warning('panels plugin: panels_room config problem: '
+                'Ignoring "' + room.upper() + '" because it was not also found in [[event_location]] section.')
+
+c.PANEL_ROOMS = [getattr(c, room.upper()) for room in c.PANEL_ROOMS if room not in invalid_panel_rooms]
 
 # This can go away if/when we implement plugin enum merging
 c.ACCESS.update(c.PANEL_ACCESS_LEVELS)
