@@ -15,7 +15,7 @@ invalid_panel_rooms = [room for room in c.PANEL_ROOMS if not getattr(c, room.upp
 
 for room in invalid_panel_rooms:
     log.warning('panels plugin: panels_room config problem: '
-                'Ignoring "' + room.upper() + '" because it was not also found in [[event_location]] section.')
+                'Ignoring {!r} because it was not also found in [[event_location]] section.'.format(room.upper()))
 
 c.PANEL_ROOMS = [getattr(c, room.upper()) for room in c.PANEL_ROOMS if room not in invalid_panel_rooms]
 
