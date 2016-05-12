@@ -6,4 +6,8 @@ DROP TABLE panel_applicant;
 
 DROP TABLE panel_application;
 
+DROP TABLE assigned_panelist;
+
+DROP TABLE event;
+
 COMMIT;
