@@ -192,7 +192,7 @@
                 <label class="col-sm-2 control-label">Technical Needs</label>
                 <div class="col-sm-6">
                     Check the following technical needs that apply. Panel rooms will by default have VGA compatible projector with 3.5mm (1/8") audio, and a local PA with enough microphones setup.
-                    {% checkgroup app.tech_needs %} <br/>
+                    {{ app.html_checkgroup('tech_needs') }} <br/>
                     Other: <input type="text" name="other_tech_needs" value="{{ app.other_tech_needs }}" />
                 </div>
             </div>
