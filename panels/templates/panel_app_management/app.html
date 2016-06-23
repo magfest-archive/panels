@@ -131,7 +131,7 @@
             <div class="col-sm-6">
                 <select name="vote" class="form-control">
                     <option value="">How Do You Vote?</option>
-                    {% options c.PANEL_VOTE_OPTS panel_vote.vote %}
+                    {{ options(c.PANEL_VOTE_OPTS,panel_vote.vote) }}
                 </select>
             </div>
         </div>

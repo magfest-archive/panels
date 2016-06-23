@@ -178,7 +178,7 @@
                 <label class="col-sm-2 control-label">Type of Panel:</label>
                 <div class="col-sm-6">
                     <select name="presentation" class="form-control">
-                        {% options c.PRESENTATION_OPTS app.presentation %}
+                        {{ options(c.PRESENTATION_OPTS,app.presentation) }}
                     </select>
                 </div>
             </div>
