@@ -202,7 +202,7 @@
                 <label class="col-sm-2 control-label"></label>
                 <div class="col-sm-6">
                     <select name="other_panelists">
-                        {% int_options 0 9 ops_count %}
+                        {{ int_options(0, 9, ops_count) }}
                     </select>
                     How many other panelists will be on this panel?
                 </div>
