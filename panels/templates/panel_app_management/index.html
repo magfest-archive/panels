@@ -27,7 +27,7 @@
         <td><a href="app?id={{ app.id }}">{{ app.name }}</a></td>
         <td>{{ app.presentation_label }}</td>
         <td>{{ app.submitter.full_name }}</td>
-        <td>{{ app.applied_local|datetime:"%Y-%m-%d" }}</td>
+        <td>{{ app.applied_local|datetime("%Y-%m-%d") }}</td>
         <td>{{ app.vote_counts.accept }}</td>
         <td>{{ app.vote_counts.decline }}</td>
         <td>
