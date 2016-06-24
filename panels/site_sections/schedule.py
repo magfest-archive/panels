@@ -53,7 +53,7 @@ class Root:
     @csv_file
     def time_ordered(self, out, session):
         for event in session.query(Event).order_by('start_time', 'duration', 'location').all():
-            out.writerow([custom_tags.timespan.pretty(event, 30), event.name, event.location_label])
+            out.writerow([event.timespan(30), event.name, event.location_label])
 
     @unrestricted
     def xml(self, session):
