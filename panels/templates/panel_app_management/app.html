@@ -13,7 +13,7 @@
 
 <form method="post" action="app" role="form" class="form-horizontal">
     <input type="hidden" name="id" value="{{ app.id }}" />
-    {% csrf_token %}
+    {{ csrf_token() }}
 
     <div class="form-group">
         <label class="col-sm-3 control-label">Panel Status:</label>

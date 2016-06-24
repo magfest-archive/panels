@@ -60,7 +60,7 @@
         Good luck!  We're excited to hear what you've got!
 
         <form method="post" action="index" class="form-horizontal" role="form">
-            {% csrf_token %}
+            {{ csrf_token() }}
             <input type="hidden" name="submitter" value="1" />
 
             <h3>Personal Information</h3>
