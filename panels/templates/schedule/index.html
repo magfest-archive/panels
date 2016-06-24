@@ -5,6 +5,23 @@
         <span style="float:right"> <a href="../accounts/homepage">Return Home</a></span>
     {% endif %}
 {% endblock %}
+
+{% macro format_time_column(time) -%}
+    {% if not time.minute %}
+        {{ time|date("%-I%p")|lower }}
+    {% else %}
+        {{ time|date("%-I:%M") }}
+    {% endif %}
+{%- endmacro %}
+
+{% macro format_day_column(time) -%}
+    {% if (not time.hour and not time.minute) or (time == c.EPOCH) or (time.hour == 12 and not time.minute) %}
+        <td class="border">{{ time|date("%a") }}</td>
+    {% else %}
+        <td></td>
+    {% endif %}
+{%- endmacro %}
+
 {% block content %}
 
 <script type="text/javascript">
@@ -45,30 +62,10 @@
 </tr>
 {% for time, events in schedule %}
     <tr>
-        {% if not time.hour and not time.minute %}
-            <td class="border">{{ time|date("%D") }}</td>
-        {% else %}
-            {% if time == c.EPOCH %}
-                <td class="border">{{ time|date("%D") }}</td>
-            {% else %}
-                {% if time.hour == 12 %}
-                    {% if not time.minute %}
-                        <td class="border">{{ time|date("%D") }}</td>
-                    {% else %}
-                        <td></td>
-                    {% endif %}
-                {% else %}
-                    <td></td>
-                {% endif %}
-            {% endif %}
-        {% endif %}
+        {{ format_day_column(time) }}
         <td class="border">
             <a name="{{ time|date("%Y-%m-%d %H:%i:%s") }}"></a>
-            {% if not time.minute %}
-                {{ time|date("%g%A")|lower }}
-            {% else %}
-                {{ time|date("%f") }}
-            {% endif %}
+            {{ format_time_column(time) }}
         </td>
         {% for location, event_list in events %}
             {% for event in event_list %}
@@ -85,29 +82,9 @@
             {% endfor %}
         {% endfor %}
         <td class="border">
-            {% if not time.minute %}
-                {{ time|date("%g%A")|lower }}
-            {% else %}
-                {{ time|date("%f") }}
-            {% endif %}
+            {{ format_time_column(time) }}
         </td>
-        {% if not time.hour and not time.minute %}
-            <td class="border">{{ time|date("%D") }}</td>
-        {% else %}
-            {% if time == c.EPOCH %}
-                <td class="border">{{ time|date("%D") }}</td>
-            {% else %}
-                {% if time.hour == 12 %}
-                    {% if not time.minute %}
-                        <td class="border">{{ time|date("%D") }}</td>
-                    {% else %}
-                        <td></td>
-                    {% endif %}
-                {% else %}
-                    <td></td>
-                {% endif %}
-            {% endif %}
-        {% endif %}
+        {{ format_day_column(time) }}
     </tr>
 {% endfor %}
 </table>
