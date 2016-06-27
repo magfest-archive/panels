@@ -85,7 +85,7 @@
         <div class="form-group">
             <label class="col-sm-3 control-label">Tech Needs:</label>
             <div class="col-sm-6 app-display">
-                {{ app.tech_needs_labels|join:' / ' }}
+                {{ app.tech_needs_labels|join(' / ') }}
                 {% if app.other_tech_needs %}
                     <br/> {{ app.other_tech_needs }}
                 {% endif %}
