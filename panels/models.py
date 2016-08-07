@@ -12,11 +12,6 @@ class Attendee:
     assigned_panelists = relationship('AssignedPanelist', backref='attendee')
 
 
-@Session.model_mixin
-class AdminAccount:
-    panel_votes = relationship('PanelVote', backref='account')
-
-
 class Event(MagModel):
     location    = Column(Choice(c.EVENT_LOCATION_OPTS))
     start_time  = Column(UTCDateTime)
@@ -70,12 +65,12 @@ class PanelApplication(MagModel):
     other_presentation = Column(UnicodeText)
     tech_needs = Column(MultiChoice(c.TECH_NEED_OPTS))
     other_tech_needs = Column(UnicodeText)
+    panelist_bringing = Column(UnicodeText)
 
     applied = Column(UTCDateTime, server_default=utcnow())
 
     status = Column(Choice(c.PANEL_APP_STATUS_OPTS), default=c.PENDING, admin_only=True)
 
-    votes = relationship('PanelVote', backref='application')
     applicants = relationship('PanelApplicant', backref='application')
 
     email_model_name = 'app'
@@ -92,15 +87,6 @@ class PanelApplication(MagModel):
             return None
         else:
             return submitter
-
-    @cached_property
-    def vote_counts(self):
-        counts = defaultdict(int)
-        for vote in self.votes:
-            for var in c.PANEL_VOTE_VARS:
-                if vote.vote == getattr(c, var):
-                    counts[var.lower()] += 1
-        return counts
 
     @property
     def matching_attendees(self):
@@ -128,9 +114,3 @@ class PanelApplicant(MagModel):
             func.lower(Attendee.email) == self.email.lower()
         ).first()
 
-
-class PanelVote(MagModel):
-    app_id = Column(UUID, ForeignKey('panel_application.id', ondelete='cascade'))
-    account_id = Column(UUID, ForeignKey('admin_account.id', ondelete='cascade'))
-    vote = Column(Choice(c.PANEL_VOTE_OPTS))
-    explanation = Column(UnicodeText)

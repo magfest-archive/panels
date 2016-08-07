@@ -4,10 +4,6 @@
 
 <h2>Panel Applications</h2>
 
-<div style="text-align:center">
-    You have cast {{ vote_count }} votes out of {{ apps|length }} applications.
-</div>
-
 <table class="table datatable" data-page-length="-1">
 <thead>
     <tr>
@@ -15,9 +11,6 @@
         <th>Panel Type</th>
         <th>Submitted By</th>
         <th>Applied</th>
-        <th>Yes Votes</th>
-        <th>No Votes</th>
-        <th>My Vote</th>
         <th>Status</th>
     </tr>
 </thead>
@@ -28,15 +21,6 @@
         <td>{{ app.presentation_label }}</td>
         <td>{{ app.submitter.full_name }}</td>
         <td>{{ app.applied_local|datetime:"%Y-%m-%d" }}</td>
-        <td>{{ app.vote_counts.accept }}</td>
-        <td>{{ app.vote_counts.decline }}</td>
-        <td>
-            {% if app.curr_admin_vote %}
-                {{ app.curr_admin_vote.vote_label }}
-            {% else %}
-                not voted yet
-            {% endif %}
-        </td>
         <td>
             {% if app.event_id %}
                 <a href="../schedule/form?id={{ app.event_id }}">{{ app.status_label }}</a>
