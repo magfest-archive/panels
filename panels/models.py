@@ -113,4 +113,3 @@ class PanelApplicant(MagModel):
             func.lower(Attendee.last_name) == self.last_name.lower(),
             func.lower(Attendee.email) == self.email.lower()
         ).first()
-
