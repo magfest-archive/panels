@@ -87,8 +87,9 @@ class Root:
         out.writerow(['Session Title', 'Date', 'Time Start', 'Time End', 'Room/Location',
                       'Schedule Track (Optional)', 'Description (Optional)', 'Allow Checkin (Optional)',
                       'Checkin Begin (Optional)', 'Limit Spaces? (Optional)', 'Allow Waitlist (Optional)'])
+        rows = []
         for event in session.query(Event).order_by('start_time').all():
-            out.writerow([
+            rows.append([
                 event.name,
                 event.start_time_local.strftime('%m/%d/%Y'),
                 event.start_time_local.strftime('%I:%M:%S %p'),
@@ -98,6 +99,8 @@ class Root:
                 normalize_newlines(event.description).replace('\n', ' '),
                 '', '', '', ''
             ])
+        for r in sorted(rows, key=lambda tup: tup[4]):
+            out.writerow(r)
 
     @csv_file
     def panels(self, out, session):
