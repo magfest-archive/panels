@@ -84,14 +84,19 @@ class Root:
 
     @csv_file
     def csv(self, out, session):
-        out.writerow(['Location', 'Date', 'Start Time', 'End Time', 'Description'])
+        out.writerow(['Session Title', 'Date', 'Time Start', 'Time End', 'Room/Location',
+                      'Schedule Track (Optional)', 'Description (Optional)', 'Allow Checkin (Optional)',
+                      'Checkin Begin (Optional)', 'Limit Spaces? (Optional)', 'Allow Waitlist (Optional)'])
         for event in session.query(Event).order_by('start_time').all():
             out.writerow([
-                event.location_label,
+                event.name,
                 event.start_time_local.strftime('%m/%d/%Y'),
                 event.start_time_local.strftime('%I:%M:%S %p'),
                 (event.start_time_local + timedelta(minutes=event.minutes)).strftime('%I:%M:%S %p'),
-                normalize_newlines(event.description).replace('\n', ' ')
+                event.location_label,
+                '',
+                normalize_newlines(event.description).replace('\n', ' '),
+                '', '', '', ''
             ])
 
     @csv_file
