@@ -83,6 +83,18 @@ class Root:
         })
 
     @csv_file
+    def csv(self, out, session):
+        out.writerow(['Location', 'Date', 'Start Time', 'End Time', 'Description'])
+        for event in session.query(Event).order_by('start_time').all():
+            out.writerow([
+                event.location_label,
+                event.start_time_local.strftime('%m/%d/%Y'),
+                event.start_time_local.strftime('%I:%M:%S %p'),
+                (event.start_time_local + timedelta(minutes=event.minutes)).strftime('%I:%M:%S %p'),
+                normalize_newlines(event.description).replace('\n', ' ')
+            ])
+
+    @csv_file
     def panels(self, out, session):
         out.writerow(['Panel', 'Time', 'Duration', 'Room', 'Description', 'Panelists'])
         for event in sorted(session.query(Event).all(), key=lambda e: [e.start_time, e.location_label]):
