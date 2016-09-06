@@ -28,6 +28,8 @@ class Root:
                     message = 'You must check the box to verify you understand that you will not hear back until {}'.format(c.EXPECTED_RESPONSE)
                 elif 'verify_tos' not in params:
                     message = 'You must accept our Terms of Accomodation'
+                elif other_panelists and 'verify_poc' not in params:
+                    message = 'You must agree to being the point of contact for your group'
                 else:
                     session.add_all([app, panelist] + other_panelists)
                     raise HTTPRedirect('index?message={}', 'Your panel application has been submitted')
@@ -39,6 +41,7 @@ class Root:
             'ops_count': len(other_panelists),
             'other_panelists': other_panelists,
             'verify_tos': params.get('verify_tos'),
+            'verify_poc': params.get('verify_pos'),
             'verify_waiting': params.get('verify_waiting'),
             'verify_unavailable': params.get('verify_unavailable')
         }
