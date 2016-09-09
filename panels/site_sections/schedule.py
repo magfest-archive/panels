@@ -9,6 +9,9 @@ class Root:
         if c.HIDE_SCHEDULE and not AdminAccount.access_set() and not cherrypy.session.get('staffer_id'):
             return "The " + c.EVENT_NAME + " schedule is being developed and will be made public when it's closer to being finalized."
 
+        if c.ALT_SCHEDULE_URL:
+            raise HTTPRedirect(c.ALT_SCHEDULE_URL)
+
         schedule = defaultdict(lambda: defaultdict(list))
         for event in session.query(Event).all():
             schedule[event.start_time_local][event.location].append(event)
