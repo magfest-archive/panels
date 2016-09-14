@@ -1,6 +1,6 @@
 {{ app.submitter.first_name }},
 
-Thanks for your interest in contributing a panel to {{ c.EVENT_NAME }} this year!  Your application has been received and is now being reviewed.
+Thanks for your interest in contributing a panel to {{ c.EVENT_NAME }} this year!  Your application for the panel, {{ app.name }}, has been received and is now being reviewed.
 
 We will continue accepting applications until {{ c.PANEL_APP_DEADLINE|datetime }}.  Decision notifications will be sent out {{ c.EXPECTED_RESPONSE }}.
 
