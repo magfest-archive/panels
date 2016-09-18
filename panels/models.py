@@ -10,6 +10,8 @@ class SessionMixin:
 @Session.model_mixin
 class Attendee:
     assigned_panelists = relationship('AssignedPanelist', backref='attendee')
+    panel_applicant = relationship('PanelApplicant', backref='attendee', uselist=False)
+    panel_applications = relationship('PanelApplication', backref='poc')
 
 
 class Event(MagModel):
@@ -53,6 +55,7 @@ class AssignedPanelist(MagModel):
 
 class PanelApplication(MagModel):
     event_id = Column(UUID, ForeignKey('event.id'), nullable=True)
+    poc_id = Column(UUID, ForeignKey('attendee.id'), nullable=True)
 
     name = Column(UnicodeText)
     length = Column(UnicodeText)
@@ -70,6 +73,7 @@ class PanelApplication(MagModel):
     applied = Column(UTCDateTime, server_default=utcnow())
 
     status = Column(Choice(c.PANEL_APP_STATUS_OPTS), default=c.PENDING, admin_only=True)
+    comments = Column(UnicodeText, admin_only=True)
 
     applicants = relationship('PanelApplicant', backref='application')
 
@@ -89,12 +93,17 @@ class PanelApplication(MagModel):
             return submitter
 
     @property
-    def matching_attendees(self):
-        return [a.matching_attendee for a in self.applicants if a.matching_attendee]
+    def matched_attendees(self):
+        return [a.attendee for a in self.applicants if a.attendee_id]
+
+    @property
+    def unmatched_applicants(self):
+        return [a for a in self.applicants if not a.attendee_id]
 
 
 class PanelApplicant(MagModel):
     app_id = Column(UUID, ForeignKey('panel_application.id', ondelete='cascade'))
+    attendee_id = Column(UUID, ForeignKey('attendee.id', ondelete='cascade'), nullable=True)
 
     submitter  = Column(Boolean, default=False)
     first_name = Column(UnicodeText)
@@ -105,11 +114,3 @@ class PanelApplicant(MagModel):
     @property
     def full_name(self):
         return self.first_name + ' ' + self.last_name
-
-    @cached_property
-    def matching_attendee(self):
-        return self.session.query(Attendee).filter(
-            func.lower(Attendee.first_name) == self.first_name.lower(),
-            func.lower(Attendee.last_name) == self.last_name.lower(),
-            func.lower(Attendee.email) == self.email.lower()
-        ).first()
