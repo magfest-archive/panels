@@ -9,6 +9,9 @@ class Root:
         if c.HIDE_SCHEDULE and not AdminAccount.access_set() and not cherrypy.session.get('staffer_id'):
             return "The " + c.EVENT_NAME + " schedule is being developed and will be made public when it's closer to being finalized."
 
+        if c.ALT_SCHEDULE_URL:
+            raise HTTPRedirect(c.ALT_SCHEDULE_URL)
+
         schedule = defaultdict(lambda: defaultdict(list))
         for event in session.query(Event).all():
             schedule[event.start_time_local][event.location].append(event)
@@ -81,6 +84,26 @@ class Root:
         return render('schedule/schedule.tsv', {
             'schedule': sorted(schedule.items(), key=lambda tup: c.ORDERED_EVENT_LOCS.index(tup[1][0]['location']))
         })
+
+    @csv_file
+    def csv(self, out, session):
+        out.writerow(['Session Title', 'Date', 'Time Start', 'Time End', 'Room/Location',
+                      'Schedule Track (Optional)', 'Description (Optional)', 'Allow Checkin (Optional)',
+                      'Checkin Begin (Optional)', 'Limit Spaces? (Optional)', 'Allow Waitlist (Optional)'])
+        rows = []
+        for event in session.query(Event).order_by('start_time').all():
+            rows.append([
+                event.name,
+                event.start_time_local.strftime('%m/%d/%Y'),
+                event.start_time_local.strftime('%I:%M:%S %p'),
+                (event.start_time_local + timedelta(minutes=event.minutes)).strftime('%I:%M:%S %p'),
+                event.location_label,
+                '',
+                normalize_newlines(event.description).replace('\n', ' '),
+                '', '', '', ''
+            ])
+        for r in sorted(rows, key=lambda tup: tup[4]):
+            out.writerow(r)
 
     @csv_file
     def panels(self, out, session):

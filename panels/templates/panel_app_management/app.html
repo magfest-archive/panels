@@ -11,10 +11,7 @@
 
 <h2>Panel Applications</h2>
 
-<form method="post" action="app" role="form" class="form-horizontal">
-    <input type="hidden" name="id" value="{{ app.id }}" />
-    {% csrf_token %}
-
+<form class="form-horizontal">
     <div class="form-group">
         <label class="col-sm-3 control-label">Panel Status:</label>
         <div class="col-sm-6 app-display">
@@ -93,6 +90,15 @@
         </div>
     {% endif %}
 
+    {% if app.panelist_bringing %}
+        <div class="form-group">
+            <label class="col-sm-3 control-label">Panelist is bringing:</label>
+            <div class="col-sm-6 app-display">
+                {{ app.panelist_bringing }}
+            </div>
+        </div>
+    {% endif %}
+
     {% if app.affiliations %}
         <div class="form-group">
             <label class="col-sm-3 control-label">Affiliations:</label>
@@ -124,31 +130,6 @@
             {% endfor %}
         </div>
     </div>
-
-    {% if app.status == c.PENDING %}
-        <div class="form-group">
-            <label class="col-sm-3 control-label">Your Vote:</label>
-            <div class="col-sm-6">
-                <select name="vote" class="form-control">
-                    <option value="">How Do You Vote?</option>
-                    {% options c.PANEL_VOTE_OPTS panel_vote.vote %}
-                </select>
-            </div>
-        </div>
-
-        <div class="form-group">
-            <label class="col-sm-3 control-label">Explanation:</label>
-            <div class="col-sm-6">
-                <textarea class="form-control" name="explanation" rows="4">{{ panel_vote.explanation }}</textarea>
-            </div>
-        </div>
-
-        <div class="form-group">
-            <div class="col-sm-6 col-sm-offset-3">
-                <button type="submit" class="btn btn-primary">Cast Your Vote</button>
-            </div>
-        </div>
-    {% endif %}
 </form>
 
 {% endblock %}
