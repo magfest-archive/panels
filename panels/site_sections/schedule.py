@@ -210,9 +210,10 @@ class Root:
 
     @ajax
     def swap(self, session, id1, id2):
+        from panels.model_checks import overlapping_events
         e1, e2 = session.event(id1), session.event(id2)
         (e1.location, e1.start_time), (e2.location, e2.start_time) = (e2.location, e2.start_time), (e1.location, e1.start_time)
-        resp = {'error': model_checks.event_overlaps(e1, e2.id) or model_checks.event_overlaps(e2, e1.id)}
+        resp = {'error': overlapping_events(e1, e2.id) or overlapping_events(e2, e1.id)}
         if not resp['error']:
             session.commit()
         return resp
@@ -241,4 +242,25 @@ class Root:
                                             .options(joinedload(Attendee.group))
                                             .order_by(Attendee.full_name).all()
                           if a.paid == c.HAS_PAID or a.paid == c.PAID_BY_GROUP and a.group and a.group.amount_paid]
+        }
+
+    def panelist_schedule(self, session, id):
+        attendee = session.attendee(id)
+        events = defaultdict(lambda: defaultdict(lambda: (1, '')))
+        for ap in attendee.assigned_panelists:
+            for timeslot in ap.event.half_hours:
+                rowspan = ap.event.duration if timeslot == ap.event.start_time else 0
+                events[timeslot][ap.event.location_label] = (rowspan, ap.event.name)
+
+        schedule = []
+        when = min(events)
+        locations = sorted(set(sum([list(locations) for locations in events.values()], [])))
+        while when <= max(events):
+            schedule.append([when, [events[when][where] for where in locations]])
+            when += timedelta(minutes=30)
+
+        return {
+            'attendee': attendee,
+            'schedule': schedule,
+            'locations': locations
         }
