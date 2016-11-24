@@ -36,7 +36,7 @@ Use the form below to associate this application with an event on the schedule. 
                 <b>WARNING:<b/> {{ app.unmatched_applicants|length }} panel applicant{{ app.unmatched_applicants|length|pluralize }}
                 NOT associated with an attendee.  This applicant will NOT be set as an assigned panelist.  Before associating this
                 panel with an event on the schedule, you should probably make sure they are correctly matched to attendees in our
-                database <a href="match">using this form</a>.  Here is the list of panel applicants not matched:
+                database <a href="badges">using this form</a>.  Here is the list of panel applicants not matched:
                 <ul>
                 {% for applicant in app.unmatched_applicants %}
                     <li>{{ applicant.full_name }}</li>
@@ -54,11 +54,10 @@ Use the form below to associate this application with an event on the schedule. 
     <select name="event_id">
         <option value="">Select an event</option>
         {% for event in panels %}
-            <option value="{{ event.id }}">{{ event.name }} ({% timespan event %})</option>
+            <option value="{{ event.id }}">{{ event.name }} [{{ event.location_label }}] ({% timespan event %})</option>
         {% endfor %}
     </select>
     <input type="submit" value="Associate" />
 </form>
-
 
 {% endblock %}

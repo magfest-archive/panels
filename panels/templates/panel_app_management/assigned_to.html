@@ -1,0 +1,16 @@
+{% extends "base-admin.html" %}
+{% block title %}{{ attendee.full_name }}'s panel applications{% endblock %}}
+{% block content %}
+
+<h3>Panels for which {{ attendee|form_link }} is the point of contact</h3>
+
+<ul>
+{% for app in panels %}
+    <li>
+        [{{ app.status_label }}]
+        <a href="app?id={{ app.id }}">{{ app.name }}</a>
+    </li>
+{% endfor %}
+</ul>
+
+{% endblock %}

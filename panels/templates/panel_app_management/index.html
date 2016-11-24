@@ -31,7 +31,7 @@
         </td>
         <td>
             {% if app.poc_id %}
-                {{ app.poc|form_link }}
+                <a href="assigned_to?id={{ app.poc_id }}">{{ app.poc.full_name }}</a>
             {% endif %}
         </td>
     </tr>

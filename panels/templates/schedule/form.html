@@ -64,7 +64,12 @@
 </tr>
 <tr>
     <td><b>Event Name:</b></td>
-    <td> <input class="focus" type="text" name="name" value="{{ event.name }}" /> </td>
+    <td>
+        <input class="focus" type="text" name="name" value="{{ event.name }}" />
+        {% for app in event.applications %}
+            <br/> (<a href="../panel_app_management/app?id={{ app.id }}">view application</a>)
+        {% endfor %}
+    </td>
 </tr>
 <tr>
     <td valign="top">Panelists</td>

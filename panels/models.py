@@ -6,6 +6,9 @@ class SessionMixin:
     def panel_apps(self):
         return self.query(PanelApplication).order_by('applied').all()
 
+    def panel_applicants(self):
+        return self.query(PanelApplicant).options(joinedload(PanelApplicant.application)).order_by('first_name', 'last_name')
+
 
 @Session.model_mixin
 class Attendee:
@@ -22,7 +25,7 @@ class Event(MagModel):
     description = Column(UnicodeText)
 
     assigned_panelists = relationship('AssignedPanelist', backref='event')
-    application = relationship('PanelApplication', backref='event')
+    applications = relationship('PanelApplication', backref='event')
 
     @property
     def half_hours(self):
@@ -54,8 +57,8 @@ class AssignedPanelist(MagModel):
 
 
 class PanelApplication(MagModel):
-    event_id = Column(UUID, ForeignKey('event.id'), nullable=True)
-    poc_id = Column(UUID, ForeignKey('attendee.id'), nullable=True)
+    event_id = Column(UUID, ForeignKey('event.id', ondelete='SET NULL'), nullable=True)
+    poc_id = Column(UUID, ForeignKey('attendee.id', ondelete='SET NULL'), nullable=True)
 
     name = Column(UnicodeText)
     length = Column(UnicodeText)
