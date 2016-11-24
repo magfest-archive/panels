@@ -50,7 +50,7 @@ forms below to add badges for those without them OR associate these panelists wi
     <tr id="{{ pa.id }}">
         <td><a href="app?id={{ pa.application.id }}">{{ pa.application.name }}</a></td>
         <td>{{ pa.full_name }}</td>
-        <td>{{ pa.email }}</td>
+        <td><a href="mailto:{{ pa.email }}">{{ pa.email }}</a></td>
         <td>
             {% for attendee in matches %}
                 <p>

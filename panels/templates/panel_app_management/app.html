@@ -165,7 +165,7 @@
         <div class="col-sm-6 app-display">
             {% for panelist in app.applicants %}
                 <div>
-                    {{ panelist.full_name }} ({{ panelist.email }})
+                    {{ panelist.full_name }} (<a href="mailto:{{ panelist.email }}">{{ panelist.email }}</a>)
                     {% if panelist.cellphone %}
                         [{{ panelist.cellphone }}]
                     {% endif %}
