@@ -30,3 +30,7 @@ PanelAppEmail('Your {EVENT_NAME} Panel Application Has Been Waitlisted: <PANEL_N
 PanelAppEmail('Your {EVENT_NAME} Panel Has Been Scheduled: <PANEL_NAME>', 'panel_app_scheduled.txt',
               lambda app: app.event_id,
               ident='panel_scheduled')
+
+AutomatedEmail(Attendee, 'Your {EVENT_NAME} Event Schedule', 'panelist_schedule.txt',
+               lambda a: a.assigned_panelists,
+               ident='event_schedule')
