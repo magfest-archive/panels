@@ -4,6 +4,9 @@
 
 <h3>Panels for which {{ attendee|form_link }} is the point of contact</h3>
 
+You can download a CSV spreadsheet of all of {{ attendee.first_name }}'s panels
+<a href="panels_by_poc?poc_id={{ attendee.id }}">here</a>.
+
 <ul>
 {% for app in panels %}
     <li>
