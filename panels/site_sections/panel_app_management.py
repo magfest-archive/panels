@@ -141,6 +141,41 @@ class Root:
         else:
             return {'added': ids}
 
+    def panel_feedback(self, session, event_id, **params):
+        feedback = session.query(EventFeedback).filter_by(event_id=event_id, attendee_id=session.admin_attendee().id).first()
+        if params or not feedback:
+            feedback = session.event_feedback(params)
+
+        if cherrypy.request.method == 'POST':
+            feedback.event_id = event_id
+            feedback.headcount_during = feedback.headcount_during or 0
+            feedback.headcount_starting = feedback.headcount_starting or 0
+            if not feedback.attendee_id:
+                feedback.attendee_id = session.admin_attendee().id
+
+            session.add(feedback)
+            raise HTTPRedirect('../schedule/form?id={}&message={}', event_id, 'Feedback saved')
+
+        return {
+            'feedback': feedback,
+            'event': session.event(event_id)
+        }
+
+    def feedback_report(self, session):
+        feedback = defaultdict(list)
+        for fb in session.query(EventFeedback).options(joinedload(EventFeedback.event), joinedload(EventFeedback.attendee)):
+            feedback[fb.event].append(fb)
+
+        events = []
+        for event in session.query(Event).filter(Event.location.in_(c.PANEL_ROOMS)).order_by('name'):
+            events.append([event, feedback[event]])
+
+        for event, fb in feedback.items():
+            if event.location not in c.PANEL_ROOMS:
+                events.append([event, fb])
+
+        return {'events': events}
+
     @csv_file
     def panels_by_poc(self, out, session, poc_id):
         attendee = session.attendee(poc_id)

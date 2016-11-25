@@ -15,6 +15,7 @@ class Attendee:
     assigned_panelists = relationship('AssignedPanelist', backref='attendee')
     panel_applicant = relationship('PanelApplicant', backref='attendee', uselist=False)
     panel_applications = relationship('PanelApplication', backref='poc')
+    panel_feedback = relationship('EventFeedback', backref='attendee')
 
 
 class Event(MagModel):
@@ -26,6 +27,7 @@ class Event(MagModel):
 
     assigned_panelists = relationship('AssignedPanelist', backref='event')
     applications = relationship('PanelApplication', backref='event')
+    panel_feedback = relationship('EventFeedback', backref='event')
 
     @property
     def half_hours(self):
@@ -117,3 +119,12 @@ class PanelApplicant(MagModel):
     @property
     def full_name(self):
         return self.first_name + ' ' + self.last_name
+
+
+class EventFeedback(MagModel):
+    event_id = Column(UUID, ForeignKey('event.id'))
+    attendee_id = Column(UUID, ForeignKey('attendee.id', ondelete='cascade'))
+    headcount_starting = Column(Integer, default=0)
+    headcount_during = Column(Integer, default=0)
+    comments = Column(UnicodeText)
+    rating = Column(Choice(c.PANEL_RATING_OPTS), default=c.UNRATED)

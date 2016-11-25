@@ -64,6 +64,7 @@
             <div class="col-sm-6 app-display">
                 {% if app.event_id %}
                     <a href="../schedule/form?id={{ app.event_id }}">{{ app.event.name }}</a>
+                    (<a href="panel_feedback?event_id={{ app.event_id }}">leave feedback</a>)
                 {% else %}
                     <a href="associate?id={{ app.id }}">Click here</a> to associate this application with an event on the schedule
                 {% endif %}
