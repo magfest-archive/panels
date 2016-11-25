@@ -6,10 +6,16 @@ class SessionMixin:
     def panel_apps(self):
         return self.query(PanelApplication).order_by('applied').all()
 
+    def panel_applicants(self):
+        return self.query(PanelApplicant).options(joinedload(PanelApplicant.application)).order_by('first_name', 'last_name')
+
 
 @Session.model_mixin
 class Attendee:
     assigned_panelists = relationship('AssignedPanelist', backref='attendee')
+    panel_applicant = relationship('PanelApplicant', backref='attendee', uselist=False)
+    panel_applications = relationship('PanelApplication', backref='poc')
+    panel_feedback = relationship('EventFeedback', backref='attendee')
 
 
 class Event(MagModel):
@@ -20,7 +26,8 @@ class Event(MagModel):
     description = Column(UnicodeText)
 
     assigned_panelists = relationship('AssignedPanelist', backref='event')
-    application = relationship('PanelApplication', backref='event')
+    applications = relationship('PanelApplication', backref='event')
+    panel_feedback = relationship('EventFeedback', backref='event')
 
     @property
     def half_hours(self):
@@ -52,7 +59,8 @@ class AssignedPanelist(MagModel):
 
 
 class PanelApplication(MagModel):
-    event_id = Column(UUID, ForeignKey('event.id'), nullable=True)
+    event_id = Column(UUID, ForeignKey('event.id', ondelete='SET NULL'), nullable=True)
+    poc_id = Column(UUID, ForeignKey('attendee.id', ondelete='SET NULL'), nullable=True)
 
     name = Column(UnicodeText)
     length = Column(UnicodeText)
@@ -70,6 +78,7 @@ class PanelApplication(MagModel):
     applied = Column(UTCDateTime, server_default=utcnow())
 
     status = Column(Choice(c.PANEL_APP_STATUS_OPTS), default=c.PENDING, admin_only=True)
+    comments = Column(UnicodeText, admin_only=True)
 
     applicants = relationship('PanelApplicant', backref='application')
 
@@ -89,12 +98,17 @@ class PanelApplication(MagModel):
             return submitter
 
     @property
-    def matching_attendees(self):
-        return [a.matching_attendee for a in self.applicants if a.matching_attendee]
+    def matched_attendees(self):
+        return [a.attendee for a in self.applicants if a.attendee_id]
+
+    @property
+    def unmatched_applicants(self):
+        return [a for a in self.applicants if not a.attendee_id]
 
 
 class PanelApplicant(MagModel):
     app_id = Column(UUID, ForeignKey('panel_application.id', ondelete='cascade'))
+    attendee_id = Column(UUID, ForeignKey('attendee.id', ondelete='cascade'), nullable=True)
 
     submitter  = Column(Boolean, default=False)
     first_name = Column(UnicodeText)
@@ -106,10 +120,11 @@ class PanelApplicant(MagModel):
     def full_name(self):
         return self.first_name + ' ' + self.last_name
 
-    @cached_property
-    def matching_attendee(self):
-        return self.session.query(Attendee).filter(
-            func.lower(Attendee.first_name) == self.first_name.lower(),
-            func.lower(Attendee.last_name) == self.last_name.lower(),
-            func.lower(Attendee.email) == self.email.lower()
-        ).first()
+
+class EventFeedback(MagModel):
+    event_id = Column(UUID, ForeignKey('event.id'))
+    attendee_id = Column(UUID, ForeignKey('attendee.id', ondelete='cascade'))
+    headcount_starting = Column(Integer, default=0)
+    headcount_during = Column(Integer, default=0)
+    comments = Column(UnicodeText)
+    rating = Column(Choice(c.PANEL_RATING_OPTS), default=c.UNRATED)

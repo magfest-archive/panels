@@ -9,4 +9,3 @@ Meanwhile, if you want to make any changes to this application, or if you have a
 Thanks again, and we look forward to seeing you in {{ c.EPOCH|datetime:"%B" }}!
 
 {{ c.PANELS_EMAIL_SIGNATURE }}
-
