@@ -15,51 +15,46 @@ class Root:
             'app': session.panel_application(id)
         }
 
-    def mark(self, session, status, **params):
+    def form(self, session, message='', **params):
         app = session.panel_application(params)
-        if app.status != c.PENDING:
-            raise HTTPRedirect('index?message={}{}', 'That panel was already marked as ', app.status_label)
-
-        app.status = int(status)
-        create_group = len(app.applicants) - len(app.matching_attendees) > 1 and not getattr(app.submitter.matching_attendee, 'group_id', None)
         if cherrypy.request.method == 'POST':
-            if app.status == c.ACCEPTED:
-                leader = None
-                group = Group(name='Panelists for ' + app.name, cost=0, auto_recalc=False) if create_group else None
-                for applicant in app.applicants:
-                    if applicant.matching_attendee:
-                        if applicant.matching_attendee.ribbon == c.NO_RIBBON:
-                            applicant.matching_attendee.ribbon = c.PANELIST_RIBBON
-                        if group and not applicant.matching_attendee.group_id:
-                            applicant.matching_attendee.group = group
-                    else:
-                        attendee = Attendee(
-                            group=group,
-                            placeholder=True,
-                            ribbon=c.PANELIST_RIBBON,
-                            badge_type=c.ATTENDEE_BADGE,
-                            paid=c.PAID_BY_GROUP if group else c.NEED_NOT_PAY,
-                            first_name=applicant.first_name,
-                            last_name=applicant.last_name,
-                            cellphone=applicant.cellphone,
-                            email=applicant.email
-                        )
-                        if group and applicant.submitter:
-                            leader = attendee
-                        session.add(attendee)
-
-                if group:
-                    session.add(group)
-                    session.commit()
-                    group.leader_id = leader.id
-                    session.commit()
-
-            raise HTTPRedirect('index?message={}{}{}', app.name, ' was marked as ', app.status_label)
+            message = check(app)
+            if not message:
+                raise HTTPRedirect('app?id={}&message={}', app.id, 'Application updated')
 
         return {
             'app': app,
-            'group': create_group
+            'message': message
         }
+
+    def email_statuses(self):
+        return {}
+
+    def assigned_to(self, session, id):
+        attendee = session.attendee(id)
+        return {
+            'attendee': attendee,
+            'panels': sorted(attendee.panel_applications, key=lambda app: app.name)
+        }
+
+    @csrf_protected
+    def update_comments(self, session, id, comments):
+        session.panel_application(id).comments = comments
+        raise HTTPRedirect('app?id={}&message={}', id, 'Comments updated')
+
+    @csrf_protected
+    def mark(self, session, status, **params):
+        app = session.panel_application(params)
+        app.status = int(status)
+        if not app.poc:
+            app.poc_id = session.admin_attendee().id
+        raise HTTPRedirect('index?message={}{}{}', app.name, ' was marked as ', app.status_label)
+
+    @csrf_protected
+    def set_poc(self, session, app_id, poc_id):
+        app = session.panel_application(app_id)
+        app.poc = session.attendee(poc_id)
+        raise HTTPRedirect('app?id={}&message={}{}', app.id, 'Point of contact was updated to ', app.poc.full_name)
 
     def associate(self, session, message='', **params):
         app = session.panel_application(params)
@@ -72,7 +67,7 @@ class Root:
             if not app.event_id:
                 message = 'You must select an event'
             else:
-                for attendee in app.matching_attendees:
+                for attendee in app.matched_attendees:
                     if not session.query(AssignedPanelist).filter_by(event_id=app.event_id, attendee_id=attendee.id).first():
                         app.event.assigned_panelists.append(AssignedPanelist(attendee=attendee))
                 raise HTTPRedirect('index?message={}{}{}', app.name, ' was associated with ', app.event.name)
@@ -80,8 +75,125 @@ class Root:
         return {
             'app': app,
             'message': message,
-            'panels': [e for e in session.query(Event).filter(Event.location.in_(c.PANEL_ROOMS)).order_by('name').all()]
+            'panels': session.query(Event).filter(Event.location.in_(c.PANEL_ROOMS)).order_by('name')
         }
+
+    def badges(self, session):
+        possibles = defaultdict(list)
+        for a in session.valid_attendees():
+            possibles[a.email.lower()].append(a)
+            possibles[a.first_name, a.last_name].append(a)
+
+        applicants = []
+        for pa in session.panel_applicants():
+            if not pa.attendee_id and pa.application.status == c.ACCEPTED:
+                applicants.append([pa, set(possibles[pa.email.lower()] + possibles[pa.first_name, pa.last_name])])
+
+        return {'applicants': applicants}
+
+    @ajax
+    def link_badge(self, session, applicant_id, attendee_id):
+        ids = []
+        try:
+            attendee = session.attendee(attendee_id)
+            if attendee.ribbon == c.NO_RIBBON and attendee.badge_type != c.GUEST_BADGE:
+                attendee.ribbon = c.PANELIST_RIBBON
+
+            pa = session.panel_applicant(applicant_id)
+            for applicant in session.query(PanelApplicant).filter_by(first_name=pa.first_name, last_name=pa.last_name, email=pa.email):
+                ids.append(applicant.id)
+                applicant.attendee_id = attendee_id
+
+            session.commit()
+        except:
+            log.error('unexpected error linking panelist to a badge', exc_info=True)
+            return {'error': 'Unexpected error: unable to link applicant to badge.'}
+        else:
+            return {
+                'linked': ids,
+                'name': pa.full_name
+            }
+
+    @ajax
+    def create_badge(self, session, applicant_id):
+        ids = []
+        try:
+            pa = session.panel_applicant(applicant_id)
+            attendee = Attendee(
+                placeholder=True,
+                paid=c.NEED_NOT_PAY,
+                ribbon=c.PANELIST_RIBBON,
+                badge_type=c.ATTENDEE_BADGE,
+                first_name=pa.first_name,
+                last_name=pa.last_name,
+                email=pa.email,
+                cellphone=pa.cellphone
+            )
+            session.add(attendee)
+
+            for applicant in session.query(PanelApplicant).filter_by(first_name=pa.first_name, last_name=pa.last_name, email=pa.email):
+                ids.append(applicant.id)
+                applicant.attendee_id = attendee.id
+            session.commit()
+        except:
+            log.error('unexpected error adding new panelist', exc_info=True)
+            return {'error': 'Unexpected error: unable to add attendee'}
+        else:
+            return {'added': ids}
+
+    def panel_feedback(self, session, event_id, **params):
+        feedback = session.query(EventFeedback).filter_by(event_id=event_id, attendee_id=session.admin_attendee().id).first()
+        if params or not feedback:
+            feedback = session.event_feedback(params)
+
+        if cherrypy.request.method == 'POST':
+            feedback.event_id = event_id
+            feedback.headcount_during = feedback.headcount_during or 0
+            feedback.headcount_starting = feedback.headcount_starting or 0
+            if not feedback.attendee_id:
+                feedback.attendee_id = session.admin_attendee().id
+
+            session.add(feedback)
+            raise HTTPRedirect('../schedule/form?id={}&message={}', event_id, 'Feedback saved')
+
+        return {
+            'feedback': feedback,
+            'event': session.event(event_id)
+        }
+
+    def feedback_report(self, session):
+        feedback = defaultdict(list)
+        for fb in session.query(EventFeedback).options(joinedload(EventFeedback.event), joinedload(EventFeedback.attendee)):
+            feedback[fb.event].append(fb)
+
+        events = []
+        for event in session.query(Event).filter(Event.location.in_(c.PANEL_ROOMS)).order_by('name'):
+            events.append([event, feedback[event]])
+
+        for event, fb in feedback.items():
+            if event.location not in c.PANEL_ROOMS:
+                events.append([event, fb])
+
+        return {'events': events}
+
+    @csv_file
+    def panels_by_poc(self, out, session, poc_id):
+        attendee = session.attendee(poc_id)
+        out.writerow(['', 'Panels for which {} is the panel staff point-of-contact'.format(attendee.full_name)])
+        out.writerow(['Panel Name', 'Panel Location', 'Panel Time', 'Panelists'])
+        for app in attendee.panel_applications:
+            out.writerow([
+                getattr(app.event, 'name', app.name),
+                getattr(app.event, 'location_label', '(not scheduled)'),
+                custom_tags.timespan.pretty(app.event, minute_increment=30) if app.event else '(not scheduled)',
+                '\n'.join([
+                    '{} ({}) {}'.format(
+                        a.full_name,
+                        a.email,
+                        getattr(a.attendee, 'cellphone', '') or a.cellphone
+                    ) for a in app.applicants
+                ])
+            ])
 
     @csv_file
     def everything(self, out, session):

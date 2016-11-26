@@ -12,6 +12,7 @@
         <th>Submitted By</th>
         <th>Applied</th>
         <th>Status</th>
+        <th>Point of Contact</th>
     </tr>
 </thead>
 <tbody>
@@ -26,6 +27,11 @@
                 <a href="../schedule/form?id={{ app.event_id }}">{{ app.status_label }}</a>
             {% else %}
                 {{ app.status_label }}
+            {% endif %}
+        </td>
+        <td>
+            {% if app.poc_id %}
+                <a href="assigned_to?id={{ app.poc_id }}">{{ app.poc.full_name }}</a>
             {% endif %}
         </td>
     </tr>
