@@ -244,6 +244,7 @@ class Root:
                           if a.paid == c.HAS_PAID or a.paid == c.PAID_BY_GROUP and a.group and a.group.amount_paid]
         }
 
+    @unrestricted
     def panelist_schedule(self, session, id):
         attendee = session.attendee(id)
         events = defaultdict(lambda: defaultdict(lambda: (1, '')))
@@ -264,3 +265,25 @@ class Root:
             'schedule': schedule,
             'locations': locations
         }
+
+    @unrestricted
+    @csv_file
+    def panel_tech_needs(self, out, session):
+        panels = defaultdict(dict)
+        for panel in session.query(PanelApplication).filter(PanelApplication.event_id == Event.id, Event.location.in_(c.PANEL_ROOMS)):
+            panels[panel.event.start_time][panel.event.location] = panel
+
+        curr_time, last_time = min(panels), max(panels)
+        out.writerow(['Panel Starts'] + [c.EVENT_LOCATIONS[room] for room in c.PANEL_ROOMS])
+        while curr_time <= last_time:
+            row = [curr_time.strftime('%H:%M %a')]
+            for room in c.PANEL_ROOMS:
+                p = panels[curr_time].get(room)
+                row.append('' if not p else '{}\n{}\n{}\n{}'.format(
+                    p.event.name,
+                    ' / '.join(p.tech_needs_labels),
+                    p.other_tech_needs,
+                    'Panelists are bringing themselves: {}'.format(p.panelist_bringing) if p.panelist_bringing else ''
+                ).strip())
+            out.writerow(row)
+            curr_time += timedelta(minutes=30)
