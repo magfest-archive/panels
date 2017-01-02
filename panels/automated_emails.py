@@ -34,4 +34,5 @@ PanelAppEmail('Your {EVENT_NAME} Panel Has Been Scheduled: <PANEL_NAME>', 'panel
 
 AutomatedEmail(Attendee, 'Your {EVENT_NAME} Event Schedule', 'panelist_schedule.txt',
                lambda a: a.assigned_panelists,
-               ident='event_schedule')
+               ident='event_schedule',
+               sender=c.PANELS_EMAIL)
