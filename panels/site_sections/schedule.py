@@ -127,8 +127,8 @@ class Root:
             {
                 'name': event.name,
                 'location': event.location_label,
-                'start': event.start_time.strftime('%I%p %a').lstrip('0'),
-                'end': event.end_time.strftime('%I%p %a').lstrip('0'),
+                'start': event.start_time_local.strftime('%I%p %a').lstrip('0'),
+                'end': event.end_time_local.strftime('%I%p %a').lstrip('0'),
                 'start_unix': int(mktime(event.start_time.timetuple())),
                 'end_unix': int(mktime(event.end_time.timetuple())),
                 'duration': event.minutes,
