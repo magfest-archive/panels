@@ -56,6 +56,14 @@ class Root:
         app.poc = session.attendee(poc_id)
         raise HTTPRedirect('app?id={}&message={}{}', app.id, 'Point of contact was updated to ', app.poc.full_name)
 
+    @csrf_protected
+    def change_submitter(self, session, applicant_id):
+        panelist = session.panel_applicant(applicant_id)
+        for each_panelist in panelist.application.applicants:
+            each_panelist.submitter = False
+        panelist.submitter = True
+        raise HTTPRedirect('app?id={}&message={}{}', panelist.app_id, 'Point of contact was updated to ', panelist.full_name)
+
     def associate(self, session, message='', **params):
         app = session.panel_application(params)
         if app.status != c.ACCEPTED:
