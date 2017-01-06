@@ -129,8 +129,8 @@ class Root:
                 'location': event.location_label,
                 'start': event.start_time_local.strftime('%I%p %a').lstrip('0'),
                 'end': event.end_time_local.strftime('%I%p %a').lstrip('0'),
-                'start_unix': int(mktime(event.start_time.timetuple())),
-                'end_unix': int(mktime(event.end_time.timetuple())),
+                'start_unix': int(mktime(event.start_time.utctimetuple())),
+                'end_unix': int(mktime(event.end_time.utctimetuple())),
                 'duration': event.minutes,
                 'description': event.description,
                 'panelists': [panelist.attendee.full_name for panelist in event.assigned_panelists]
