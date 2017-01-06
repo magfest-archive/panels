@@ -64,6 +64,12 @@ class Root:
         panelist.submitter = True
         raise HTTPRedirect('app?id={}&message={}{}', panelist.app_id, 'Point of contact was updated to ', panelist.full_name)
 
+    @csrf_protected
+    def remove_submitter(self, session, applicant_id):
+        panelist = session.panel_applicant(applicant_id)
+        session.delete(panelist)
+        raise HTTPRedirect('app?id={}&message={}{}', panelist.app_id, 'Point of contact was removed from', panelist.full_name)
+
     def associate(self, session, message='', **params):
         app = session.panel_application(params)
         if app.status != c.ACCEPTED:
