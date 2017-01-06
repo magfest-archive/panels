@@ -185,6 +185,15 @@
                             </form>
                         {% endif %}
                     </td>
+                    <td>
+                      {% if not panelist.submitter and not panelist.attendee_id%}
+                            <form method="post" action="remove_submitter">
+                                {% csrf_token %}
+                                <input type="hidden" name="applicant_id" value="{{ panelist.id }}" />
+                                <input type="submit" value="Remove Panelist" />
+                            </form>
+                      {% endif %}
+                    </td>
                 </tr>
           {% endfor %}
           </table>
