@@ -164,14 +164,30 @@
     <div class="form-group">
         <label class="col-sm-3 control-label">Panelists:</label>
         <div class="col-sm-6 app-display">
+            <table>
             {% for panelist in app.applicants %}
-                <div>
-                    {{ panelist.full_name }} (<a href="mailto:{{ panelist.email }}">{{ panelist.email }}</a>)
-                    {% if panelist.cellphone %}
-                        [{{ panelist.cellphone }}]
-                    {% endif %}
-                </div>
-            {% endfor %}
+                <tr>
+                    <td>{{ panelist.full_name }}</td>
+                    <td>(<a href="mailto:{{ panelist.email }}">{{ panelist.email }}</a>)</td>
+                    <td>
+                          {% if panelist.cellphone %}
+                              [{{ panelist.cellphone }}]
+                          {% endif %}
+                    </td>
+                    <td>
+                        {% if panelist.submitter %}
+                            <b>(Point of Contact)</b>
+                        {% else %}
+                            <form method="post" action="change_submitter">
+                                {% csrf_token %}
+                                <input type="hidden" name="applicant_id" value="{{ panelist.id }}" />
+                                <input type="submit" value="Make Point of Contact" />
+                            </form>
+                        {% endif %}
+                    </td>
+                </tr>
+          {% endfor %}
+          </table>
             <br/> <a href="form?id={{ app.id }}">Edit this application</a>
             <br/> <a href="index">Return to list of panel applications</a>
         </div>
