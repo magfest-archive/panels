@@ -231,3 +231,26 @@ class Root:
                 ' / '.join(app.tech_needs_labels) + (' / ' if app.other_tech_needs else '') + app.other_tech_needs,
                 app.applied.strftime('%Y-%m-%d')
             ] + panelists)
+
+    def panel_poc_schedule(self, session, attendee_id):
+        attendee = session.attendee(attendee_id)
+        event_times = defaultdict(lambda: defaultdict(lambda: (1, '')))
+        for app in attendee.panel_applications:
+            if app.event is not None:
+                for timeslot in app.event.half_hours:
+                    rowspan = app.event.duration if timeslot == app.event.start_time else 0
+                    event_times[timeslot][app.event.location_label] = (rowspan, app.event.name)
+
+        schedule = []
+        locations = sorted(set(sum([list(locations) for locations in event_times.values()], [])))
+        if event_times:
+            when = min(event_times)
+            while when <= max(event_times):
+                schedule.append([when, [event_times[when][where] for where in locations]])
+                when += timedelta(minutes=30)
+
+        return {
+            'attendee': attendee,
+            'schedule': schedule,
+            'locations': locations
+        }
