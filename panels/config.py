@@ -6,12 +6,12 @@ class Config:
     @request_cached_property
     def PANEL_POC_OPTS(self):
         with Session() as session:
-            return [
+            return sorted([
                 (a.attendee.id, a.attendee.full_name)
                 for a in session.query(AdminAccount)
                                 .options(joinedload(AdminAccount.attendee))
                                 .filter(AdminAccount.access.contains(str(c.PANEL_APPS)))
-            ]
+            ],key = lambda y: y[1], reverse=False)
 
     @property
     def PANEL_ACCEPTED_EMAIL_APPROVED(self):
