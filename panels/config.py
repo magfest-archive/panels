@@ -11,7 +11,7 @@ class Config:
                 for a in session.query(AdminAccount)
                                 .options(joinedload(AdminAccount.attendee))
                                 .filter(AdminAccount.access.contains(str(c.PANEL_APPS)))
-            ],key = lambda tup: tup[1], reverse=False)
+            ], key = lambda tup: tup[1], reverse=False)
 
     @property
     def PANEL_ACCEPTED_EMAIL_APPROVED(self):
