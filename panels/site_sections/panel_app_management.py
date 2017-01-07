@@ -232,7 +232,7 @@ class Root:
                 app.applied.strftime('%Y-%m-%d')
             ] + panelists)
 
-    def staff_schedule(self, session, attendee_id):
+    def panel_poc_schedule(self, session, attendee_id):
         attendee = session.attendee(attendee_id)
         event_times = defaultdict(lambda: defaultdict(lambda: (1, '')))
         for pa in attendee.panel_applications:
