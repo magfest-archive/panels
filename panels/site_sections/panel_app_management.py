@@ -235,11 +235,11 @@ class Root:
     def panel_poc_schedule(self, session, attendee_id):
         attendee = session.attendee(attendee_id)
         event_times = defaultdict(lambda: defaultdict(lambda: (1, '')))
-        for pa in attendee.panel_applications:
-            if pa.event is not None:
-                for timeslot in pa.event.half_hours:
-                    rowspan = pa.event.duration if timeslot == pa.event.start_time else 0
-                    event_times[timeslot][pa.event.location_label] = (rowspan, pa.event.name)
+        for app in attendee.panel_applications:
+            if app.event is not None:
+                for timeslot in app.event.half_hours:
+                    rowspan = app.event.duration if timeslot == app.event.start_time else 0
+                    event_times[timeslot][app.event.location_label] = (rowspan, app.event.name)
 
         schedule = []
         locations = sorted(set(sum([list(locations) for locations in event_times.values()], [])))
