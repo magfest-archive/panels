@@ -194,9 +194,10 @@ class Root:
     def panels_by_poc(self, out, session, poc_id):
         attendee = session.attendee(poc_id)
         out.writerow(['', 'Panels for which {} is the panel staff point-of-contact'.format(attendee.full_name)])
-        out.writerow(['Panel Name', 'Panel Location', 'Panel Time', 'Panelists'])
+        out.writerow(['App status', 'Panel Name', 'Panel Location', 'Panel Time', 'Panelists'])
         for app in attendee.panel_applications:
             out.writerow([
+                getattr(app.event, 'status', app.status_label),
                 getattr(app.event, 'name', app.name),
                 getattr(app.event, 'location_label', '(not scheduled)'),
                 custom_tags.timespan.pretty(app.event, minute_increment=30) if app.event else '(not scheduled)',
