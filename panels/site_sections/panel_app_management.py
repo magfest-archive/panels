@@ -234,19 +234,19 @@ class Root:
 
     def staff_schedule(self, session, attendee_id):
         attendee = session.attendee(attendee_id)
-        events = defaultdict(lambda: defaultdict(lambda: (1, '')))
+        event_times = defaultdict(lambda: defaultdict(lambda: (1, '')))
         for pa in attendee.panel_applications:
             if pa.event is not None:
                 for timeslot in pa.event.half_hours:
                     rowspan = pa.event.duration if timeslot == pa.event.start_time else 0
-                    events[timeslot][pa.event.location_label] = (rowspan, pa.event.name)
+                    event_times[timeslot][pa.event.location_label] = (rowspan, pa.event.name)
 
         schedule = []
-        locations = sorted(set(sum([list(locations) for locations in events.values()], [])))
-        if events:
-            when = min(events)
-            while when <= max(events):
-                schedule.append([when, [events[when][where] for where in locations]])
+        locations = sorted(set(sum([list(locations) for locations in event_times.values()], [])))
+        if event_times:
+            when = min(event_times)
+            while when <= max(event_times):
+                schedule.append([when, [event_times[when][where] for where in locations]])
                 when += timedelta(minutes=30)
 
         return {
