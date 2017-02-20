@@ -1,6 +1,6 @@
 {{ app.submitter.first_name }},
 
-Congratulations, "({{ app.name }})", the panel you submitted for {{ c.EVENT_NAME }}, has been approved.  We will send you another e-mail to confirm your availability on our schedule.
+Congratulations, "{{ app.name }}", the panel you submitted for {{ c.EVENT_NAME }} {{ c.EVENT_YEAR }}, has been approved.  We will send you another e-mail to confirm your availability on our schedule.
 
 Yourself and all panelists will receive free admissions.  If you have not yet registered you will receive a notification that we have begun registering you for the event, and you will need to follow the instruction in that email to finish your registration. 
 

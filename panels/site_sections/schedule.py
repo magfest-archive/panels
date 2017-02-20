@@ -4,8 +4,14 @@ from panels import *
 @all_renderable(c.STUFF)
 class Root:
     @unrestricted
-    @cached
     def index(self, session, message=''):
+        if c.ALT_SCHEDULE_URL:
+            raise HTTPRedirect(c.ALT_SCHEDULE_URL)
+        else:
+            raise HTTPRedirect("internal")
+
+    @cached
+    def internal(self, session, message=''):
         if c.HIDE_SCHEDULE and not AdminAccount.access_set() and not cherrypy.session.get('staffer_id'):
             return "The " + c.EVENT_NAME + " schedule is being developed and will be made public when it's closer to being finalized."
 
@@ -83,6 +89,26 @@ class Root:
         })
 
     @csv_file
+    def csv(self, out, session):
+        out.writerow(['Session Title', 'Date', 'Time Start', 'Time End', 'Room/Location',
+                      'Schedule Track (Optional)', 'Description (Optional)', 'Allow Checkin (Optional)',
+                      'Checkin Begin (Optional)', 'Limit Spaces? (Optional)', 'Allow Waitlist (Optional)'])
+        rows = []
+        for event in session.query(Event).order_by('start_time').all():
+            rows.append([
+                event.name,
+                event.start_time_local.strftime('%m/%d/%Y'),
+                event.start_time_local.strftime('%I:%M:%S %p'),
+                (event.start_time_local + timedelta(minutes=event.minutes)).strftime('%I:%M:%S %p'),
+                event.location_label,
+                '',
+                normalize_newlines(event.description).replace('\n', ' '),
+                '', '', '', ''
+            ])
+        for r in sorted(rows, key=lambda tup: tup[4]):
+            out.writerow(r)
+
+    @csv_file
     def panels(self, out, session):
         out.writerow(['Panel', 'Time', 'Duration', 'Room', 'Description', 'Panelists'])
         for event in sorted(session.query(Event).all(), key=lambda e: [e.start_time, e.location_label]):
@@ -101,10 +127,10 @@ class Root:
             {
                 'name': event.name,
                 'location': event.location_label,
-                'start': event.start_time.strftime('%I%p %a').lstrip('0'),
-                'end': event.end_time.strftime('%I%p %a').lstrip('0'),
-                'start_unix': int(mktime(event.start_time.timetuple())),
-                'end_unix': int(mktime(event.end_time.timetuple())),
+                'start': event.start_time_local.strftime('%I%p %a').lstrip('0'),
+                'end': event.end_time_local.strftime('%I%p %a').lstrip('0'),
+                'start_unix': int(mktime(event.start_time.utctimetuple())),
+                'end_unix': int(mktime(event.end_time.utctimetuple())),
                 'duration': event.minutes,
                 'description': event.description,
                 'panelists': [panelist.attendee.full_name for panelist in event.assigned_panelists]
@@ -187,9 +213,10 @@ class Root:
 
     @ajax
     def swap(self, session, id1, id2):
+        from panels.model_checks import overlapping_events
         e1, e2 = session.event(id1), session.event(id2)
         (e1.location, e1.start_time), (e2.location, e2.start_time) = (e2.location, e2.start_time), (e1.location, e1.start_time)
-        resp = {'error': model_checks.event_overlaps(e1, e2.id) or model_checks.event_overlaps(e2, e1.id)}
+        resp = {'error': overlapping_events(e1, e2.id) or overlapping_events(e2, e1.id)}
         if not resp['error']:
             session.commit()
         return resp
@@ -219,3 +246,47 @@ class Root:
                                             .order_by(Attendee.full_name).all()
                           if a.paid == c.HAS_PAID or a.paid == c.PAID_BY_GROUP and a.group and a.group.amount_paid]
         }
+
+    @unrestricted
+    def panelist_schedule(self, session, id):
+        attendee = session.attendee(id)
+        events = defaultdict(lambda: defaultdict(lambda: (1, '')))
+        for ap in attendee.assigned_panelists:
+            for timeslot in ap.event.half_hours:
+                rowspan = ap.event.duration if timeslot == ap.event.start_time else 0
+                events[timeslot][ap.event.location_label] = (rowspan, ap.event.name)
+
+        schedule = []
+        when = min(events)
+        locations = sorted(set(sum([list(locations) for locations in events.values()], [])))
+        while when <= max(events):
+            schedule.append([when, [events[when][where] for where in locations]])
+            when += timedelta(minutes=30)
+
+        return {
+            'attendee': attendee,
+            'schedule': schedule,
+            'locations': locations
+        }
+
+    @unrestricted
+    @csv_file
+    def panel_tech_needs(self, out, session):
+        panels = defaultdict(dict)
+        for panel in session.query(PanelApplication).filter(PanelApplication.event_id == Event.id, Event.location.in_(c.PANEL_ROOMS)):
+            panels[panel.event.start_time][panel.event.location] = panel
+
+        curr_time, last_time = min(panels), max(panels)
+        out.writerow(['Panel Starts'] + [c.EVENT_LOCATIONS[room] for room in c.PANEL_ROOMS])
+        while curr_time <= last_time:
+            row = [curr_time.strftime('%H:%M %a')]
+            for room in c.PANEL_ROOMS:
+                p = panels[curr_time].get(room)
+                row.append('' if not p else '{}\n{}\n{}\n{}'.format(
+                    p.event.name,
+                    ' / '.join(p.tech_needs_labels),
+                    p.other_tech_needs,
+                    'Panelists are bringing themselves: {}'.format(p.panelist_bringing) if p.panelist_bringing else ''
+                ).strip())
+            out.writerow(row)
+            curr_time += timedelta(minutes=30)

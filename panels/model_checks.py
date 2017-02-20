@@ -52,5 +52,5 @@ def pa_other(pa):
 
 @validation.PanelApplication
 def pa_deadline(pa):
-    if localized_now() > c.PANEL_APP_DEADLINE:
+    if localized_now() > c.PANEL_APP_DEADLINE and not c.HAS_PANEL_APPS_ACCESS:
         return 'We are now past the deadline and are no longer accepting panel applications'
