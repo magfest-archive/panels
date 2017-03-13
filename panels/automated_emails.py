@@ -14,7 +14,8 @@ class PanelAppEmail(AutomatedEmail):
         return self.subject.replace('<PANEL_NAME>', x.name)
 
 
-PanelAppEmail('Your {EVENT_NAME} Panel Application Has Been Received: <PANEL_NAME>', 'panel_app_confirmation.txt')
+PanelAppEmail('Your {EVENT_NAME} Panel Application Has Been Received: <PANEL_NAME>', 'panel_app_confirmation.txt',
+              ident='panel_received')
 
 PanelAppEmail('Your {EVENT_NAME} Panel Application Has Been Accepted: <PANEL_NAME>', 'panel_app_accepted.txt',
               lambda app: app.status == c.ACCEPTED,
