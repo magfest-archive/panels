@@ -1,7 +1,7 @@
 {% extends "base-admin.html" %}
 {% block title %}Jobs by Event{% endblock %}
 {% block content %}
-{% with 3 as page %}
+{% with page = 3 %}
     {% include "schedule/menu.html" %}
 {% endwith %}
 

@@ -25,12 +25,12 @@
                 {% endif %}
                 <td><a href="assigned_to?id={{ fb.attendee_id }}">{{ fb.attendee.full_name }}</a></td>
                 <td>{{ fb.rating_label }}</td>
-                <td>{{ fb.headcount_starting|default:"(unknown)" }}</td>
-                <td>{{ fb.headcount_during|default:"(unknown)" }}</td>
+                <td>{{ fb.headcount_starting|default("(unknown)") }}</td>
+                <td>{{ fb.headcount_during|default("(unknown)") }}</td>
                 <td>{{ fb.comments|linebreaksbr }}</td>
                 <td><a href="panel_feedback?event_id={{ fb.event_id }}&id={{ fb.id }}">Edit</a></td>
             </tr>
-        {% empty %}
+        {% else %}
             <tr>
                 <td><a href="panel_feedback?event_id={{ event.id }}">{{ event.name }}</a></td>
                 <td colspan="6">Click the event name to leave feedback</td>

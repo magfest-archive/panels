@@ -6,6 +6,6 @@ We will continue accepting applications until {{ c.PANEL_APP_DEADLINE|datetime }
 
 Meanwhile, if you want to make any changes to this application, or if you have any questions or concerns, please don't hesitate to reach out to us at {{ c.PANELS_EMAIL|email_only }}.
 
-Thanks again, and we look forward to seeing you in {{ c.EPOCH|datetime:"%B" }}!
+Thanks again, and we look forward to seeing you in {{ c.EPOCH|datetime("%B") }}!
 
 {{ c.PANELS_EMAIL_SIGNATURE }}

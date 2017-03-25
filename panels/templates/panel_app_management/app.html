@@ -37,7 +37,7 @@
                     <button name="status" value="{{ c.CANCELLED }}">Cancel Acceptance</button>
                 {% endif %}
                 <br/>
-                {% popup_link "email_statuses" "Will this trigger an email?" %}
+                {{ popup_link("email_statuses", "Will this trigger an email?") }}
             </form>
         </div>
     </div>
@@ -50,7 +50,7 @@
                     {{ csrf_token() }}
                     <input type="hidden" name="app_id" value="{{ app.id }}" />
                     <select name="poc_id">
-                        {% options c.PANEL_POC_OPTS app.poc_id %}
+                        {{ options(c.PANEL_POC_OPTS, app.poc_id) }}
                     </select>
                     <input type="submit" value="Change Point of Contact" />
                 </form>

@@ -2,7 +2,7 @@
 {% block title %}Inventory Requirements{% endblock %}
 {% block content %}
 
-{% with 2 as page %}
+{% with page = 2 %}
     {% include "schedule/menu.html" %}
 {% endwith %}
 
@@ -10,13 +10,13 @@
 <tr style="vertical-align:top">
 <td width="66%">
     <h3> Inventory Assigned to '{{ event.name }}' </h3>
-    
+
     {% if not event.assigneditem_set.count %}
         <div style="text-align:center ; font-style:italic">
             <br/> no inventory assigned to this event
         </div>
     {% endif %}
-    
+
     <table>
     {% for assigned in event.assigneditem_set.all %}
         <tr>
@@ -37,7 +37,7 @@
     </table>
 </td>
 <td width="33%" align="center">
-    {% with event.item_opts_html as item_opts_html %}
+    {% with item_opts_html = event.item_opts_html %}
         {% if item_opts_html %}
             <h3> Assign Inventory </h3>
             <form method="post" action="assign">
