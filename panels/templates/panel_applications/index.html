@@ -65,7 +65,7 @@
         {% endif %}
         We expect many requests being sent in and will be unable to accept them all.  To increase your odds of acceptance, fill this form out accurately, keep your schedule open, and contact us if there are any questions pertaining to the form.  The contact e-mail is <b>{{ c.PANELS_EMAIL }}</b>.
         <br/> <br/>
-        Panel requests are due by {{ c.PANEL_APP_DEADLINE|datetime }}, but this form will close once we have received a certain number of applicants beyond the time slots we have available.
+        Panel requests are due by {{ c.PANEL_APP_DEADLINE|datetime_local }}, but this form will close once we have received a certain number of applicants beyond the time slots we have available.
         <br/> <br/>
         We will send acceptance e-mails out by {{ c.EXPECTED_RESPONSE }}.
         <br/> <br/>

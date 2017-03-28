@@ -16,7 +16,7 @@
             <tbody>
                 {% for when, events in schedule %}
                     <tr>
-                        <td>{{ when|datetime("%I:%M %p")|lower }} {{ when|datetime("%a") }}</td>
+                        <td>{{ when|datetime_local("%I:%M %p")|lower }} {{ when|datetime_local("%a") }}</td>
                         {% for rowspan, event_name in events %}
                             {% if rowspan %}
                                 <td rowspan="{{ rowspan }}" {% if not event_name %}style="border:0px"{% endif %}>{{ event_name }}</td>
