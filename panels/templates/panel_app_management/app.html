@@ -16,7 +16,7 @@
         <label class="col-sm-3 control-label">Panel Status:</label>
         <div class="col-sm-6 app-display">
             <form method="post" action="mark">
-                {% csrf_token %}
+                {{ csrf_token() }}
                 <input type="hidden" name="id" value="{{ app.id }}" />
                 {% if app.status != c.PENDING %}
                     <b>{{ app.status_label }}</b>
@@ -37,7 +37,7 @@
                     <button name="status" value="{{ c.CANCELLED }}">Cancel Acceptance</button>
                 {% endif %}
                 <br/>
-                {% popup_link "email_statuses" "Will this trigger an email?" %}
+                {{ popup_link("email_statuses", "Will this trigger an email?") }}
             </form>
         </div>
     </div>
@@ -47,10 +47,10 @@
             <label class="col-sm-3 control-label">Point of Contact:</label>
             <div class="col-sm-6 app-display">
                 <form method="post" action="set_poc">
-                    {% csrf_token %}
+                    {{ csrf_token() }}
                     <input type="hidden" name="app_id" value="{{ app.id }}" />
                     <select name="poc_id">
-                        {% options c.PANEL_POC_OPTS app.poc_id %}
+                        {{ options(c.PANEL_POC_OPTS, app.poc_id) }}
                     </select>
                     <input type="submit" value="Change Point of Contact" />
                 </form>
@@ -76,7 +76,7 @@
         <label class="col-sm-3 control-label">Staff Comments:</label>
         <div class="col-sm-6 app-display">
             <form method="post" action="update_comments">
-                {% csrf_token %}
+                {{ csrf_token() }}
                 <input type="hidden" name="id" value="{{ app.id }}" />
                 <textarea name="comments" rows="3" style="width:80%">{{ app.comments }}</textarea>
                 <br/> <input type="submit" value="Update Staff Comments" />
@@ -126,7 +126,7 @@
         <div class="form-group">
             <label class="col-sm-3 control-label">Tech Needs:</label>
             <div class="col-sm-6 app-display">
-                {{ app.tech_needs_labels|join:' / ' }}
+                {{ app.tech_needs_labels|join(' / ') }}
                 {% if app.other_tech_needs %}
                     <br/> {{ app.other_tech_needs }}
                 {% endif %}
@@ -179,7 +179,7 @@
                             <b>(Point of Contact)</b>
                         {% else %}
                             <form method="post" action="change_submitter">
-                                {% csrf_token %}
+                                {{ csrf_token() }}
                                 <input type="hidden" name="applicant_id" value="{{ panelist.id }}" />
                                 <input type="submit" value="Make Point of Contact" />
                             </form>
@@ -188,7 +188,7 @@
                     <td>
                       {% if not panelist.submitter and not panelist.attendee_id%}
                             <form method="post" action="remove_submitter">
-                                {% csrf_token %}
+                                {{ csrf_token() }}
                                 <input type="hidden" name="applicant_id" value="{{ panelist.id }}" />
                                 <input type="submit" value="Remove Panelist" />
                             </form>

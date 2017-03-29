@@ -5,6 +5,23 @@
         <span style="float:right"> <a href="../accounts/homepage">Return Home</a></span>
     {% endif %}
 {% endblock %}
+
+{% macro format_time_column(time) -%}
+    {% if not time.minute %}
+        {{ time|datetime("%-I%p")|lower }}
+    {% else %}
+        {{ time|datetime("%-I:%M") }}
+    {% endif %}
+{%- endmacro %}
+
+{% macro format_day_column(time) -%}
+    {% if (not time.hour and not time.minute) or (time == c.EPOCH) or (time.hour == 12 and not time.minute) %}
+        <td class="border">{{ time|datetime("%a") }}</td>
+    {% else %}
+        <td></td>
+    {% endif %}
+{%- endmacro %}
+
 {% block content %}
 
 <script type="text/javascript">
@@ -45,39 +62,19 @@
 </tr>
 {% for time, events in schedule %}
     <tr>
-        {% if not time.hour and not time.minute %}
-            <td class="border">{{ time|date:"D" }}</td>
-        {% else %}
-            {% ifequal time c.EPOCH %}
-                <td class="border">{{ time|date:"D" }}</td>
-            {% else %}
-                {% ifequal time.hour 12 %}
-                    {% if not time.minute %}
-                        <td class="border">{{ time|date:"D" }}</td>
-                    {% else %}
-                        <td></td>
-                    {% endif %}
-                {% else %}
-                    <td></td>
-                {% endifequal %}
-            {% endifequal %}
-        {% endif %}
+        {{ format_day_column(time) }}
         <td class="border">
-            <a name="{{ time|date:"Y-m-d H:i:s" }}"></a>
-            {% if not time.minute %}
-                {{ time|date:"gA"|lower }}
-            {% else %}
-                {{ time|date:"f" }}
-            {% endif %}
+            <a name="{{ time|datetime("%Y-%m-%d %H:%i:%s") }}"></a>
+            {{ format_time_column(time) }}
         </td>
         {% for location, event_list in events %}
             {% for event in event_list %}
                 {% if event.colspan %}
-                    <td rowspan="{{ event.duration|default:1 }}" colspan="{{ event.colspan }}" class="schedule"
-                        id='{{ event.id|default:"None" }},{{ location }},{{ time|date:"Y-m-d H:i:s" }}'
+                    <td rowspan="{{ event.duration|default(1) }}" colspan="{{ event.colspan }}" class="schedule"
+                        id='{{ event.id|default("None") }},{{ location }},{{ time|datetime("%Y-%m-%d %H:%i:%s") }}'
                         {% if event.id %}style="border:1px solid black"{% endif %}
                         {% if event.description %}
-                            title="{{ event.name|remove_newlines }}~~~{{ event.description|linebreaksbr }}"
+                            title="{{ event.name|remove_newlines }}~~~{{ event.description }}"
                         {% endif %}>
                         {{ event.name }}
                     </td>
@@ -85,29 +82,9 @@
             {% endfor %}
         {% endfor %}
         <td class="border">
-            {% if not time.minute %}
-                {{ time|date:"gA"|lower }}
-            {% else %}
-                {{ time|date:"f" }}
-            {% endif %}
+            {{ format_time_column(time) }}
         </td>
-        {% if not time.hour and not time.minute %}
-            <td class="border">{{ time|date:"D" }}</td>
-        {% else %}
-            {% ifequal time c.EPOCH %}
-                <td class="border">{{ time|date:"D" }}</td>
-            {% else %}
-                {% ifequal time.hour 12 %}
-                    {% if not time.minute %}
-                        <td class="border">{{ time|date:"D" }}</td>
-                    {% else %}
-                        <td></td>
-                    {% endif %}
-                {% else %}
-                    <td></td>
-                {% endifequal %}
-            {% endifequal %}
-        {% endif %}
+        {{ format_day_column(time) }}
     </tr>
 {% endfor %}
 </table>

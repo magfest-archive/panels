@@ -49,12 +49,12 @@ Use the form below to associate this application with an event on the schedule. 
 </ol>
 
 <form method="post" action="associate">
-    {% csrf_token %}
+    {{ csrf_token() }}
     <input type="hidden" name="id" value="{{ app.id }}" />
     <select name="event_id">
         <option value="">Select an event</option>
         {% for event in panels %}
-            <option value="{{ event.id }}">{{ event.name }} [{{ event.location_label }}] ({% timespan event %})</option>
+            <option value="{{ event.id }}">{{ event.name }} [{{ event.location_label }}] ({{ event.timespan() }})</option>
         {% endfor %}
     </select>
     <input type="submit" value="Associate" />

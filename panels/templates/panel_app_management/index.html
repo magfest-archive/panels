@@ -21,7 +21,7 @@
         <td><a href="app?id={{ app.id }}">{{ app.name }}</a></td>
         <td>{{ app.presentation_label }}</td>
         <td>{{ app.submitter.full_name }}</td>
-        <td>{{ app.applied_local|datetime:"%Y-%m-%d" }}</td>
+        <td>{{ app.applied_local|datetime("%Y-%m-%d") }}</td>
         <td>
             {% if app.event_id %}
                 <a href="../schedule/form?id={{ app.event_id }}">{{ app.status_label }}</a>

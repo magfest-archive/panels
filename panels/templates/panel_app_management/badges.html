@@ -57,7 +57,7 @@ forms below to add badges for those without them OR associate these panelists wi
                     <button onClick="link('{{ pa.id }}', '{{ attendee.id }}')">Link</button>
                     {{ attendee|form_link }} [{{ attendee.badge }}] ({{ attendee.email }})
                 </p>
-            {% empty %}
+            {% else %}
                 (no matching attendees)
             {% endfor %}
         </td>

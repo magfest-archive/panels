@@ -39,7 +39,7 @@ Submitting this form will mark this application as {{ app.status_label|lower }} 
 {% endif %}
 
 <form method="post" action="mark">
-    {% csrf_token %}
+    {{ csrf_token() }}
     <input type="hidden" name="id" value="{{ app.id }}" />
     <input type="hidden" name="status" value="{{ app.status }}" />
     <input type="submit" value="Mark Application as {{ app.status_label }}" />

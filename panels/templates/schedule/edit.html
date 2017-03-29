@@ -55,8 +55,8 @@
 <script type="text/javascript">
     var SLOT_COUNT = {{ c.CON_LENGTH }} * 2;
     var EVENTS = {{ events|jsonize }};
-    var EPOCH = moment('{{ c.EPOCH|datetime:"%Y-%m-%d %H:%M:%S" }}', 'YYYY-MM-DD HH:mm:ss');
-    
+    var EPOCH = moment('{{ c.EPOCH|datetime_local("%Y-%m-%d %H:%M:%S") }}', 'YYYY-MM-DD HH:mm:ss');
+
     var swapProps = function(x, y) {
         $.each($.makeArray(arguments).slice(2), function(i,name) {
             var temp = x[name];
@@ -84,7 +84,7 @@
             return d.format('ha');
         }
     };
-    
+
     var $cell = function(loc, slot) {
         return $("#row" + slot + " .loc" + loc);
     };
@@ -95,7 +95,7 @@
         }
         return $xs;
     };
-    
+
     var shortestIndex = function(xs) {
         var pos = 0, shortest = xs[0];
         $.each(xs, function(i,s) {
@@ -119,7 +119,7 @@
         }
         return xs;
     };
-    
+
     var CHECK_CHUNK = SLOT_COUNT;
     var markConflicts = function(startIndex) {
         var stopIndex = (startIndex || 0) + CHECK_CHUNK;
@@ -163,7 +163,7 @@
         markConflicts();
         conflictsMarked = true;
     };
-    
+
     var clearEvents = function() {
         $.each(arguments, function(i,event) {
             $cells(event).removeData("event")
@@ -200,7 +200,7 @@
             $(document.body).scrollTop(top);
         }
     };
-    
+
     var selectedEvent = null;
     var clearSelected = function() {
         if (selectedEvent) {
@@ -299,7 +299,7 @@
             }
         });
     };
-    
+
     $(function(){
         //console.log(new Date(), new Date().getMilliseconds(), "document.onReady");
         var $schedule = $("#schedule");

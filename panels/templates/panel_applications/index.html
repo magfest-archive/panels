@@ -65,14 +65,14 @@
         {% endif %}
         We expect many requests being sent in and will be unable to accept them all.  To increase your odds of acceptance, fill this form out accurately, keep your schedule open, and contact us if there are any questions pertaining to the form.  The contact e-mail is <b>{{ c.PANELS_EMAIL }}</b>.
         <br/> <br/>
-        Panel requests are due by {{ c.PANEL_APP_DEADLINE|datetime }}, but this form will close once we have received a certain number of applicants beyond the time slots we have available.
+        Panel requests are due by {{ c.PANEL_APP_DEADLINE|datetime_local }}, but this form will close once we have received a certain number of applicants beyond the time slots we have available.
         <br/> <br/>
         We will send acceptance e-mails out by {{ c.EXPECTED_RESPONSE }}.
         <br/> <br/>
         Good luck!  We're excited to hear what you've got!
 
         <form method="post" action="index" class="form-horizontal" role="form">
-            {% csrf_token %}
+            {{ csrf_token() }}
             <input type="hidden" name="submitter" value="1" />
 
             <h3>Personal Information</h3>
@@ -117,7 +117,7 @@
                 <label class="col-sm-2 control-label">Type of Panel:</label>
                 <div class="col-sm-6">
                     <select name="presentation" class="form-control">
-                        {% options c.PRESENTATION_OPTS app.presentation %}
+                        {{ options(c.PRESENTATION_OPTS, app.presentation) }}
                     </select>
                 </div>
             </div>
@@ -204,7 +204,7 @@
                 <label class="col-sm-2 control-label">Technical Needs</label>
                 <div class="col-sm-6">
                     Check the following technical needs that apply. Panel rooms will by default have VGA compatible projector with 3.5mm (1/8") audio, and a local PA with enough microphones setup.
-                    {% checkgroup app.tech_needs %} <br/>
+                    {{ macros.checkgroup(app, 'tech_needs') }} <br/>
                     Other: <input type="text" name="other_tech_needs" value="{{ app.other_tech_needs }}" />
                 </div>
             </div>
@@ -220,7 +220,7 @@
                 <label class="col-sm-2 control-label"></label>
                 <div class="col-sm-6">
                     <select name="other_panelists">
-                        {% int_options 0 9 ops_count %}
+                        {{ int_options(0, 9, ops_count) }}
                     </select>
                     How many other panelists will be on this panel?
                 </div>
