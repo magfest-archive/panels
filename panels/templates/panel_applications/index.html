@@ -237,10 +237,10 @@
                 <tbody>
                     {% for op in other_panelists %}
                         <tr>
-                            <td><b>Other Panelist #{{ forloop.counter }}</b></td>
-                            <td><input type="text" name="first_name_{{ forloop.counter0 }}" value="{{ op.first_name }}" /></td>
-                            <td><input type="text" name="last_name_{{ forloop.counter0 }}" value="{{ op.last_name }}" /></td>
-                            <td><input type="text" name="email_{{ forloop.counter0 }}" value="{{ op.email }}" /></td>
+                            <td><b>Other Panelist #{{ loop.index }}</b></td>
+                            <td><input type="text" name="first_name_{{ loop.index0 }}" value="{{ op.first_name }}" /></td>
+                            <td><input type="text" name="last_name_{{ loop.index0 }}" value="{{ op.last_name }}" /></td>
+                            <td><input type="text" name="email_{{ loop.index0 }}" value="{{ op.email }}" /></td>
                         </tr>
                     {% endfor %}
                 </tbody>
