@@ -1,3 +1,4 @@
+from uber.custom_tags import normalize_newlines
 from panels import *
 
 
