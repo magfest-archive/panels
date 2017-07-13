@@ -1,0 +1,87 @@
+{% extends "base.html" %}{% set admin_area=True %}
+{% block title %}Edit Panel Application{% endblock %}}
+{% block content %}
+
+<div class="masthead"></div>
+<div class="panel panel-default">
+    <h2>Edit Panel</h2>
+    <form method="post" action="form" class="form-horizontal" role="form">
+        {{ csrf_token() }}
+        <input type="hidden" name="id" value="{{ app.id }}" />
+        <div class="form-group">
+            <label class="col-sm-2 control-label">Panel Name:</label>
+            <div class="col-sm-6">
+                <input class="form-control" type="text" name="name" value="{{ app.name }}" />
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="col-sm-2 control-label">Type of Panel:</label>
+            <div class="col-sm-6">
+                <select name="presentation" class="form-control">
+                    {{ options(c.PRESENTATION_OPTS, app.presentation) }}
+                </select>
+            </div>
+        </div>
+        <div class="form-group" style="margin-bottom:0px">
+            <label class="col-sm-2 control-label">Panel Description</label>
+            <div class="col-sm-6">
+                <textarea class="form-control" name="description" rows="4">{{ app.description }}</textarea>
+            </div>
+        </div>
+        <div class="form-group">
+            <p class="help-block col-sm-6 col-sm-offset-2">
+                Will appear as a subheading on the schedule. 200 words max.
+            </p>
+        </div>
+        <div class="form-group" style="margin-bottom:0px">
+            <label class="col-sm-2 control-label">Expected Panel Length:</label>
+            <div class="col-sm-6">
+                <input class="form-control" type="text" name="length" value="{{ app.length }}" />
+            </div>
+        </div>
+        <div class="form-group">
+            <p class="help-block col-sm-6 col-sm-offset-2">
+                An hour is typical, including time for Q&A.
+            </p>
+        </div>
+        <div class="form-group" style="display:none">
+            <label class="col-sm-2 control-label">Past Attendance:</label>
+            <div class="col-sm-6">
+                <textarea class="form-control" name="past_attendance" rows="4">{{ app.past_attendance }}</textarea>
+            </div>
+        </div>
+        <div class="form-group" style="display:none">
+            <label class="col-sm-2 control-label">Affiliations:</label>
+            <div class="col-sm-6">
+                <textarea class="form-control" name="affiliations" rows="4">{{ app.affiliations }}</textarea>
+            </div>
+        </div>
+        <div class="form-group" style="margin-bottom:0px">
+            <label class="col-sm-2 control-label">Unavailable:</label>
+            <div class="col-sm-6">
+                <textarea class="form-control" name="unavailable" rows="4">{{ app.unavailable }}</textarea>
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="col-sm-2 control-label">Technical Needs</label>
+            <div class="col-sm-6">
+                Check the following technical needs that apply. Panel rooms will by default have VGA compatible projector with 3.5mm (1/8") audio, and a local PA with enough microphones setup.
+                {{ macros.checkgroup(app, 'tech_needs') }} <br/>
+                Other: <input type="text" name="other_tech_needs" value="{{ app.other_tech_needs }}" />
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="col-sm-2 control-label">What are you bringing?</label>
+            <div class="col-sm-6">
+                <input type="input" class="form-control" name="panelist_bringing" value="{{ app.panelist_bringing }}" placeholder="Windows laptop, Macbook, gaming console, etc" />
+            </div>
+        </div>
+        <div class="form-group">
+            <div class="col-sm-6 col-sm-offset-2">
+                <button type="submit" class="btn btn-primary">Update</button>
+            </div>
+        </div>
+    </form>
+</div>
+
+{% endblock %}

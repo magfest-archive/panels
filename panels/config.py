@@ -1,5 +1,34 @@
 from panels import *
 
+
+@Config.mixin
+class Config:
+    @request_cached_property
+    def PANEL_POC_OPTS(self):
+        with Session() as session:
+            return sorted([
+                (a.attendee.id, a.attendee.full_name)
+                for a in session.query(AdminAccount)
+                                .options(joinedload(AdminAccount.attendee))
+                                .filter(AdminAccount.access.contains(str(c.PANEL_APPS)))
+            ], key=lambda tup: tup[1], reverse=False)
+
+    @property
+    def PANEL_ACCEPTED_EMAIL_APPROVED(self):
+        return AutomatedEmail.instances['panel_accepted'].approved
+
+    @property
+    def PANEL_DECLINED_EMAIL_APPROVED(self):
+        return AutomatedEmail.instances['panel_declined'].approved
+
+    @property
+    def PANEL_WAITLISTED_EMAIL_APPROVED(self):
+        return AutomatedEmail.instances['panel_waitlisted'].approved
+
+    @property
+    def PANEL_SCHEDULED_EMAIL_APPROVED(self):
+        return AutomatedEmail.instances['panel_scheduled'].approved
+
 panels_config = parse_config(__file__)
 c.include_plugin_config(panels_config)
 

@@ -13,6 +13,9 @@
     var showOrHideOtherPresentation = function () {
         setVisible($.field('other_presentation').parents('.form-group'), $.val('presentation') === {{ c.OTHER }});
     };
+    var showOrHidePOC = function () {
+        setVisible('#point_of_contact', $.val('other_panelists'));
+    };
     var showOrHideOtherPanelists = function () {
         var count = $.val('other_panelists');
         var $ops = $('#other-panelist-data tbody tr');
@@ -33,12 +36,14 @@
 
     $(function () {
         $('<br/>').insertBefore('nobr');
+        showOrHidePOC();
         showOrHideHeldBefore();
         showOrHideAffiliations();
         showOrHideOtherPanelists();
         showOrHideOtherPresentation();
         $.field('held_before').on('click', showOrHideHeldBefore);
         $.field('has_affiliations').on('click', showOrHideAffiliations);
+        $.field('other_panelists').on('change', showOrHidePOC);
         $.field('other_panelists').on('change', showOrHideOtherPanelists);
         $.field('presentation').on('change', showOrHideOtherPresentation);
     });
@@ -48,19 +53,26 @@
 <div class="panel panel-default">
     <h2>{{ c.EVENT_NAME }} Panel Submission Form</h2>
 
-    {% if c.AFTER_PANEL_APP_DEADLINE %}
+    {% if c.AFTER_PANEL_APP_DEADLINE and not c.HAS_PANEL_APPS_ACCESS %}
         Unfortunately, the deadline for panel applications has passed and we are no longer accepting panel submissions.
     {% else %}
+        {% if c.AFTER_PANEL_APP_DEADLINE and c.HAS_PANEL_APPS_ACCESS %}
+            <span style="color:red">
+                Panel applications have closed, but because you are a logged in administrator you can submit a new
+                application using this form.
+            </span>
+            <br/> <br/>
+        {% endif %}
         We expect many requests being sent in and will be unable to accept them all.  To increase your odds of acceptance, fill this form out accurately, keep your schedule open, and contact us if there are any questions pertaining to the form.  The contact e-mail is <b>{{ c.PANELS_EMAIL }}</b>.
         <br/> <br/>
-        Panel requests are due by {{ c.PANEL_APP_DEADLINE|datetime }}, but this form will close once we have received a certain number of applicants beyond the time slots we have available.
+        Panel requests are due by {{ c.PANEL_APP_DEADLINE|datetime_local }}, but this form will close once we have received a certain number of applicants beyond the time slots we have available.
         <br/> <br/>
         We will send acceptance e-mails out by {{ c.EXPECTED_RESPONSE }}.
         <br/> <br/>
         Good luck!  We're excited to hear what you've got!
 
         <form method="post" action="index" class="form-horizontal" role="form">
-            {% csrf_token %}
+            {{ csrf_token() }}
             <input type="hidden" name="submitter" value="1" />
 
             <h3>Personal Information</h3>
@@ -99,6 +111,14 @@
                 <label class="col-sm-2 control-label">Panel Name:</label>
                 <div class="col-sm-6">
                     <input class="form-control" type="text" name="name" value="{{ app.name }}" />
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="col-sm-2 control-label">Type of Panel:</label>
+                <div class="col-sm-6">
+                    <select name="presentation" class="form-control">
+                        {{ options(c.PRESENTATION_OPTS, app.presentation) }}
+                    </select>
                 </div>
             </div>
             <div class="form-group" style="margin-bottom:0px">
@@ -150,7 +170,7 @@
 
             <h3>Additional Information</h3>
             <div class="form-group" style="margin-bottom:0px">
-                <label class="col-sm-2 control-label">When are you unavailable?.</label>
+                <label class="col-sm-2 control-label">When are you unavailable?</label>
                 <div class="col-sm-6">
                     <textarea class="form-control" name="unavailable" rows="4">{{ app.unavailable }}</textarea>
                 </div>
@@ -175,14 +195,6 @@
                 </div>
             </div>
             <div class="form-group">
-                <label class="col-sm-2 control-label">Type of Panel:</label>
-                <div class="col-sm-6">
-                    <select name="presentation" class="form-control">
-                        {% options c.PRESENTATION_OPTS app.presentation %}
-                    </select>
-                </div>
-            </div>
-            <div class="form-group">
                 <label class="col-sm-2 control-label">Please Describe:</label>
                 <div class="col-sm-6">
                     <input type="input" class="form-control" name="other_presentation" value="{{ app.other_presentation }}" />
@@ -192,8 +204,14 @@
                 <label class="col-sm-2 control-label">Technical Needs</label>
                 <div class="col-sm-6">
                     Check the following technical needs that apply. Panel rooms will by default have VGA compatible projector with 3.5mm (1/8") audio, and a local PA with enough microphones setup.
-                    {% checkgroup app.tech_needs %} <br/>
+                    {{ macros.checkgroup(app, 'tech_needs') }} <br/>
                     Other: <input type="text" name="other_tech_needs" value="{{ app.other_tech_needs }}" />
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="col-sm-2 control-label">What are you bringing?</label>
+                <div class="col-sm-6">
+                    <input type="input" class="form-control" name="panelist_bringing" value="{{ app.panelist_bringing }}" placeholder="Windows laptop, Macbook, gaming console, etc" />
                 </div>
             </div>
 
@@ -202,7 +220,7 @@
                 <label class="col-sm-2 control-label"></label>
                 <div class="col-sm-6">
                     <select name="other_panelists">
-                        {% int_options 0 9 ops_count %}
+                        {{ int_options(0, 9, ops_count) }}
                     </select>
                     How many other panelists will be on this panel?
                 </div>
@@ -219,14 +237,21 @@
                 <tbody>
                     {% for op in other_panelists %}
                         <tr>
-                            <td><b>Other Panelist #{{ forloop.counter }}</b></td>
-                            <td><input type="text" name="first_name_{{ forloop.counter0 }}" value="{{ op.first_name }}" /></td>
-                            <td><input type="text" name="last_name_{{ forloop.counter0 }}" value="{{ op.last_name }}" /></td>
-                            <td><input type="text" name="email_{{ forloop.counter0 }}" value="{{ op.email }}" /></td>
+                            <td><b>Other Panelist #{{ loop.index }}</b></td>
+                            <td><input type="text" name="first_name_{{ loop.index0 }}" value="{{ op.first_name }}" /></td>
+                            <td><input type="text" name="last_name_{{ loop.index0 }}" value="{{ op.last_name }}" /></td>
+                            <td><input type="text" name="email_{{ loop.index0 }}" value="{{ op.email }}" /></td>
                         </tr>
                     {% endfor %}
                 </tbody>
             </table>
+            <div id="point_of_contact" class="form-group" style="display:none">
+                <label class="col-sm-2 control-label">&nbsp;</label>
+                <div class="col-sm-6">
+                    I understand that by submitting this application, I am designating myself as the team leader and primary point of contact for this panel. I further understand that if I need to add or change panelists for this event I may be required to provide justification, and that this will be approved at the sole discretion of {{ c.EVENT_NAME }} Staff. <br/>
+                    <input type="checkbox" name="verify_poc" {% if verify_poc %}checked{% endif %} /> I have read and agree to the terms above.
+                </div>
+            </div>
 
             <h3>Panelist Terms of Accomodation</h3>
             <div class="form-group">
