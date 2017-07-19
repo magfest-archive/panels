@@ -20,21 +20,19 @@
                 <input type="hidden" name="id" value="{{ app.id }}" />
                 {% if app.status != c.PENDING %}
                     <b>{{ app.status_label }}</b>
-                    {% if app.status != c.CANCELLED %}
-                        <br/>Change:
-                    {% endif %}
+                    <br/>Change:
                 {% endif %}
-                {% if app.status != c.ACCEPTED and app.status != c.CANCELLED %}
+                {% if app.status != c.ACCEPTED %}
                     <button name="status" value="{{ c.ACCEPTED }}">Accept</button>
                 {% endif %}
-                {% if app.status != c.WAITLISTED and app.status != c.CANCELLED %}
+                {% if app.status != c.WAITLISTED %}
                     <button name="status" value="{{ c.WAITLISTED }}">Waitlist</button>
                 {% endif %}
-                {% if app.status != c.DECLINED and app.status != c.CANCELLED %}
+                {% if app.status != c.DECLINED %}
                     <button name="status" value="{{ c.DECLINED }}">Decline</button>
                 {% endif %}
                 {% if app.status == c.ACCEPTED %}
-                    <button name="status" value="{{ c.CANCELLED }}">Cancel Acceptance</button>
+                    <button name="status" value="{{ c.CANCELLED }}">Cancel Panel</button>
                 {% endif %}
                 <br/>
                 {{ macros.popup_link("email_statuses", "Will this trigger an email?") }}
