@@ -15,6 +15,7 @@
 
 <div class="masthead"></div>
 <div class="panel panel-default">
+  <div class="panel-body">
     <h2>Feedback for {{ event.name }}</h2>
     <form method="post" action="panel_feedback" class="form-horizontal" role="form">
         {{ csrf_token() }}
@@ -56,6 +57,7 @@
             </div>
         </div>
     </form>
+  </div>
 </div>
 
 {% endblock %}
