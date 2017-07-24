@@ -192,7 +192,7 @@ class Root:
             'assigned': [ap.attendee_id for ap in sorted(event.assigned_panelists, reverse=True, key=lambda a: a.attendee.first_name)],
             'panelists': [(a.id, a.full_name)
                           for a in session.query(Attendee)
-                                          .filter(or_(Attendee.ribbon == c.PANELIST_RIBBON,
+                                          .filter(or_(Attendee.ribbon.contains(c.PANELIST_RIBBON),
                                                       Attendee.badge_type == c.GUEST_BADGE))
                                           .order_by(Attendee.full_name).all()]
         }
