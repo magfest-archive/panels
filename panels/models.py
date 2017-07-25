@@ -63,7 +63,9 @@ class PanelApplication(MagModel):
     poc_id = Column(UUID, ForeignKey('attendee.id', ondelete='SET NULL'), nullable=True)
 
     name = Column(UnicodeText)
-    length = Column(UnicodeText)
+    length = Column(Choice(c.PANEL_LENGTH_OPTS), default=c.SIXTY_MIN)
+    length_text = Column(UnicodeText)
+    length_reason = Column(UnicodeText)
     description = Column(UnicodeText)
     unavailable = Column(UnicodeText)
     affiliations = Column(UnicodeText)
@@ -73,7 +75,13 @@ class PanelApplication(MagModel):
     other_presentation = Column(UnicodeText)
     tech_needs = Column(MultiChoice(c.TECH_NEED_OPTS))
     other_tech_needs = Column(UnicodeText)
+    need_tables = Column(Boolean, default=False)
+    tables_desc = Column(UnicodeText)
+    has_cost = Column(Boolean, default=False)
+    cost_desc = Column(UnicodeText)
+    livestream = Column(Choice(c.LIVESTREAM_OPTS), default=c.DONT_CARE)
     panelist_bringing = Column(UnicodeText)
+    extra_info = Column(UnicodeText)
 
     applied = Column(UTCDateTime, server_default=utcnow())
 
