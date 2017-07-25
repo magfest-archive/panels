@@ -22,10 +22,8 @@ Submitting this form will mark this application as {{ app.status_label|lower }} 
                         They will be automatically added to the group created for this panel.
                     {% endif %}
                 {% endif %}
-                {% if applicant.matching_attendee.ribbon == c.NO_RIBBON %}
+                {% if c.PANELIST_RIBBON not in applicant.matching_attendee.ribbon_ints %}
                     They will be assigned a panelist ribbon.
-                {% else %}
-                    Because they already have a {{ applicant.matching_attendee.ribbon_label }} ribbon, no Panelist ribbon will be assigned.
                 {% endif %}
             {% else %}
                 {{ applicant.full_name }} will be added with a complementary Attendee badge with a Panelist ribbon{% if group %} to the group for this panel{% endif %}.

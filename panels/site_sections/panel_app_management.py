@@ -110,8 +110,8 @@ class Root:
         ids = []
         try:
             attendee = session.attendee(attendee_id)
-            if attendee.ribbon == c.NO_RIBBON and attendee.badge_type != c.GUEST_BADGE:
-                attendee.ribbon = c.PANELIST_RIBBON
+            if attendee.badge_type != c.GUEST_BADGE:
+                attendee.ribbon = add_opt(attendee.ribbon_ints, c.PANELIST_RIBBON)
 
             pa = session.panel_applicant(applicant_id)
             for applicant in session.query(PanelApplicant).filter_by(first_name=pa.first_name, last_name=pa.last_name, email=pa.email):
