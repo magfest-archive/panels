@@ -1,6 +1,9 @@
 from panels import *
 
-AutomatedEmail.queries[PanelApplication] = lambda session: session.query(PanelApplication).all()
+AutomatedEmail.queries[PanelApplication] = lambda session: session.query(PanelApplication)
+
+_attendee_query = AutomatedEmail.queries[Attendee]
+AutomatedEmail.queries[Attendee] = lambda session: _attendee_query(session).options(subqueryload(Attendee.assigned_panelists))
 
 
 # TODO: check to make sure this still works, length of args may have changed with date_filter addition
