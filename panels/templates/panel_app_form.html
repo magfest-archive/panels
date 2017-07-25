@@ -1,3 +1,29 @@
+<script type="text/javascript">
+    var showOrHideOtherPresentation = function () {
+        setVisible($.field('other_presentation').parents('.form-group'), $.val('presentation') === {{ c.OTHER }});
+    };
+    var showOrHideOtherLength = function() {
+        setVisible($('#other-length'), $.val('length') === {{ c.OTHER }});
+        setVisible($.field('length_reason').parents('.form-group'), $.val('length') != {{ c.SIXTY_MIN }});
+    };
+    var showOrHideTablesDesc = function() {
+        setVisible($('#tables-desc'), $.field('need_tables').prop('checked'));
+    };
+    var showOrHideCostDesc = function() {
+        setVisible($('#cost-desc'), $.field('has_cost').prop('checked'));
+    };
+
+    $(function () {
+        showOrHideOtherPresentation();
+        showOrHideOtherLength();
+        showOrHideTablesDesc();
+        showOrHideCostDesc();
+        $.field('presentation').on('change', showOrHideOtherPresentation);
+        $.field('length').on('change', showOrHideOtherLength);
+        $.field('need_tables').on('click', showOrHideTablesDesc);
+        $.field('has_cost').on('click', showOrHideCostDesc);
+    });
+</script>
 <div class="form-group">
     <label class="col-sm-3 control-label">Panel Name:</label>
     <div class="col-sm-6">

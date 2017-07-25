@@ -10,9 +10,6 @@
     var showOrHideAffiliations = function () {
         setVisible($.field('affiliations').parents('.form-group'), $.field('has_affiliations').prop('checked'));
     };
-    var showOrHideOtherPresentation = function () {
-        setVisible($.field('other_presentation').parents('.form-group'), $.val('presentation') === {{ c.OTHER }});
-    };
     var showOrHidePOC = function () {
         setVisible('#point_of_contact', $.val('other_panelists'));
     };
@@ -33,16 +30,6 @@
             }
         }
     };
-    var showOrHideOtherLength = function() {
-        setVisible($('#other-length'), $.val('length') === {{ c.OTHER }});
-        setVisible($.field('length_reason').parents('.form-group'), $.val('length') != {{ c.SIXTY_MIN }});
-    };
-    var showOrHideTablesDesc = function() {
-        setVisible($('#tables-desc'), $.field('need_tables').prop('checked'));
-    };
-    var showOrHideCostDesc = function() {
-        setVisible($('#cost-desc'), $.field('has_cost').prop('checked'));
-    };
 
     $(function () {
         $('<br/>').insertBefore('nobr');
@@ -50,18 +37,10 @@
         showOrHideHeldBefore();
         showOrHideAffiliations();
         showOrHideOtherPanelists();
-        showOrHideOtherPresentation();
-        showOrHideOtherLength();
-        showOrHideTablesDesc();
-        showOrHideCostDesc();
         $.field('held_before').on('click', showOrHideHeldBefore);
         $.field('has_affiliations').on('click', showOrHideAffiliations);
         $.field('other_panelists').on('change', showOrHidePOC);
         $.field('other_panelists').on('change', showOrHideOtherPanelists);
-        $.field('presentation').on('change', showOrHideOtherPresentation);
-        $.field('length').on('change', showOrHideOtherLength);
-        $.field('need_tables').on('click', showOrHideTablesDesc);
-        $.field('has_cost').on('click', showOrHideCostDesc);
     });
 </script>
 
