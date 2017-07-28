@@ -3,8 +3,7 @@
 {% block content %}
 
 <style type="text/css">
-    .app-display {
-        padding-top: 8px;
+    .form-control-static {
         font-family: Courier;
     }
 </style>
@@ -13,8 +12,8 @@
 
 <div class="form-horizontal">
     <div class="form-group">
-        <label class="col-sm-3 control-label">Panel Status:</label>
-        <div class="col-sm-6 app-display">
+        <label class="col-sm-3 control-label">Panel Status</label>
+        <div class="col-sm-6 form-control-static">
             <form method="post" action="mark">
                 {{ csrf_token() }}
                 <input type="hidden" name="id" value="{{ app.id }}" />
@@ -42,8 +41,8 @@
 
     {% if app.poc_id %}
         <div class="form-group">
-            <label class="col-sm-3 control-label">Point of Contact:</label>
-            <div class="col-sm-6 app-display">
+            <label class="col-sm-3 control-label">Point of Contact</label>
+            <div class="col-sm-6 form-control-static">
                 <form method="post" action="set_poc">
                     {{ csrf_token() }}
                     <input type="hidden" name="app_id" value="{{ app.id }}" />
@@ -58,8 +57,8 @@
 
     {% if app.status == c.ACCEPTED %}
         <div class="form-group">
-            <label class="col-sm-3 control-label">Event:</label>
-            <div class="col-sm-6 app-display">
+            <label class="col-sm-3 control-label">Event</label>
+            <div class="col-sm-6 form-control-static">
                 {% if app.event_id %}
                     <a href="../schedule/form?id={{ app.event_id }}">{{ app.event.name }}</a>
                     (<a href="panel_feedback?event_id={{ app.event_id }}">leave feedback</a>)
@@ -71,8 +70,8 @@
     {% endif %}
 
     <div class="form-group">
-        <label class="col-sm-3 control-label">Staff Comments:</label>
-        <div class="col-sm-6 app-display">
+        <label class="col-sm-3 control-label">Staff Comments</label>
+        <div class="col-sm-6 form-control-static">
             <form method="post" action="update_comments">
                 {{ csrf_token() }}
                 <input type="hidden" name="id" value="{{ app.id }}" />
@@ -83,22 +82,22 @@
     </div>
 
     <div class="form-group">
-        <label class="col-sm-3 control-label">Panel Name:</label>
-        <div class="col-sm-6 app-display">
+        <label class="col-sm-3 control-label">Panel Name</label>
+        <div class="col-sm-6 form-control-static">
             {{ app.name }}
         </div>
     </div>
 
     <div class="form-group">
-        <label class="col-sm-3 control-label">Description:</label>
-        <div class="col-sm-6 app-display">
+        <label class="col-sm-3 control-label">Description</label>
+        <div class="col-sm-6 form-control-static">
             {{ app.description|linebreaksbr }}
         </div>
     </div>
 
     <div class="form-group">
-        <label class="col-sm-3 control-label">Panel Type:</label>
-        <div class="col-sm-6 app-display">
+        <label class="col-sm-3 control-label">Panel Type</label>
+        <div class="col-sm-6 form-control-static">
             {{ app.presentation_label }}
             {% if app.presentation == c.OTHER %}
                 <br/> {{ app.other_presentation }}
@@ -107,16 +106,16 @@
     </div>
 
     <div class="form-group">
-        <label class="col-sm-3 control-label">Expected Length:</label>
-        <div class="col-sm-6 app-display">
+        <label class="col-sm-3 control-label">Expected Length</label>
+        <div class="col-sm-6 form-control-static">
             {{ app.length_label if app.length != c.OTHER else app.length_text }}
         </div>
     </div>
 
     {% if app.length_reason %}
         <div class="form-group">
-            <label class="col-sm-3 control-label">Reason for Length:</label>
-            <div class="col-sm-6 app-display">
+            <label class="col-sm-3 control-label">Reason for Length</label>
+            <div class="col-sm-6 form-control-static">
                 {{ app.length_reason }}
             </div>
         </div>
@@ -124,15 +123,15 @@
 
     <div class="form-group">
         <label class="col-sm-3 control-label">Do they want their panel livestreamed?</label>
-        <div class="col-sm-6 app-display">
+        <div class="col-sm-6 form-control-static">
             {{ app.livestream_label }}
         </div>
     </div>
 
     {% if app.tables_desc %}
         <div class="form-group">
-            <label class="col-sm-3 control-label">Special Table Set-up:</label>
-            <div class="col-sm-6 app-display">
+            <label class="col-sm-3 control-label">Special Table Set-up</label>
+            <div class="col-sm-6 form-control-static">
                 {{ app.tables_desc }}
             </div>
         </div>
@@ -140,24 +139,24 @@
 
     {% if app.cost_desc %}
         <div class="form-group">
-            <label class="col-sm-3 control-label">Upfront Cost and Materials:</label>
-            <div class="col-sm-6 app-display">
+            <label class="col-sm-3 control-label">Upfront Cost and Materials</label>
+            <div class="col-sm-6 form-control-static">
                 {{ app.cost_desc }}
             </div>
         </div>
     {% endif %}
 
     <div class="form-group">
-        <label class="col-sm-3 control-label">Unavailability:</label>
-        <div class="col-sm-6 app-display">
+        <label class="col-sm-3 control-label">Unavailability</label>
+        <div class="col-sm-6 form-control-static">
             {{ app.unavailable|linebreaksbr }}
         </div>
     </div>
 
     {% if app.tech_needs or app.other_tech_needs %}
         <div class="form-group">
-            <label class="col-sm-3 control-label">Tech Needs:</label>
-            <div class="col-sm-6 app-display">
+            <label class="col-sm-3 control-label">Tech Needs</label>
+            <div class="col-sm-6 form-control-static">
                 {{ app.tech_needs_labels|join(' / ') }}
                 {% if app.other_tech_needs %}
                     <br/> {{ app.other_tech_needs }}
@@ -168,8 +167,8 @@
 
     {% if app.extra_info %}
         <div class="form-group">
-            <label class="col-sm-3 control-label">Extra Info for Internal Use:</label>
-            <div class="col-sm-6 app-display">
+            <label class="col-sm-3 control-label">Extra Info for Internal Use</label>
+            <div class="col-sm-6 form-control-static">
                 {{ app.extra_info }}
             </div>
         </div>
@@ -177,8 +176,8 @@
 
     {% if app.panelist_bringing %}
         <div class="form-group">
-            <label class="col-sm-3 control-label">Panelist is bringing:</label>
-            <div class="col-sm-6 app-display">
+            <label class="col-sm-3 control-label">Panelist is bringing</label>
+            <div class="col-sm-6 form-control-static">
                 {{ app.panelist_bringing }}
             </div>
         </div>
@@ -186,8 +185,8 @@
 
     {% if app.affiliations %}
         <div class="form-group">
-            <label class="col-sm-3 control-label">Affiliations:</label>
-            <div class="col-sm-6 app-display">
+            <label class="col-sm-3 control-label">Affiliations</label>
+            <div class="col-sm-6 form-control-static">
                 {{ app.affiliations|linebreaksbr }}
             </div>
         </div>
@@ -195,16 +194,16 @@
 
     {% if app.past_attendance %}
         <div class="form-group">
-            <label class="col-sm-3 control-label">Past Attendance:</label>
-            <div class="col-sm-6 app-display">
+            <label class="col-sm-3 control-label">Past Attendance</label>
+            <div class="col-sm-6 form-control-static">
                 {{ app.past_attendance }}
             </div>
         </div>
     {% endif %}
 
     <div class="form-group">
-        <label class="col-sm-3 control-label">Panelists:</label>
-        <div class="col-sm-6 app-display">
+        <label class="col-sm-3 control-label">Panelists</label>
+        <div class="col-sm-6 form-control-static">
             <table>
             {% for panelist in app.applicants %}
                 <tr>

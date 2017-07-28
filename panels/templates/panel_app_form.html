@@ -1,73 +1,65 @@
 <script type="text/javascript">
     var showOrHideOtherPresentation = function () {
-        setVisible($.field('other_presentation').parents('.form-group'), $.val('presentation') === {{ c.OTHER }});
+        var isOtherPresentation = $.val('presentation') === {{ c.OTHER }};
+        setVisible($.field('other_presentation').parent(), isOtherPresentation);
+        $.field('other_presentation').prop('required', isOtherPresentation);
     };
     var showOrHideOtherLength = function() {
-        setVisible($('#other-length'), $.val('length') === {{ c.OTHER }});
-        setVisible($.field('length_reason').parents('.form-group'), $.val('length') != {{ c.SIXTY_MIN }});
-    };
-    var showOrHideTablesDesc = function() {
-        setVisible($('#tables-desc'), $.field('need_tables').prop('checked'));
-    };
-    var showOrHideCostDesc = function() {
-        setVisible($('#cost-desc'), $.field('has_cost').prop('checked'));
+        var isOther = $.val('length') === {{ c.OTHER }},
+            isNotAnHour = $.val('length') != {{ c.SIXTY_MIN }};
+        setVisible($('#other-length'), isOther);
+        $.field('length_text').prop('required', isOther);
+        setVisible($.field('length_reason').parents('.form-group'), isNotAnHour);
+        $.field('length_reason').prop('required', isNotAnHour);
     };
 
     $(function () {
         showOrHideOtherPresentation();
         showOrHideOtherLength();
-        showOrHideTablesDesc();
-        showOrHideCostDesc();
         $.field('presentation').on('change', showOrHideOtherPresentation);
         $.field('length').on('change', showOrHideOtherLength);
-        $.field('need_tables').on('click', showOrHideTablesDesc);
-        $.field('has_cost').on('click', showOrHideCostDesc);
     });
 </script>
 <div class="form-group">
-    <label class="col-sm-3 control-label">Panel Name:</label>
+    <label class="col-sm-3 control-label">Panel Name</label>
     <div class="col-sm-6">
-        <input class="form-control" type="text" name="name" value="{{ app.name }}" />
+        <input class="form-control" type="text" name="name" value="{{ app.name }}" required="required" />
     </div>
 </div>
 <div class="form-group">
-    <label class="col-sm-3 control-label">Type of Panel:</label>
+    <label class="col-sm-3 control-label">Type of Panel</label>
     <div class="col-sm-6">
         <select name="presentation" class="form-control">
             {{ options(c.PRESENTATION_OPTS, app.presentation) }}
         </select>
     </div>
-</div>
-<div class="form-group">
-    <label class="col-sm-3 control-label">Please Describe:</label>
-    <div class="col-sm-6">
-        <input type="input" class="form-control" name="other_presentation" value="{{ app.other_presentation }}" />
+    <div class="clearfix"></div>
+    <div class="col-sm-6 col-sm-offset-3" style="margin-top: 15px;">
+        <input type="input" class="form-control" name="other_presentation" value="{{ app.other_presentation }}" placeholder="Please describe type of panel" />
     </div>
 </div>
-<div class="form-group" style="margin-bottom:0px">
+<div class="form-group">
     <label class="col-sm-3 control-label">Panel Description</label>
     <div class="col-sm-6">
-        <textarea class="form-control" name="description" rows="4">{{ app.description }}</textarea>
+        <textarea class="form-control" name="description" rows="4" required="required">{{ app.description }}</textarea>
     </div>
-</div>
-<div class="form-group">
+    <div class="clearfix"></div>
     <p class="help-block col-sm-9 col-sm-offset-3">
         Will appear as a subheading on the schedule. 200 words max.
     </p>
 </div>
-<div class="form-group" style="margin-bottom:0px">
-    <label class="col-sm-3 control-label">Expected Panel Length:</label>
+<div class="form-group">
+    <label class="col-sm-3 control-label">Expected Panel Length</label>
     <div class="col-sm-6">
         <select class="form-control" name="length">
             {{ options(c.PANEL_LENGTH_OPTS, app.length) }}
         </select>
     </div>
     <div class="clearfix"></div>
-    <div id="other-length" class="col-sm-6 col-sm-offset-3">
+    <div id="other-length" class="col-sm-6 col-sm-offset-3" style="margin-top: 15px;">
         <input type="text" class="form-control" name="length_text" value="{{ app.length_text }}" placeholder="Other length" />
     </div>
-</div>
-<div class="form-group">
+    <div class="clearfix"></div>
     <p class="help-block col-sm-9 col-sm-offset-3">
         An hour is typical, including time for Q&A.
     </p>
@@ -75,10 +67,12 @@
 <div class="form-group">
     <label class="col-sm-3 control-label">Why do you need the extra time?</label>
     <div class="col-sm-6">
-        Panels longer than 60 minutes are allowed, but discouraged unless you really need the extra time.
-        Please explain below.
-        <textarea class="form-control" name="length_reason" row="4">{{ app.length_reason }}</textarea>
+        <textarea class="form-control" name="length_reason" rows="4">{{ app.length_reason }}</textarea>
     </div>
+    <div class="clearfix"></div>
+    <p class="help-block col-sm-9 col-sm-offset-3">
+        Panels longer than 60 minutes are allowed, but discouraged unless you really need the extra time.
+    </p>
 </div>
 <div class="form-group">
     <label class="col-sm-3 control-label">Do you want your panel livestreamed?</label>
@@ -87,30 +81,59 @@
             {{ options(c.LIVESTREAM_OPTS, app.livestream) }}
         </select>
     </div>
+    <div class="clearfix"></div>
     <p class="help-block col-sm-9 col-sm-offset-3">
         Note: we cannot guarantee that panels will be livestreamed.
     </p>
 </div>
+
+
 <div class="form-group">
-    <label class="col-sm-3 control-label">Does your room need tables set up for participation?</label>
-    <div class="col-sm-6">
-        {{ macros.checkbox(app, 'need_tables', label='Yes.') }}
-        <p id="tables-desc" class="help-block">
-            Please describe how tables should be set up for this panel.
-            <textarea class="form-control" name="tables_desc" rows="4">{{ app.tables_desc }}</textarea>
-        </p>
+    <div class="col-sm-9 col-sm-offset-3 checkbox">
+        {{ macros.toggle_checkbox(
+            '.form-group-need_tables',
+            'Does your room need tables set up for participation?',
+            suffix='_need_tables',
+            name='need_tables',
+            required_selector='.form-group-need_tables .form-control',
+            hide_on_checked=False,
+            checked=app.need_tables) }}
     </div>
 </div>
-<div class="form-group">
-    <label class="col-sm-3 control-label">Does your event require attendees to pay an upfront cost of materials for hands-on activities?</label>
+<div class="form-group form-group-need_tables">
+    <label class="col-sm-3 control-label">Describe your table needs</label>
     <div class="col-sm-6">
-        {{ macros.checkbox(app, 'has_cost', label='Yes.') }}
-        <p id="cost-desc" class="help-block">
-            Please describe what materials you'll be providing and how much you'll need to charge attendees to participate.
-            <textarea class="form-control" name="cost_desc" rows="4">{{ app.cost_desc }}</textarea>
-        </p>
+        <textarea class="form-control" name="tables_desc" rows="4">{{ app.tables_desc }}</textarea>
+    </div>
+    <div class="clearfix"></div>
+    <p class="help-block col-sm-9 col-sm-offset-3">
+        Please tell us how many tables you'll need, and describe how tables should be set up for this panel.
+    </p>
+</div>
+
+<div class="form-group">
+    <div class="col-sm-9 col-sm-offset-3 checkbox">
+        {{ macros.toggle_checkbox(
+            '.form-group-has_cost',
+            'Does your event require attendees to pay an upfront cost of materials for hands-on activities?',
+            suffix='_has_cost',
+            name='has_cost',
+            required_selector='.form-group-has_cost .form-control',
+            hide_on_checked=False,
+            checked=app.has_cost) }}
     </div>
 </div>
+<div class="form-group form-group-has_cost">
+    <label class="col-sm-3 control-label">Describe your material costs</label>
+    <div class="col-sm-6">
+        <textarea class="form-control" name="cost_desc" rows="4">{{ app.cost_desc }}</textarea>
+    </div>
+    <div class="clearfix"></div>
+    <p class="help-block col-sm-9 col-sm-offset-3">
+        Please describe what materials you'll be providing and how much you'll need to charge attendees to participate.
+    </p>
+</div>
+
 <div class="form-group">
     <label class="col-sm-3 control-label">Technical Needs</label>
     <div class="col-sm-9">
