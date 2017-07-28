@@ -109,9 +109,43 @@
     <div class="form-group">
         <label class="col-sm-3 control-label">Expected Length:</label>
         <div class="col-sm-6 app-display">
-            {{ app.length }}
+            {{ app.length_label if app.length != c.OTHER else app.length_text }}
         </div>
     </div>
+
+    {% if app.length_reason %}
+        <div class="form-group">
+            <label class="col-sm-3 control-label">Reason for Length:</label>
+            <div class="col-sm-6 app-display">
+                {{ app.length_reason }}
+            </div>
+        </div>
+    {% endif %}
+
+    <div class="form-group">
+        <label class="col-sm-3 control-label">Do they want their panel livestreamed?</label>
+        <div class="col-sm-6 app-display">
+            {{ app.livestream_label }}
+        </div>
+    </div>
+
+    {% if app.tables_desc %}
+        <div class="form-group">
+            <label class="col-sm-3 control-label">Special Table Set-up:</label>
+            <div class="col-sm-6 app-display">
+                {{ app.tables_desc }}
+            </div>
+        </div>
+    {% endif %}
+
+    {% if app.cost_desc %}
+        <div class="form-group">
+            <label class="col-sm-3 control-label">Upfront Cost and Materials:</label>
+            <div class="col-sm-6 app-display">
+                {{ app.cost_desc }}
+            </div>
+        </div>
+    {% endif %}
 
     <div class="form-group">
         <label class="col-sm-3 control-label">Unavailability:</label>
@@ -128,6 +162,15 @@
                 {% if app.other_tech_needs %}
                     <br/> {{ app.other_tech_needs }}
                 {% endif %}
+            </div>
+        </div>
+    {% endif %}
+
+    {% if app.extra_info %}
+        <div class="form-group">
+            <label class="col-sm-3 control-label">Extra Info for Internal Use:</label>
+            <div class="col-sm-6 app-display">
+                {{ app.extra_info }}
             </div>
         </div>
     {% endif %}

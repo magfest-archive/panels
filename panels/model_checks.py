@@ -54,3 +54,27 @@ def pa_other(pa):
 def pa_deadline(pa):
     if localized_now() > c.PANEL_APP_DEADLINE and not c.HAS_PANEL_APPS_ACCESS:
         return 'We are now past the deadline and are no longer accepting panel applications'
+
+
+@validation.PanelApplication
+def specify_other_time(pa):
+    if pa.length == c.OTHER and not pa.length_text:
+        return 'Please specify how long your panel will be.'
+
+
+@validation.PanelApplication
+def specify_nonstandard_time(pa):
+    if pa.length != c.SIXTY_MIN and not pa.length_reason:
+        return 'Please explain why your panel needs to be longer than sixty minutes.'
+
+
+@validation.PanelApplication
+def specify_table_needs(pa):
+    if pa.need_tables and not pa.tables_desc:
+        return 'Please describe how you need tables set up for your panel.'
+
+
+@validation.PanelApplication
+def specify_cost_details(pa):
+    if pa.has_cost and not pa.cost_desc:
+        return 'Please describe the materials you will provide and how much you will charge attendees for them.'
