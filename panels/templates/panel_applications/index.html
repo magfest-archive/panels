@@ -57,7 +57,8 @@
         <br/> <br/>
         Good luck!  We're excited to hear what you've got!
 
-        <form method="post" action="index" class="form-horizontal" role="form">
+        {# The action is set to "post_index" in order to bypass the NGINX cache. -#}
+        <form method="post" action="post_index" class="form-horizontal" role="form">
             {{ csrf_token() }}
             <input type="hidden" name="submitter" value="1" />
 
