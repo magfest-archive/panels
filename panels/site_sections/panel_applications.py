@@ -18,8 +18,8 @@ class Root:
         must POST to a different URL in order to bypass the cache and get a
         valid session cookie. Thus, this page is also exposed as "post_index".
         """
-        app = session.panel_application(params, checkgroups={'tech_needs'}, restricted=True)
-        panelist = session.panel_applicant(params, restricted=True)
+        app = session.panel_application(params, checkgroups={'tech_needs'}, restricted=True, ignore_csrf=True)
+        panelist = session.panel_applicant(params, restricted=True, ignore_csrf=True)
         panelist.application = app
         other_panelists = []
         for i in range(int(params.get('other_panelists', 0))):
