@@ -34,7 +34,8 @@ panel_app_helper = table(
         'panel_application',
         sa.Column('id', sideboard.lib.sa.UUID(), nullable=False),
         sa.Column('length', sa.Unicode()),
-        sa.Column('length_text', sa.Unicode())
+        sa.Column('length_text', sa.Unicode()),
+        sa.Column('length_reason', sa.Unicode())
         # Other columns not needed
     )
 
@@ -52,12 +53,14 @@ def upgrade():
     connection = op.get_bind()
 
     for panel_app in connection.execute(panel_app_helper.select()):
-        length_text = panel_app.length
+        new_length_text = panel_app.length
         connection.execute(
             panel_app_helper.update().where(
                 panel_app_helper.c.id == panel_app.id
             ).values(
-                length_text=length_text
+                length_text=new_length_text,
+                length=c.OTHER,
+                length_reason="Automated data migration."
             )
         )
 

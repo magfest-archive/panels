@@ -108,7 +108,7 @@
     <div class="form-group">
         <label class="col-sm-3 control-label">Expected Length</label>
         <div class="col-sm-6 form-control-static">
-            {{ app.length_label if app.length != c.OTHER else app.length_text }}
+            {{ app.length_label if app.length != c.OTHER and not app.length_text else app.length_text }}
         </div>
     </div>
 
