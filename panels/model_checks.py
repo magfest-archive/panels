@@ -33,7 +33,7 @@ PanelApplicant.required = [
 
 @validation.PanelApplicant
 def pa_email(pa):
-    if not re.match(c.EMAIL_RE, pa.email):
+    if not pa.email or not re.match(c.EMAIL_RE, pa.email):
         return 'Please enter a valid email address'
 
 

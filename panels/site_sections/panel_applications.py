@@ -1,7 +1,12 @@
 from panels import *
 
 
-def check_ops(other_panelists):
+OTHER_PANELISTS_FIELDS = [
+    'first_name', 'last_name', 'email', 'occupation', 'website',
+    'other_credentials'] + list(PanelApplicant.social_media_fields.keys())
+
+
+def check_other_panelists(other_panelists):
     for i, op in enumerate(other_panelists):
         message = check(op)
         if message:
@@ -18,16 +23,16 @@ class Root:
         must POST to a different URL in order to bypass the cache and get a
         valid session cookie. Thus, this page is also exposed as "post_index".
         """
-        app = session.panel_application(params, checkgroups={'tech_needs'}, restricted=True)
-        panelist = session.panel_applicant(params, restricted=True)
+        app = session.panel_application(params, checkgroups={'tech_needs'}, restricted=True, ignore_csrf=True)
+        panelist = session.panel_applicant(params, restricted=True, ignore_csrf=True)
         panelist.application = app
         other_panelists = []
         for i in range(int(params.get('other_panelists', 0))):
-            applicant = {attr: params.get('{}_{}'.format(attr, i)) for attr in ['first_name', 'last_name', 'email']}
+            applicant = {attr: params.get('{}_{}'.format(attr, i)) for attr in OTHER_PANELISTS_FIELDS}
             other_panelists.append(PanelApplicant(application=app, **applicant))
 
         if cherrypy.request.method == 'POST':
-            message = check(panelist) or check(app) or check_ops(other_panelists)
+            message = check(panelist) or check(app) or check_other_panelists(other_panelists)
             if not message:
                 if 'verify_unavailable' not in params:
                     message = 'You must check the box to confirm that you are only unavailable at the specified times'
