@@ -3,7 +3,7 @@ from panels.config import panels_config as config
 
 
 def url_domain(url):
-    url = url.replace('//', '/')
+    url = url.strip().replace('//', '/')
     url = re.sub(r'^https?:/', '', url)
     url = re.sub(r'^www\.', '', url)
     return url.split('/', 1)[0].strip('@#?=. ')
@@ -19,8 +19,8 @@ class SessionMixin:
 
 
 class SocialMediaMixin(JSONColumnMixin('social_media', c.SOCIAL_MEDIA)):
-    social_media_urls = config['social_media_urls']
-    social_media_placeholders = config['social_media_placeholders']
+    social_media_urls = config.get('social_media_urls', {})
+    social_media_placeholders = config.get('social_media_placeholders', {})
 
     @classmethod
     def get_placeholder(cls, name):

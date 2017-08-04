@@ -14,7 +14,6 @@
             $template = $('#panelist_form_template > .panel'),
             $ops = $('#panelists_container > .panel');
         setVisible('#panelists_container', count);
-        console.log($template);
         if (count < $ops.size()) {
             $ops.slice(count).remove();
         } else {

@@ -1,4 +1,4 @@
-"""Add additional fields to panel app
+"""Adds fields to panel_application
 
 Revision ID: 3733faf640e9
 Revises: 416eb615ff1a

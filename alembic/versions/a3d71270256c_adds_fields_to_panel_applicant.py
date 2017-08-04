@@ -1,4 +1,4 @@
-"""Adds panel application fields
+"""Adds fields to panel_applicant
 
 Revision ID: a3d71270256c
 Revises: 416eb615ff1a
