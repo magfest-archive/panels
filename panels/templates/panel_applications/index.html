@@ -1,26 +1,29 @@
+{% import 'panel_macros.html' as panel_macros %}
 {% extends "preregistration/preregbase.html" %}
 {% block title %}Panel Applications{% endblock %}
 {% block backlink %}{% endblock %}
 {% block content %}
+{% include "panels_common.html" %}
 
 <script type="text/javascript">
     var showOrHidePOC = function () {
         setVisible('#point_of_contact', $.val('other_panelists'));
     };
     var showOrHideOtherPanelists = function () {
-        var count = $.val('other_panelists');
-        var $ops = $('#other-panelist-data tbody tr');
-        setVisible('#other-panelist-data', count);
+        var count = $.val('other_panelists'),
+            $template = $('#panelist_form_template > .panel'),
+            $ops = $('#panelists_container > .panel');
+        setVisible('#panelists_container', count);
         if (count < $ops.size()) {
             $ops.slice(count).remove();
         } else {
             for (var i = $ops.size(); i < count; i++) {
-                $('#other-panelist-data tbody').append(
-                    $('<tr></tr>')
-                        .append('<td style="padding-bottom: 10px;"><b>Other Panelist #' + (i + 1) + '</b></td>')
-                        .append('<td style="padding-bottom: 10px;"><input type="text" name="first_name_' + i + '" /></td>')
-                        .append('<td style="padding-bottom: 10px;"><input type="text" name="last_name_' + i + '"  /></td>')
-                        .append('<td style="padding-bottom: 10px;"><input type="text" name="email_' + i + '" /></td>'));
+                var suffix = '_' + i;
+                $opPanel = $template.clone();
+                $opPanel.find('h2').text($opPanel.find('h2').text() + (i + 1));
+                $opPanel.find('input').attr('name', function() { return $(this).attr('name') + suffix } );
+                $opPanel.find('textarea').attr('name', function() { return $(this).attr('name') + suffix } );
+                $opPanel.appendTo('#panelists_container');
             }
         }
     };
@@ -34,6 +37,15 @@
     });
 </script>
 
+<div id="panelist_form_template" style="display: none;">
+  <div class="panel panel-default">
+    <div class="panel-body">
+      <h2>Other Panelist #</h2>
+      {{ panel_macros.panelist_form(PanelApplicant, include_cellphone=False, include_communication_pref=False) }}
+    </div>
+  </div>
+</div>
+
 <div class="masthead"></div>
 <div class="panel panel-default">
     <div class="panel-body">
@@ -44,14 +56,19 @@
     {% else %}
         {% if c.AFTER_PANEL_APP_DEADLINE and c.HAS_PANEL_APPS_ACCESS %}
             <span style="color:red">
-                Panel applications have closed, but because you are a logged in administrator you can submit a new
-                application using this form.
+                Panel applications have closed, but because you are a logged in
+                administrator you can submit a new application using this form.
             </span>
             <br/> <br/>
         {% endif %}
-        We expect many requests being sent in and will be unable to accept them all.  To increase your odds of acceptance, fill this form out accurately, keep your schedule open, and contact us if there are any questions pertaining to the form.  The contact e-mail is <b>{{ c.PANELS_EMAIL }}</b>.
+        We expect many requests being sent in and will be unable to accept them
+        all. To increase your odds of acceptance, fill this form out
+        accurately, keep your schedule open, and contact us if there are any
+        questions pertaining to the form. The contact e-mail is <b>{{ c.PANELS_EMAIL }}</b>.
         <br/> <br/>
-        Panel requests are due by {{ c.PANEL_APP_DEADLINE|datetime_local }}, but this form will close once we have received a certain number of applicants beyond the time slots we have available.
+        Panel requests are due by {{ c.PANEL_APP_DEADLINE|datetime_local }},
+        but this form will close once we have received a certain number of
+        applicants beyond the time slots we have available.
         <br/> <br/>
         We will send acceptance e-mails out by {{ c.EXPECTED_RESPONSE }}.
         <br/> <br/>
@@ -61,35 +78,7 @@
         <form method="post" action="post_index" class="form-horizontal" role="form">
             <input type="hidden" name="submitter" value="1" />
 
-            <h3>Personal Information</h3>
-            <div class="form-group">
-                <label class="col-sm-3 control-label">First Name</label>
-                <div class="col-sm-6">
-                    <input class="form-control" type="text" class="focus" name="first_name" value="{{ panelist.first_name }}" required="required" />
-                </div>
-            </div>
-            <div class="form-group">
-                <label class="col-sm-3 control-label">Last Name</label>
-                <div class="col-sm-6">
-                    <input class="form-control" type="text" name="last_name" value="{{ panelist.last_name }}" required="required" />
-                </div>
-            </div>
-            <div class="form-group">
-                <label class="col-sm-3 control-label">Email</label>
-                <div class="col-sm-6">
-                    <input class="form-control" type="email" name="email" value="{{ panelist.email }}" required="required" />
-                </div>
-            </div>
-            <div class="form-group">
-                <label class="col-sm-3 control-label">Phone Number</label>
-                <div class="col-sm-6">
-                    <input class="form-control" type="tel" name="cellphone" value="{{ panelist.cellphone }}" required="required" />
-                </div>
-                <div class="clearfix"></div>
-                <p class="help-block col-sm-9 col-sm-offset-3">
-                    Please make this the phone number at which we can most easily reach you before the event regarding your panel.
-                </p>
-            </div>
+            {{ panel_macros.panelist_form(panelist) }}
 
             <h3>Panel Information</h3>
             {% include "panel_app_form.html" %}
@@ -167,43 +156,37 @@
                 <div class="col-sm-9 col-sm-offset-3">
                     <label class="checkbox-label" style="font-weight: normal;">
                         <input type="checkbox" name="verify_waiting" {% if verify_waiting %}checked{% endif %} />
-                        I understand that I will not hear back until {{ c.EXPECTED_RESPONSE }}, <b>and I will not prematurely email {{ c.EVENT_NAME }} to check my panel status.</b>
+                        I understand that I will not hear back until {{ c.EXPECTED_RESPONSE }},
+                        <b>and I will not prematurely email {{ c.EVENT_NAME }} to check my panel status.</b>
                     </label>
                 </div>
             </div>
 
             <h3>Other Panelists</h3>
             <div class="form-group">
-                <label class="col-sm-3 control-label"></label>
-                <div class="col-sm-6">
+                <div class="col-sm-6 col-sm-offset-3">
                     <select name="other_panelists">
                         {{ int_options(0, 9, ops_count) }}
                     </select>
                     How many other panelists will be on this panel?
                 </div>
             </div>
-            <div class="form-group">
-                <table style="width:100%" id="other-panelist-data">
-                    <thead>
-                        <tr>
-                            <th></th>
-                            <th>First Name</th>
-                            <th>Last Name</th>
-                            <th>Email</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for op in other_panelists %}
-                            <tr>
-                                <td style="padding-bottom: 10px;"><b>Other Panelist #{{ loop.index }}</b></td>
-                                <td style="padding-bottom: 10px;"><input type="text" name="first_name_{{ loop.index0 }}" value="{{ op.first_name }}" /></td>
-                                <td style="padding-bottom: 10px;"><input type="text" name="last_name_{{ loop.index0 }}" value="{{ op.last_name }}" /></td>
-                                <td style="padding-bottom: 10px;"><input type="text" name="email_{{ loop.index0 }}" value="{{ op.email }}" /></td>
-                            </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+
+            <div id="panelists_container">
+              {% for op in other_panelists %}
+                <div class="panel panel-default">
+                  <div class="panel-body">
+                    <h2>Other Panelist #{{ loop.index }}</h2>
+                    {{ panel_macros.panelist_form(
+                        op,
+                        suffix='_' + loop.index0|string,
+                        include_cellphone=False,
+                        include_communication_pref=False) }}
+                  </div>
+                </div>
+              {% endfor %}
             </div>
+
             <div id="point_of_contact" class="form-group" style="display:none">
                 <p class="col-sm-9 col-sm-offset-3">
                     I understand that by submitting this application, I am

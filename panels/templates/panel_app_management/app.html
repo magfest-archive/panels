@@ -1,14 +1,14 @@
+{% import 'panel_macros.html' as panel_macros %}
 {% extends "base.html" %}{% set admin_area=True %}
 {% block title %}Panel Submission{% endblock %}}
 {% block content %}
+{% include "panels_common.html" %}
 
 <style type="text/css">
-    .form-control-static {
-        font-family: Courier;
-    }
+.form-group { margin-bottom: 0px; }
 </style>
 
-<h2>Panel Applications</h2>
+<h1>Panel Application <small><a href="index">View all panel applications</a></small></h1>
 
 <div class="form-horizontal">
     <div class="form-group">
@@ -63,7 +63,8 @@
                     <a href="../schedule/form?id={{ app.event_id }}">{{ app.event.name }}</a>
                     (<a href="panel_feedback?event_id={{ app.event_id }}">leave feedback</a>)
                 {% else %}
-                    <a href="associate?id={{ app.id }}">Click here</a> to associate this application with an event on the schedule
+                    <a href="associate?id={{ app.id }}">Click here</a> to associate
+                    this application with an event on the schedule
                 {% endif %}
             </div>
         </div>
@@ -154,15 +155,16 @@
     </div>
 
     {% if app.tech_needs or app.other_tech_needs %}
-        <div class="form-group">
-            <label class="col-sm-3 control-label">Tech Needs</label>
-            <div class="col-sm-6 form-control-static">
-                {{ app.tech_needs_labels|join(' / ') }}
-                {% if app.other_tech_needs %}
-                    <br/> {{ app.other_tech_needs }}
-                {% endif %}
-            </div>
-        </div>
+        {{ macros.form_checkgroup(
+            app,
+            'tech_needs',
+            other_field='other_tech_needs',
+            other_placeholder='Additional technical needs',
+            label='Technical Needs',
+            desc='Check the following technical needs that apply. Panel rooms will by default have VGA compatible projector with 3.5mm (1/8") audio, and a local PA with enough microphones setup.',
+            is_readonly=True,
+            is_required=True,
+            is_admin=True) }}
     {% endif %}
 
     {% if app.extra_info %}
@@ -201,46 +203,13 @@
         </div>
     {% endif %}
 
-    <div class="form-group">
-        <label class="col-sm-3 control-label">Panelists</label>
-        <div class="col-sm-6 form-control-static">
-            <table>
-            {% for panelist in app.applicants %}
-                <tr>
-                    <td>{{ panelist.full_name }}</td>
-                    <td>(<a href="mailto:{{ panelist.email }}">{{ panelist.email }}</a>)</td>
-                    <td>
-                          {% if panelist.cellphone %}
-                              [{{ panelist.cellphone }}]
-                          {% endif %}
-                    </td>
-                    <td>
-                        {% if panelist.submitter %}
-                            <b>(Point of Contact)</b>
-                        {% else %}
-                            <form method="post" action="change_submitter">
-                                {{ csrf_token() }}
-                                <input type="hidden" name="applicant_id" value="{{ panelist.id }}" />
-                                <input type="submit" value="Make Point of Contact" />
-                            </form>
-                        {% endif %}
-                    </td>
-                    <td>
-                      {% if not panelist.submitter and not panelist.attendee_id%}
-                            <form method="post" action="remove_submitter">
-                                {{ csrf_token() }}
-                                <input type="hidden" name="applicant_id" value="{{ panelist.id }}" />
-                                <input type="submit" value="Remove Panelist" />
-                            </form>
-                      {% endif %}
-                    </td>
-                </tr>
-          {% endfor %}
-          </table>
-            <br/> <a href="form?id={{ app.id }}">Edit this application</a>
-            <br/> <a href="index">Return to list of panel applications</a>
-        </div>
+    <div class="form-group" style="margin-top: 15px;">
+      <div class="col-sm-9 col-sm-offset-3">
+        <a href="form?id={{ app.id }}" class="btn btn-primary">Edit this application</a>
+      </div>
     </div>
+
+    {{ panel_macros.app_panelists_form(app, is_readonly=True, is_admin=True) }}
 </div>
 
 {% endblock %}

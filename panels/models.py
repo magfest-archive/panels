@@ -1,4 +1,12 @@
 from panels import *
+from panels.config import panels_config as config
+
+
+def url_domain(url):
+    url = url.strip().replace('//', '/')
+    url = re.sub(r'^https?:/', '', url)
+    url = re.sub(r'^www\.', '', url)
+    return url.split('/', 1)[0].strip('@#?=. ')
 
 
 @Session.model_mixin
@@ -8,6 +16,42 @@ class SessionMixin:
 
     def panel_applicants(self):
         return self.query(PanelApplicant).options(joinedload(PanelApplicant.application)).order_by('first_name', 'last_name')
+
+
+class SocialMediaMixin(JSONColumnMixin('social_media', c.SOCIAL_MEDIA)):
+    social_media_urls = config.get('social_media_urls', {})
+    social_media_placeholders = config.get('social_media_placeholders', {})
+
+    @classmethod
+    def get_placeholder(cls, name):
+        name = cls.unqualify(name)
+        return cls.social_media_placeholders.get(name, '')
+
+    @property
+    def has_social_media(self):
+        return any(getattr(self, f) for f in self.social_media_fields.keys())
+
+    def __getattr__(self, name):
+        if name.endswith('_url'):
+            field_name = self.unqualify(name[:-4])
+            if field_name in self.social_media_fields:
+                attr = super(SocialMediaMixin, self).__getattr__(field_name)
+                attr = attr.strip('@#?=. ') if attr else ''
+                if attr:
+                    if attr.startswith('http:') or attr.startswith('https:'):
+                        return attr
+                    else:
+                        url = self.social_media_urls.get(field_name, '{}')
+                        if url_domain(url.format('')) in url_domain(attr):
+                            return attr
+                        return url.format(attr)
+                return ''
+            else:
+                return super(SocialMediaMixin, self).__getattr__(name)
+        elif name.endswith('_placeholder'):
+            return self.get_placeholder(name[:-12])
+        else:
+            return super(SocialMediaMixin, self).__getattr__(name)
 
 
 @Session.model_mixin
@@ -98,12 +142,14 @@ class PanelApplication(MagModel):
 
     @property
     def submitter(self):
-        try:
-            [submitter] = [a for a in self.applicants if a.submitter]
-        except:
-            return None
-        else:
-            return submitter
+        for a in self.applicants:
+            if a.submitter:
+                return a
+        return None
+
+    @property
+    def other_panelists(self):
+        return [a for a in self.applicants if not a.submitter]
 
     @property
     def matched_attendees(self):
@@ -114,7 +160,7 @@ class PanelApplication(MagModel):
         return [a for a in self.applicants if not a.attendee_id]
 
 
-class PanelApplicant(MagModel):
+class PanelApplicant(SocialMediaMixin, MagModel):
     app_id = Column(UUID, ForeignKey('panel_application.id', ondelete='cascade'))
     attendee_id = Column(UUID, ForeignKey('attendee.id', ondelete='cascade'), nullable=True)
 
@@ -123,6 +169,16 @@ class PanelApplicant(MagModel):
     last_name  = Column(UnicodeText)
     email      = Column(UnicodeText)
     cellphone  = Column(UnicodeText)
+    communication_pref = Column(MultiChoice(c.COMMUNICATION_PREF_OPTS))
+    other_communication_pref = Column(UnicodeText)
+
+    occupation = Column(UnicodeText)
+    website = Column(UnicodeText)
+    other_credentials = Column(UnicodeText)
+
+    @property
+    def has_credentials(self):
+        return any([self.occupation, self.website, self.other_credentials])
 
     @property
     def full_name(self):

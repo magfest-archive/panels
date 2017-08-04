@@ -1,22 +1,18 @@
 {% extends "base.html" %}{% set admin_area=True %}
 {% block title %}Edit Panel Application{% endblock %}}
 {% block content %}
+{% include "panels_common.html" %}
 
-<div class="masthead"></div>
-<div class="panel panel-default">
-    <div class="panel-body">
-    <h2>Edit Panel</h2>
-    <form method="post" action="form" class="form-horizontal" role="form">
-        {{ csrf_token() }}
-        <input type="hidden" name="id" value="{{ app.id }}" />
-        {% include "panel_app_form.html" %}
-        <div class="form-group">
-            <div class="col-sm-6 col-sm-offset-3">
-                <button type="submit" class="btn btn-primary">Update</button>
-            </div>
+<h1>Edit Panel</h1>
+<form method="post" action="form" class="form-horizontal" role="form">
+    {{ csrf_token() }}
+    <input type="hidden" name="id" value="{{ app.id }}" />
+    {% include "panel_app_form.html" %}
+    <div class="form-group">
+        <div class="col-sm-6 col-sm-offset-3">
+            <button type="submit" class="btn btn-primary">Update Panel</button>
         </div>
-    </form>
-  </div>
-</div>
+    </div>
+</form>
 
 {% endblock %}
