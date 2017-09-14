@@ -19,29 +19,29 @@ class SessionMixin:
 
 
 class SocialMediaMixin(JSONColumnMixin('social_media', c.SOCIAL_MEDIA)):
-    social_media_urls = config.get('social_media_urls', {})
-    social_media_placeholders = config.get('social_media_placeholders', {})
+    _social_media_urls = config.get('social_media_urls', {})
+    _social_media_placeholders = config.get('social_media_placeholders', {})
 
     @classmethod
     def get_placeholder(cls, name):
         name = cls.unqualify(name)
-        return cls.social_media_placeholders.get(name, '')
+        return cls._social_media_placeholders.get(name, '')
 
     @property
     def has_social_media(self):
-        return any(getattr(self, f) for f in self.social_media_fields.keys())
+        return any(getattr(self, f) for f in self._social_media_fields.keys())
 
     def __getattr__(self, name):
         if name.endswith('_url'):
             field_name = self.unqualify(name[:-4])
-            if field_name in self.social_media_fields:
+            if field_name in self._social_media_fields:
                 attr = super(SocialMediaMixin, self).__getattr__(field_name)
                 attr = attr.strip('@#?=. ') if attr else ''
                 if attr:
                     if attr.startswith('http:') or attr.startswith('https:'):
                         return attr
                     else:
-                        url = self.social_media_urls.get(field_name, '{}')
+                        url = self._social_media_urls.get(field_name, '{}')
                         if url_domain(url.format('')) in url_domain(attr):
                             return attr
                         return url.format(attr)

@@ -17,10 +17,10 @@
         if (count < $ops.size()) {
             $ops.slice(count).remove();
         } else {
-            for (var i = $ops.size(); i < count; i++) {
+            for (var i = $ops.size() + 1; i <= count; i++) {
                 var suffix = '_' + i;
                 $opPanel = $template.clone();
-                $opPanel.find('h2').text($opPanel.find('h2').text() + (i + 1));
+                $opPanel.find('h2').text($opPanel.find('h2').text() + i);
                 $opPanel.find('input').attr('name', function() { return $(this).attr('name') + suffix } );
                 $opPanel.find('textarea').attr('name', function() { return $(this).attr('name') + suffix } );
                 $opPanel.appendTo('#panelists_container');
@@ -41,7 +41,7 @@
   <div class="panel panel-default">
     <div class="panel-body">
       <h2>Other Panelist #</h2>
-      {{ panel_macros.panelist_form(PanelApplicant, include_cellphone=False, include_communication_pref=False) }}
+      {{ panel_macros.panelist_form(PanelApplicant, require_cellphone=False, require_communication_pref=False) }}
     </div>
   </div>
 </div>
@@ -76,9 +76,7 @@
 
         {# The action is set to "post_index" in order to bypass the NGINX cache. -#}
         <form method="post" action="post_index" class="form-horizontal" role="form">
-            <input type="hidden" name="submitter" value="1" />
-
-            {{ panel_macros.panelist_form(panelist) }}
+            {{ panel_macros.panelist_form(panelist, suffix='_0') }}
 
             <h3>Panel Information</h3>
             {% include "panel_app_form.html" %}
@@ -180,8 +178,8 @@
                     {{ panel_macros.panelist_form(
                         op,
                         suffix='_' + loop.index0|string,
-                        include_cellphone=False,
-                        include_communication_pref=False) }}
+                        require_cellphone=False,
+                        require_communication_pref=False) }}
                   </div>
                 </div>
               {% endfor %}
