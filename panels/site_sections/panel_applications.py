@@ -3,7 +3,11 @@ from panels import *
 
 OTHER_PANELISTS_FIELDS = [
     'first_name', 'last_name', 'email', 'occupation', 'website',
-    'other_credentials'] + list(PanelApplicant.social_media_fields.keys())
+    'other_credentials'] + list(PanelApplicant._social_media_fields.keys())
+
+
+PANELISTS_FIELDS = OTHER_PANELISTS_FIELDS + [
+    'cellphone', 'communication_pref', 'other_communication_pref']
 
 
 def check_other_panelists(other_panelists):
@@ -24,10 +28,12 @@ class Root:
         valid session cookie. Thus, this page is also exposed as "post_index".
         """
         app = session.panel_application(params, checkgroups={'tech_needs'}, restricted=True, ignore_csrf=True)
-        panelist = session.panel_applicant(params, restricted=True, ignore_csrf=True)
+        panelist_params = {attr: params.get('{}_0'.format(attr)) for attr in PANELISTS_FIELDS if params.get('{}_0'.format(attr))}
+        panelist = session.panel_applicant(panelist_params, restricted=True, ignore_csrf=True)
         panelist.application = app
+        panelist.submitter = True
         other_panelists = []
-        for i in range(int(params.get('other_panelists', 0))):
+        for i in range(1, int(params.get('other_panelists', 0)) + 1):
             applicant = {attr: params.get('{}_{}'.format(attr, i)) for attr in OTHER_PANELISTS_FIELDS}
             other_panelists.append(PanelApplicant(application=app, **applicant))
 

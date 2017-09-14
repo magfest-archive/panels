@@ -56,19 +56,32 @@ class Root:
         app.poc = session.attendee(poc_id)
         raise HTTPRedirect('app?id={}&message={}{}', app.id, 'Point of contact was updated to ', app.poc.full_name)
 
+    def edit_panelist(self, session, **params):
+        is_post = cherrypy.request.method == 'POST'
+        panelist = session.panel_applicant(params, ignore_csrf=not is_post)
+        application = session.query(PanelApplication).get(params.get('app_id', panelist.app_id))
+        if is_post:
+            message = check(panelist)
+            if message:
+                return {'message': message, 'panelist': panelist, 'application': application}
+            session.add(panelist)
+            session.commit()
+            raise HTTPRedirect('app?id={}&message={} was successfully updated', application.id, panelist.full_name)
+        return {'panelist': PanelApplicant if panelist.is_new else panelist, 'application': application}
+
     @csrf_protected
     def change_submitter(self, session, applicant_id):
         panelist = session.panel_applicant(applicant_id)
         for each_panelist in panelist.application.applicants:
             each_panelist.submitter = False
         panelist.submitter = True
-        raise HTTPRedirect('app?id={}&message={}{}', panelist.app_id, 'Point of contact was updated to ', panelist.full_name)
+        raise HTTPRedirect('app?id={}&message=Point of contact was updated to {}', panelist.app_id, panelist.full_name)
 
     @csrf_protected
     def remove_submitter(self, session, applicant_id):
         panelist = session.panel_applicant(applicant_id)
         session.delete(panelist)
-        raise HTTPRedirect('app?id={}&message={}{}', panelist.app_id, 'Point of contact was removed from', panelist.full_name)
+        raise HTTPRedirect('app?id={}&message=Panelist {} was removed', panelist.app_id, panelist.full_name)
 
     def associate(self, session, message='', **params):
         app = session.panel_application(params)

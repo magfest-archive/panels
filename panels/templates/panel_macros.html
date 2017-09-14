@@ -3,17 +3,21 @@
 
 {% macro panelist_form(
     panelist,
+    application=None,
     suffix='',
-    include_cellphone=True,
-    include_communication_pref=True,
+    require_cellphone=True,
+    require_communication_pref=True,
     is_readonly=False,
     is_admin=False) -%}
 
   {%- set is_class = panelist is class -%}
+  {%- set app = application if is_class else panelist.application -%}
 
   {% if not is_readonly or (not is_class and (panelist.has_credentials or panelist.has_social_media)) -%}
     <h3>Personal Information</h3>
   {%- endif %}
+  <input type="hidden" name="app_id{{ suffix }}" value="{{ app.id }}"/>
+  <input type="hidden" name="id{{ suffix }}" value="{{ 'None' if is_class else panelist.id }}"/>
   {{ macros.form_group(
       panelist,
       'first_name',
@@ -36,19 +40,17 @@
       is_required=True,
       is_readonly=is_readonly,
       is_admin=is_admin) }}
-  {% if include_cellphone -%}
-    {{ macros.form_group(
-        panelist,
-        'cellphone',
-        suffix=suffix,
-        type='tel',
-        label='Phone Number',
-        help='Please make this the phone number at which we can most easily reach you before the event.',
-        is_required=True,
-        is_readonly=is_readonly,
-        is_admin=is_admin) }}
-  {%- endif %}
-  {% if include_communication_pref -%}
+  {{ macros.form_group(
+      panelist,
+      'cellphone',
+      suffix=suffix,
+      type='tel',
+      label='Phone Number',
+      help='Please make this the phone number at which we can most easily reach you before the event.',
+      is_required=require_cellphone,
+      is_readonly=is_readonly,
+      is_admin=is_admin) }}
+  {% if not is_readonly or (not is_class and (panelist.communication_pref or panelist.other_communication_pref)) -%}
     {{ macros.form_checkgroup(
         panelist,
         'communication_pref',
@@ -56,7 +58,7 @@
         other_placeholder='What other way should we contact you?',
         suffix=suffix,
         label='Communication Preference',
-        is_required=True,
+        is_required=require_communication_pref,
         is_readonly=is_readonly,
         is_admin=is_admin) }}
   {%- endif %}
@@ -92,7 +94,7 @@
 
   {% if not is_readonly or (not is_class and panelist.has_social_media) -%}
     <h3>Social Media</h3>
-    {% for name, label in panelist.social_media_fields.items() -%}
+    {% for name, label in panelist._social_media_fields.items() -%}
       {{ macros.form_group(
           panelist,
           name,
@@ -109,7 +111,10 @@
 
 
 {% macro app_panelists_form(app, is_readonly=False, is_admin=False) -%}
-  <h1>Panelists</h1>
+  <h1>
+    Panelists
+    <a class="btn btn-sm btn-primary" href="edit_panelist?app_id={{ app.id }}">Add Panelist</a>
+  </h1>
   <div id="panelists_container">
     {% if app.submitter %}
       <div class="panel panel-default">
@@ -124,6 +129,9 @@
               </small>
             {% endif %}
           </h2>
+          <div class="panelist-buttons">
+            <a class="btn btn-sm btn-primary" href="edit_panelist?id={{ app.submitter.id }}">Edit Panelist</a>
+          </div>
           {{ panelist_form(app.submitter, suffix='_0', is_readonly=is_readonly, is_admin=is_admin) }}
         </div>
       </div>
@@ -142,12 +150,13 @@
             {% endif %}
           </h2>
           <div class="panelist-buttons">
-            <form method="post" action="change_submitter">
+            <form method="post" action="change_submitter" class="btn-group" role="group">
+              <a class="btn btn-sm btn-primary" href="edit_panelist?id={{ panelist.id }}">Edit Panelist</a>
               {{ csrf_token() }}
               <input type="hidden" name="applicant_id" value="{{ panelist.id }}" />
-              <input type="submit" class="btn btn-sm btn-primary" value="Make Point of Contact" />
+              <input type="submit" class="btn btn-sm btn-primary" value="Make POC" />
             </form>
-            <form method="post" action="remove_submitter">
+            <form method="post" action="remove_submitter" onSubmit="return confirm('Are you sure you want to remove {{ panelist.full_name }}?');">
               {{ csrf_token() }}
               <input type="hidden" name="applicant_id" value="{{ panelist.id }}" />
               <input type="submit" class="btn btn-sm btn-danger" value="Remove Panelist" />
@@ -157,8 +166,8 @@
           {{ panelist_form(
               panelist,
               suffix='_' + loop.index|string,
-              include_cellphone=False,
-              include_communication_pref=False,
+              require_cellphone=False,
+              require_communication_pref=False,
               is_readonly=is_readonly,
               is_admin=is_admin) }}
         </div>
