@@ -16,7 +16,7 @@ class Root:
         }
 
     def form(self, session, message='', **params):
-        app = session.panel_application(params)
+        app = session.panel_application(params, checkgroups=PanelApplication.all_checkgroups)
         if cherrypy.request.method == 'POST':
             message = check(app)
             if not message:
@@ -58,7 +58,7 @@ class Root:
 
     def edit_panelist(self, session, **params):
         is_post = cherrypy.request.method == 'POST'
-        panelist = session.panel_applicant(params, ignore_csrf=not is_post)
+        panelist = session.panel_applicant(params, checkgroups=PanelApplicant.all_checkgroups, ignore_csrf=not is_post)
         application = session.query(PanelApplication).get(params.get('app_id', panelist.app_id))
         if is_post:
             message = check(panelist)
