@@ -61,7 +61,7 @@ class Root:
             if not message:
                 message = process_panel_app(session, app, panelist, **params)
                 if not message:
-                    raise HTTPRedirect('guest?poc_id={}message={}', poc_id, 'Your panel application has been submitted')
+                    raise HTTPRedirect('index?message={}', 'Your panel application has been submitted')
 
         return {
             'app': app,
