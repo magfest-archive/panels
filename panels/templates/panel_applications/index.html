@@ -9,34 +9,15 @@
     var showOrHidePOC = function () {
         setVisible('#point_of_contact', $.val('other_panelists'));
     };
-    var showOrHideOtherPanelists = function () {
-        var count = $.val('other_panelists'),
-            $template = $('#panelist_form_template > .panel'),
-            $ops = $('#panelists_container > .panel');
-        setVisible('#panelists_container', count);
-        if (count < $ops.size()) {
-            $ops.slice(count).remove();
-        } else {
-            for (var i = $ops.size() + 1; i <= count; i++) {
-                var suffix = '_' + i;
-                $opPanel = $template.clone();
-                $opPanel.find('h2').text($opPanel.find('h2').text() + i);
-                $opPanel.find('input').attr('name', function() { return $(this).attr('name') + suffix } );
-                $opPanel.find('textarea').attr('name', function() { return $(this).attr('name') + suffix } );
-                $opPanel.appendTo('#panelists_container');
-            }
-        }
-    };
 
     $(function () {
         $('<br/>').insertBefore('nobr');
         showOrHidePOC();
-        showOrHideOtherPanelists();
         $.field('other_panelists').on('change', showOrHidePOC);
-        $.field('other_panelists').on('change', showOrHideOtherPanelists);
     });
 </script>
 
+{# This needs to be placed outside the <form> tag or we get validation errors #}
 <div id="panelist_form_template" style="display: none;">
   <div class="panel panel-default">
     <div class="panel-body">
@@ -161,29 +142,7 @@
             </div>
 
             <h3>Other Panelists</h3>
-            <div class="form-group">
-                <div class="col-sm-6 col-sm-offset-3">
-                    <select name="other_panelists">
-                        {{ int_options(0, 9, ops_count) }}
-                    </select>
-                    How many other panelists will be on this panel?
-                </div>
-            </div>
-
-            <div id="panelists_container">
-              {% for op in other_panelists %}
-                <div class="panel panel-default">
-                  <div class="panel-body">
-                    <h2>Other Panelist #{{ loop.index }}</h2>
-                    {{ panel_macros.panelist_form(
-                        op,
-                        suffix='_' + loop.index0|string,
-                        require_cellphone=False,
-                        require_communication_pref=False) }}
-                  </div>
-                </div>
-              {% endfor %}
-            </div>
+            {% include "other_panelists_form.html" %}
 
             <div id="point_of_contact" class="form-group" style="display:none">
                 <p class="col-sm-9 col-sm-offset-3">
@@ -202,7 +161,7 @@
                 </div>
             </div>
 
-            <h3>Panelist Terms of Accomodation</h3>
+            <h3>Panelist Terms of Accommodation</h3>
             <div class="form-group">
                 <p class="col-sm-9 col-sm-offset-3">
                     "Panelists" at {{ c.EVENT_NAME }} receive free admission and

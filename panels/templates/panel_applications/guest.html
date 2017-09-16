@@ -1,0 +1,81 @@
+{% extends "preregistration/preregbase.html" %}
+{% import 'panel_macros.html' as panel_macros %}
+{% block title %}Panel Application{% endblock %}
+{% block backlink %}{% endblock %}
+{% block content %}
+  {% include "panels_common.html" %}
+
+  {# This needs to be placed outside the <form> tag or we get validation errors #}
+  <div id="panelist_form_template" style="display: none;">
+    <div class="panel panel-default">
+      <div class="panel-body">
+        <h2>Other Panelist #</h2>
+        {{ panel_macros.panelist_form(PanelApplicant, require_cellphone=False, require_communication_pref=False) }}
+      </div>
+    </div>
+  </div>
+
+  <div class="masthead"></div>
+  <div class="panel panel-default">
+    <div class="panel-body">
+    {% if c.APP_LIMIT and attendee.panel_applications|length >= c.APP_LIMIT %}
+      You have already submitted the maximum number of panels ({{ c.APP_LIMIT }}). Please contact your liaison if
+      you need to change a panel or submit more ideas.
+    {% else %}
+      {% if c.APP_LIMIT %}
+        You may submit up to {{ c.APP_LIMIT }} panel ideas.
+        {% if attendee.panel_applications %}
+          You have already submitted {{ attendee.panel_applications|length }}.
+        {% endif %}
+      {% endif %}
+      <form method="post" action="guest" class="form-horizontal" role="form">
+
+      <input type="hidden" name="poc_id" value="{{ poc_id }}" />
+
+      <h3>Panel Information</h3>
+      {% include "panel_app_form.html" %}
+
+      <h3>Additional Information</h3>
+      <div class="form-group">
+        <label class="col-sm-3 control-label">When are you unavailable?</label>
+        <div class="col-sm-6">
+          <textarea class="form-control" name="unavailable" rows="4" required="required">{{ app.unavailable }}</textarea>
+        </div>
+        <div class="clearfix"></div>
+        <p class="help-block col-sm-9 col-sm-offset-3">
+          Please list all times during the event when you will be UNAVAILABLE to hold your panel.
+          If we book you into a time slot, that is very difficult to change, so please be thorough.
+        </p>
+      </div>
+      <div class="form-group">
+        <div class="col-sm-9 col-sm-offset-3">
+          <label class="checkbox-label" style="font-weight: normal;">
+            <input type="checkbox" name="verify_unavailable" {% if verify_unavailable %}checked{% endif %} />
+            I verify I am available at any time during the event EXCEPT for the times listed above.
+          </label>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="col-sm-3 control-label">What else might we need to know?</label>
+        <div class="col-sm-6">
+          <textarea class="form-control" name="extra_info" rows="4">{{ app.extra_info }}</textarea>
+        </div>
+        <div class="clearfix"></div>
+        <p class="help-block col-sm-9 col-sm-offset-3">
+          This can include information not for public consumption, but merely things the event needs to know.
+        </p>
+      </div>
+
+      <h3>Other Panelists</h3>
+      {% include "other_panelists_form.html" %}
+
+      <div class="form-group">
+        <div class="col-sm-6 col-sm-offset-3">
+          <button type="submit" class="btn btn-primary">Submit Panel Idea</button>
+        </div>
+      </div>
+      </form>
+    {% endif %}
+    </div>
+  </div>
+{% endblock %}
