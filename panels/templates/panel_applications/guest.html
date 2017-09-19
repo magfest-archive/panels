@@ -5,15 +5,6 @@
 {% block content %}
   {% include "panels_common.html" %}
 
-  {# This needs to be placed outside the <form> tag or we get validation errors #}
-  <div id="panelist_form_template" style="display: none;">
-    <div class="panel panel-default">
-      <div class="panel-body">
-        <h2>Other Panelist #</h2>
-        {{ panel_macros.panelist_form(PanelApplicant, require_cellphone=False, require_communication_pref=False) }}
-      </div>
-    </div>
-  </div>
 
   <div class="masthead"></div>
   <div class="panel panel-default">

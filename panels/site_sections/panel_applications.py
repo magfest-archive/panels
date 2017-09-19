@@ -17,7 +17,7 @@ def check_other_panelists(other_panelists):
             return '{} (for Other Panelist #{})'.format(message, i + 1)
 
 
-def check_extra_verifications(other_panelists=False, **params):
+def check_extra_verifications(**params):
     """
     Panelists submitting an application not associated with an attendee have some extra checkboxes they have
     to tick, so we validate them all here.
@@ -27,11 +27,11 @@ def check_extra_verifications(other_panelists=False, **params):
             c.EXPECTED_RESPONSE)
     elif 'verify_tos' not in params:
         return 'You must accept our Terms of Accommodation'
-    elif other_panelists and 'verify_poc' not in params:
+    elif 'other_panelists' in params and 'verify_poc' not in params:
         return 'You must agree to being the point of contact for your group'
 
 
-def other_panelists_from_params(app, **params):
+def compile_other_panelists_from_params(app, **params):
     # Turns form fields into a list of dicts of extra panelists on a panel application.
     other_panelists = []
     for i in range(1, int(params.get('other_panelists', 0)) + 1):
@@ -55,11 +55,12 @@ class Root:
         panelist = session.panel_applicant(panelist_params, checkgroups=PanelApplicant.all_checkgroups, restricted=True, ignore_csrf=True)
         panelist.application = app
         panelist.submitter = True
+        other_panelists = compile_other_panelists_from_params(app, **params)
 
         if cherrypy.request.method == 'POST':
-            message = check(panelist) or check_extra_verifications(int(params.get('other_panelists', 0)), **params)
+            message = check(panelist) or check_extra_verifications(**params)
             if not message:
-                message = process_panel_app(session, app, panelist, **params)
+                message = process_panel_app(session, app, panelist, other_panelists, **params)
                 if not message:
                     raise HTTPRedirect('index?message={}', 'Your panel application has been submitted')
 
@@ -67,7 +68,7 @@ class Root:
             'app': app,
             'message': message,
             'panelist': panelist,
-            'other_panelists': other_panelists_from_params(app, **params),
+            'other_panelists': other_panelists,
             'verify_tos': params.get('verify_tos'),
             'verify_poc': params.get('verify_poc'),
             'verify_waiting': params.get('verify_waiting'),
@@ -94,9 +95,10 @@ class Root:
             email=attendee.email,
             cellphone=attendee.cellphone
         )
+        other_panelists = compile_other_panelists_from_params(app, **params)
 
         if cherrypy.request.method == 'POST':
-            message = process_panel_app(session, app, panelist, **params)
+            message = process_panel_app(session, app, panelist, other_panelists, **params)
             if not message:
                 raise HTTPRedirect('guest?poc_id={}&message={}', poc_id, 'Your panel application has been submitted')
 
@@ -105,22 +107,21 @@ class Root:
             'message': message,
             'attendee': attendee,
             'poc_id': poc_id,
-            'other_panelists': other_panelists_from_params(app, **params),
+            'other_panelists': other_panelists,
             'verify_unavailable': params.get('verify_unavailable')
         }
 
 
-def process_panel_app(session, app, panelist, **params):
+def process_panel_app(session, app, panelist, other_panelists_compiled, **params):
     """
     Checks various parts of a new panel application, either submitted by guests or by non-attendees,
     and then adds them to a session.
     """
-    other_panelists = other_panelists_from_params(app, **params)
 
-    message = check(app) or check_other_panelists(other_panelists) or ''
+    message = check(app) or check_other_panelists(other_panelists_compiled) or ''
     if not message and 'verify_unavailable' not in params:
         message = 'You must check the box to confirm that you are only unavailable at the specified times'
     elif not message:
-        session.add_all([app, panelist] + other_panelists)
+        session.add_all([app, panelist] + other_panelists_compiled)
 
     return message
