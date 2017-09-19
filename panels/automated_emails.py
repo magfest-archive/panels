@@ -18,6 +18,7 @@ class PanelAppEmail(AutomatedEmail):
 
 
 PanelAppEmail('Your {EVENT_NAME} Panel Application Has Been Received: <PANEL_NAME>', 'panel_app_confirmation.txt',
+              needs_approval=False,
               ident='panel_received')
 
 PanelAppEmail('Your {EVENT_NAME} Panel Application Has Been Accepted: <PANEL_NAME>', 'panel_app_accepted.txt',
