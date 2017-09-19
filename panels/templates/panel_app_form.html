@@ -15,11 +15,16 @@
         setVisible($.field('length_reason').parents('.form-group'), isNotAnHour);
         $.field('length_reason').prop('required', isNotAnHour);
     };
+    var showOrHideModHelp = function() {
+        setVisible($('#mod_help'), $.val('presentation') === {{ c.GROUP_DISCUSSION }})
+    };
 
     $(function () {
         showOrHideOtherPresentation();
         showOrHideOtherLength();
+        showOrHideModHelp();
         $.field('presentation').on('change', showOrHideOtherPresentation);
+        $.field('presentation').on('change', showOrHideModHelp);
         $.field('length').on('change', showOrHideOtherLength);
     });
 </script>
@@ -40,6 +45,11 @@
     <div class="col-sm-6 col-sm-offset-3" style="margin-top: 15px;">
         <input type="input" class="form-control" name="other_presentation" value="{{ app.other_presentation }}" placeholder="Please describe type of panel" />
     </div>
+    <div class="clearfix"></div>
+    <p class="help-block col-sm-9 col-sm-offset-3" id="mod_help">
+      Please include who will moderate the panel in the description. If you will not be moderating the panel, please add
+      the moderator as a panelist at the bottom of this application.
+    </p>
 </div>
 <div class="form-group">
     <label class="col-sm-3 control-label">Panel Description</label>
