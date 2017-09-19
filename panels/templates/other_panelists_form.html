@@ -52,7 +52,7 @@
         <h2>Other Panelist #{{ loop.index }}</h2>
         {{ panel_macros.panelist_form(
             op,
-            suffix='_' + loop.index0|string,
+            suffix='_' + loop.index1|string,
             include_cellphone=False,
             include_communication_pref=False) }}
       </div>
