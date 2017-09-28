@@ -22,7 +22,9 @@ def check_extra_verifications(**params):
     Panelists submitting an application not associated with an attendee have some extra checkboxes they have
     to tick, so we validate them all here.
     """
-    if 'verify_waiting' not in params:
+    if 'verify_unavailable' not in params:
+        return 'You must check the box to confirm that you are only unavailable at the specified times'
+    elif 'verify_waiting' not in params:
         return 'You must check the box to verify you understand that you will not hear back until {}'.format(
             c.EXPECTED_RESPONSE)
     elif 'verify_tos' not in params:
@@ -75,7 +77,7 @@ class Root:
             'verify_unavailable': params.get('verify_unavailable')
         }
 
-    def guest(self, session, poc_id, message='', **params):
+    def guest(self, session, poc_id, return_to='', message='', **params):
         """
         In some cases, we want pre-existing attendees (e.g., guests) to submit panel ideas.
         This submission form bypasses the need to enter in one's personal and contact info
@@ -96,11 +98,13 @@ class Root:
             cellphone=attendee.cellphone
         )
         other_panelists = compile_other_panelists_from_params(app, **params)
+        go_to = return_to if 'ignore_return_to' not in params and return_to \
+            else 'guest?poc_id=' + poc_id + '&return_to=' + return_to
 
         if cherrypy.request.method == 'POST':
             message = process_panel_app(session, app, panelist, other_panelists, **params)
             if not message:
-                raise HTTPRedirect('guest?poc_id={}&message={}', poc_id, 'Your panel application has been submitted')
+                raise HTTPRedirect(go_to + '&message={}', 'Your panel application has been submitted')
 
         return {
             'app': app,
@@ -108,7 +112,7 @@ class Root:
             'attendee': attendee,
             'poc_id': poc_id,
             'other_panelists': other_panelists,
-            'verify_unavailable': params.get('verify_unavailable')
+            'return_to': return_to
         }
 
 
@@ -119,9 +123,7 @@ def process_panel_app(session, app, panelist, other_panelists_compiled, **params
     """
 
     message = check(app) or check_other_panelists(other_panelists_compiled) or ''
-    if not message and 'verify_unavailable' not in params:
-        message = 'You must check the box to confirm that you are only unavailable at the specified times'
-    elif not message:
+    if not message:
         session.add_all([app, panelist] + other_panelists_compiled)
 
     return message

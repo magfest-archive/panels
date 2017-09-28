@@ -5,15 +5,19 @@
         $.field('other_presentation').prop('required', isOtherPresentation);
     };
     var showOrHideOtherLength = function() {
-        var isOther = $.val('length') === {{ c.OTHER }},
-            isNotAnHour = $.val('length') != {{ c.SIXTY_MIN }};
+        var isOther = $.val('length') === {{ c.OTHER }};
         setVisible($('#other-length'), isOther);
         $.field('length_text').prop('required', isOther);
         if (!isOther) {
             $.field('length_text').val('');
         }
+    };
+    var showOrHideLengthReason = function () {
+        {% if not poc_id %}
+        var isNotAnHour = $.val('length') != {{ c.SIXTY_MIN }};
         setVisible($.field('length_reason').parents('.form-group'), isNotAnHour);
         $.field('length_reason').prop('required', isNotAnHour);
+        {% endif %}
     };
     var showOrHideModHelp = function() {
         setVisible($('#mod_help'), $.val('presentation') === {{ c.GROUP_DISCUSSION }})
@@ -22,10 +26,12 @@
     $(function () {
         showOrHideOtherPresentation();
         showOrHideOtherLength();
+        showOrHideLengthReason();
         showOrHideModHelp();
         $.field('presentation').on('change', showOrHideOtherPresentation);
         $.field('presentation').on('change', showOrHideModHelp);
         $.field('length').on('change', showOrHideOtherLength);
+        $.field('length').on('change', showOrHideLengthReason);
     });
 </script>
 <div class="form-group">
@@ -77,7 +83,7 @@
         An hour is typical, including time for Q&A.
     </p>
 </div>
-<div class="form-group">
+<div class="form-group"{% if poc_id %} style="display:none"{% endif %}>
     <label class="col-sm-3 control-label">Why do you need the extra time?</label>
     <div class="col-sm-6">
         <textarea class="form-control" name="length_reason" rows="4">{{ app.length_reason }}</textarea>

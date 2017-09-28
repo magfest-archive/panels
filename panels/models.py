@@ -112,6 +112,7 @@ class PanelApplication(MagModel):
     length_reason = Column(UnicodeText)
     description = Column(UnicodeText)
     unavailable = Column(UnicodeText)
+    available = Column(UnicodeText)
     affiliations = Column(UnicodeText)
     past_attendance = Column(UnicodeText)
 

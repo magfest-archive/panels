@@ -21,8 +21,7 @@ def overlapping_events(event, other_event_id=None):
 PanelApplication.required = [
     ('name', 'Panel Name'),
     ('description', 'Panel Description'),
-    ('length', 'Panel Length'),
-    ('unavailable', 'Your unavailability'),
+    ('length', 'Panel Length')
 ]
 PanelApplicant.required = [
     ('first_name', 'First Name'),
@@ -45,36 +44,48 @@ def pa_phone(pa):
 
 
 @validation.PanelApplication
-def pa_other(pa):
-    if pa.presentation == c.OTHER and not pa.other_presentation:
+def unavailability(app):
+    if not app.unavailable and not app.poc_id:
+        return 'Your unavailability is required.'
+
+
+@validation.PanelApplication
+def availability(app):
+    if not app.available and app.poc_id:
+        return 'Please list the times you are available to hold this panel!'
+
+
+@validation.PanelApplication
+def panel_other(app):
+    if app.presentation == c.OTHER and not app.other_presentation:
         return 'Since you selected "Other" for your type of panel, please describe it'
 
 
 @validation.PanelApplication
-def pa_deadline(pa):
-    if localized_now() > c.PANEL_APP_DEADLINE and not c.HAS_PANEL_APPS_ACCESS:
+def app_deadline(app):
+    if localized_now() > c.PANEL_APP_DEADLINE and not c.HAS_PANEL_APPS_ACCESS and not app.poc_id:
         return 'We are now past the deadline and are no longer accepting panel applications'
 
 
 @validation.PanelApplication
-def specify_other_time(pa):
-    if pa.length == c.OTHER and not pa.length_text:
+def specify_other_time(app):
+    if app.length == c.OTHER and not app.length_text:
         return 'Please specify how long your panel will be.'
 
 
 @validation.PanelApplication
-def specify_nonstandard_time(pa):
-    if pa.length != c.SIXTY_MIN and not pa.length_reason:
+def specify_nonstandard_time(app):
+    if app.length != c.SIXTY_MIN and not app.length_reason and not app.poc_id:
         return 'Please explain why your panel needs to be longer than sixty minutes.'
 
 
 @validation.PanelApplication
-def specify_table_needs(pa):
-    if pa.need_tables and not pa.tables_desc:
+def specify_table_needs(app):
+    if app.need_tables and not app.tables_desc:
         return 'Please describe how you need tables set up for your panel.'
 
 
 @validation.PanelApplication
-def specify_cost_details(pa):
-    if pa.has_cost and not pa.cost_desc:
+def specify_cost_details(app):
+    if app.has_cost and not app.cost_desc:
         return 'Please describe the materials you will provide and how much you will charge attendees for them.'
