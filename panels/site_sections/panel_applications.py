@@ -29,8 +29,6 @@ def check_extra_verifications(**params):
             c.EXPECTED_RESPONSE)
     elif 'verify_tos' not in params:
         return 'You must accept our Terms of Accommodation'
-    elif 'other_panelists' in params and 'verify_poc' not in params:
-        return 'You must agree to being the point of contact for your group'
 
 
 def compile_other_panelists_from_params(app, **params):
@@ -63,7 +61,9 @@ class Root:
             message = check(panelist) or check_extra_verifications(**params)
             if not message:
                 message = process_panel_app(session, app, panelist, other_panelists, **params)
-                if not message:
+                if not message and other_panelists and 'verify_poc' not in params:
+                    message = 'You must agree to being the point of contact for your group'
+                elif not message:
                     raise HTTPRedirect('index?message={}', 'Your panel application has been submitted')
 
         return {
