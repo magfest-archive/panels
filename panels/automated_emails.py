@@ -6,18 +6,18 @@ _attendee_query = AutomatedEmail.queries[Attendee]
 AutomatedEmail.queries[Attendee] = lambda session: _attendee_query(session).options(subqueryload(Attendee.assigned_panelists))
 
 
-# TODO: check to make sure this still works, length of args may have changed with date_filter addition
 class PanelAppEmail(AutomatedEmail):
-    def __init__(self, *args, **kwargs):
-        if len(args) < 3 and 'filter' not in kwargs:
-            kwargs['filter'] = lambda x: True
-        AutomatedEmail.__init__(self, PanelApplication, *args, sender=c.PANELS_EMAIL, **kwargs)
+    def __init__(self, subject, template, filter, ident, **kwargs):
+        AutomatedEmail.__init__(self, PanelApplication, subject, template,
+                                lambda app: (not app.poc_id or app.poc.badge_type != c.GUEST_BADGE) and filter(app),
+                                ident, sender=c.PANELS_EMAIL, **kwargs)
 
     def computed_subject(self, x):
         return self.subject.replace('<PANEL_NAME>', x.name)
 
 
 PanelAppEmail('Your {EVENT_NAME} Panel Application Has Been Received: <PANEL_NAME>', 'panel_app_confirmation.txt',
+              lambda a: True,
               needs_approval=False,
               ident='panel_received')
 
@@ -38,6 +38,6 @@ PanelAppEmail('Your {EVENT_NAME} Panel Has Been Scheduled: <PANEL_NAME>', 'panel
               ident='panel_scheduled')
 
 AutomatedEmail(Attendee, 'Your {EVENT_NAME} Event Schedule', 'panelist_schedule.txt',
-               lambda a: a.assigned_panelists,
+               lambda a: (not a.poc_id or a.poc.badge_type != c.GUEST_BADGE) and a.assigned_panelists,
                ident='event_schedule',
                sender=c.PANELS_EMAIL)
