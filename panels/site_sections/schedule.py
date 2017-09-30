@@ -11,6 +11,7 @@ class Root:
         else:
             raise HTTPRedirect("internal")
 
+    @cached
     def internal(self, session, message=''):
         if c.HIDE_SCHEDULE and not AdminAccount.access_set() and not cherrypy.session.get('staffer_id'):
             return "The " + c.EVENT_NAME + " schedule is being developed and will be made public when it's closer to being finalized."
