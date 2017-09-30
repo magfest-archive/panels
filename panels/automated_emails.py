@@ -38,6 +38,6 @@ PanelAppEmail('Your {EVENT_NAME} Panel Has Been Scheduled: <PANEL_NAME>', 'panel
               ident='panel_scheduled')
 
 AutomatedEmail(Attendee, 'Your {EVENT_NAME} Event Schedule', 'panelist_schedule.txt',
-               lambda a: (not a.poc_id or a.poc.badge_type != c.GUEST_BADGE) and a.assigned_panelists,
+               lambda a: a.badge_type != c.GUEST_BADGE and a.assigned_panelists,
                ident='event_schedule',
                sender=c.PANELS_EMAIL)
