@@ -52,3 +52,20 @@ c.PANEL_ROOMS = [getattr(c, room.upper()) for room in c.PANEL_ROOMS if room not 
 c.ACCESS.update(c.PANEL_ACCESS_LEVELS)
 c.ACCESS_OPTS.extend(c.PANEL_ACCESS_LEVEL_OPTS)
 c.ACCESS_VARS.extend(c.PANEL_ACCESS_LEVEL_VARS)
+
+
+if getattr(c, 'ALT_SCHEDULE_URL', ''):
+    try:
+        url = urlparse(c.ALT_SCHEDULE_URL)
+        schedule_name = 'View Schedule on {}'.format(url.netloc)
+    except:
+        log.warning('Unable to parse ALT_SCHEDULE_URL: "{}"', c.ALT_SCHEDULE_URL)
+        schedule_name = 'View Schedule Externally'
+    schedule_menu = [
+        MenuItem(name=schedule_name, href='../schedule/'),
+        MenuItem(name='View Schedule Internally', href='../schedule/internal')]
+else:
+    schedule_menu = [MenuItem(name='View Schedule', href='../schedule/internal')]
+schedule_menu.append(MenuItem(name='Edit Schedule', href='../schedule/edit'))
+
+c.MENU.submenu.insert(2, MenuItem(name='Schedule', access=c.STUFF, submenu=schedule_menu))
