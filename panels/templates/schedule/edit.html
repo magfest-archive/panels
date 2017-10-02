@@ -1,54 +1,15 @@
 {% extends "base.html" %}{% set admin_area=True %}
 {% block title %}Schedule{% endblock %}
 {% block content %}
+{% include "panels_common.html" %}
 
 <style type="text/css">
     .context-menu-item {
         padding: 2px 2px 2px 7px;
     }
-    .highlight, .clicked { background: yellow; }
-    .selected:not(.highlight) { background: orange; }
-    .conflict:not(.highlight):not(.selected) { background: red; }
-    #schedule thead {
-        text-align: center;
-        vertical-align: center;
-    }
-    #schedule thead td {
-        border-right: 1px solid black;
-    }
-    #schedule tbody td.time {
-        white-space: nowrap;
-    }
-    #schedule tbody td:not(.time):hover {
-        background: yellow;
-    }
-    #schedule, #schedule tbody tr {
-        border-spacing: 0px 0px;
-        border-collapse: collapse;
-    }
-    #schedule tbody td {
-        padding: 0px;
-        text-align: center;
-    }
-    td.box {
-        border-top: 1px solid black;
-        border-left: 1px solid black;
-        border-right: 1px solid black;
-        border-bottom: 1px solid black;
-    }
-    td.top {
-        border-top: 1px solid black;
-        border-left: 1px solid black;
-        border-right: 1px solid black;
-    }
-    td.bottom {
-        border-left: 1px solid black;
-        border-right: 1px solid black;
-        border-bottom: 1px solid black;
-    }
-    td.middle {
-        border-left: 1px solid black;
-        border-right: 1px solid black;
+
+    .schedule-table tbody td:not(.time):hover {
+        background: #ff6;
     }
 </style>
 
@@ -74,12 +35,20 @@
         });
         return deduped;
     };
-    var formatDate = function(slot) {
-        var d = EPOCH.clone().add(30 * slot, 'minutes');
+
+    var slotToDate = function(slot) {
+      return EPOCH.clone().add(30 * slot, 'minutes');
+    };
+
+    var hasDay = function(d) {
+       return !d.minute() && (d <= EPOCH || d.hour() == 0 || d.hour() == 12);
+    };
+
+    var formatDate = function(d) {
         if (d.minute()) {
             return d.format('h:mm');
-        } else if (d.hour() == 0 || d.hour() == 12) {
-            return d.format('ha ddd');
+        } else if (hasDay(d)) {
+            return d.format('ddd ha');
         } else {
             return d.format('ha');
         }
@@ -172,12 +141,12 @@
         });
     };
     var renderEvents = function() {
-        $.each(arguments, function(_,event){
+        $.each(arguments, function(_, event) {
             var name = splitName(event);
-            $cells(event).each(function(i,td){
-                $(td).data("event", event)
+            $cells(event).each(function(i, td) {
+                $(td).data('event', event)
                      .text(name[i] || "")
-                     .addClass(event.duration == 1 ? "box" : i==0 ? "top" : i==(event.duration - 1) ? "bottom" : "middle");
+                     .addClass(event.duration == 1 ? 'box' : i==0 ? 'top' : i==(event.duration - 1) ? 'bottom' : 'middle');
             });
         });
     };
@@ -307,25 +276,26 @@
         var $schedBody = $schedule.find("tbody");
         var $emptyRow = $("<tr/>");
         $.each({{ c.EVENT_LOCATION_OPTS|jsonize }}, function(i,loc) {
-            if (loc[1].indexOf("(") >= 0) {
-                loc[1] = loc[1].replace("(", "<nobr>(").replace(")", ")</nobr>");
+            var is_panels = {{ c.PANEL_ROOMS|jsonize }}.indexOf(loc[0]) >= 0;
+            if (loc[1].indexOf(' (') >= 0) {
+                loc[1] = '<span class="text-nowrap">' + loc[1].replace(' (', '</span><br><span class="text-nowrap">(').replace(')', ')</span>');
             } else {
-                loc[1] = "<nobr>" + loc[1] + "</nobr>";
+                loc[1] = '<span class="text-nowrap">' + loc[1].trim() + '</span>';
             }
-            $schedHead.append( $("<td/>").html(loc[1]) );
+            $schedHead.append( $("<th/>").html(loc[1]).toggleClass('panels', is_panels) );
             $emptyRow.append(
                 $("<td/>").data("location", loc[0])
                           .addClass("loc" + loc[0])
-                          .html("&nbsp;"));
+                          .html("&nbsp;").toggleClass('panels', is_panels) );
         });
         for(var i = 0; i < SLOT_COUNT; i++) {
+            var d = slotToDate(i);
             $schedBody.append(
                 $emptyRow.clone(true)
                          .data("slot", i)
                          .attr("id", "row" + i)
                          .prepend(
-                            $("<td/>").text(formatDate(i))
-                                      .addClass("time")));
+                            $('<td class="time panels"/>').text(formatDate(d)).toggleClass('has-day', hasDay(d))));
         }
         $schedBody.on("mouseenter mouseleave", "td", function(e) {
             var event = $(e.target).data("event");
@@ -339,9 +309,17 @@
     });
 </script>
 
-<table width="100%" id="schedule" cellspacing="0" cellpadding="0">
-    <thead><tr><td></td></tr></thead>
+<div class="schedule-header">
+  <div class="text-center">
+    <label><input type="checkbox" id="show_only_panels"> Show only panels rooms</label>
+  </div>
+</div>
+
+<div class="schedule-table">
+  <table id="schedule" cellspacing="0" cellpadding="0">
+    <thead><tr><th class="panels"></th></tr></thead>
     <tbody></tbody>
-</table>
+  </table>
+</div>
 
 {% endblock %}
