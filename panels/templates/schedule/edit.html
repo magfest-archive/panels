@@ -4,13 +4,38 @@
 {% include "panels_common.html" %}
 
 <style type="text/css">
-    .context-menu-item {
-        padding: 2px 2px 2px 7px;
-    }
 
-    .schedule-table tbody td:not(.time):hover {
-        background: #ff6;
-    }
+.context-menu-item {
+  padding: 2px 2px 2px 7px;
+}
+
+.schedule-rooms td > .content {
+  overflow: visible;
+  padding: 0;
+}
+
+.schedule-rooms td > .content .text-wrapper {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  min-height: 100%;
+
+  padding: 5px 2px 2px 2px;
+
+  overflow: hidden;
+  text-align: center;
+  text-overflow: ellipsis;
+}
+
+.schedule-rooms tbody {
+  cursor: pointer;
+}
+
+.schedule-rooms tbody td:hover {
+  background: #ff6;
+}
+
 </style>
 
 <script type="text/javascript">
@@ -142,11 +167,16 @@
     };
     var renderEvents = function() {
         $.each(arguments, function(_, event) {
-            var name = splitName(event);
             $cells(event).each(function(i, td) {
                 $(td).data('event', event)
-                     .text(name[i] || "")
                      .addClass(event.duration == 1 ? 'box' : i==0 ? 'top' : i==(event.duration - 1) ? 'bottom' : 'middle');
+                if (i == 0) {
+                  var parentHeight = $(td).parent().height() || 30;
+                  var paddingTop = 5;
+                  var height = (event.duration * parentHeight) - paddingTop;
+                  $(td).find('div.content').html('<div class="text-wrapper" style="z-index: 1000; max-height: ' + height + 'px;"></div>');
+                  $(td).find('div.text-wrapper').text(event.name);
+                }
             });
         });
     };
@@ -232,7 +262,7 @@
         $.contextMenu({
             autoHide: true,
             trigger: "left",
-            selector: "#schedule tbody td:not(.time)",
+            selector: "#schedule_rooms tbody td:not(.time)",
             build: function($td, e) {
                 var event = $td.data("event");
                 var $box = event ? $cells(event) : $td;
@@ -271,9 +301,13 @@
 
     $(function(){
         //console.log(new Date(), new Date().getMilliseconds(), "document.onReady");
-        var $schedule = $("#schedule");
-        var $schedHead = $schedule.find("thead tr");
-        var $schedBody = $schedule.find("tbody");
+        var $scheduleRooms = $("#schedule_rooms");
+        var $scheduleRoomsHead = $scheduleRooms.find("thead tr");
+        var $scheduleRoomsBody = $scheduleRooms.find("tbody");
+
+        var $scheduleTimes = $("#schedule_times");
+        var $scheduleTimesBody = $scheduleTimes.find("tbody");
+
         var $emptyRow = $("<tr/>");
         $.each({{ c.EVENT_LOCATION_OPTS|jsonize }}, function(i,loc) {
             var is_panels = {{ c.PANEL_ROOMS|jsonize }}.indexOf(loc[0]) >= 0;
@@ -282,7 +316,7 @@
             } else {
                 loc[1] = '<span class="text-nowrap">' + loc[1].trim() + '</span>';
             }
-            $schedHead.append( $("<th/>").html(loc[1]).toggleClass('panels', is_panels) );
+            $scheduleRoomsHead.append( $("<th/>").html(loc[1]).toggleClass('panels', is_panels) );
             $emptyRow.append(
                 $("<td/>").data("location", loc[0])
                           .addClass("loc" + loc[0])
@@ -290,15 +324,21 @@
         });
         for(var i = 0; i < SLOT_COUNT; i++) {
             var d = slotToDate(i);
-            $schedBody.append(
-                $emptyRow.clone(true)
+            $scheduleTimesBody.append(
+                $('<tr/>').addClass('row' + i)
+                         .data("slot", i)
+                         .prepend(
+                            $('<td class="time panels"><div class="content">' + formatDate(d) + '</div></td>').toggleClass('has-day', hasDay(d))));
+
+            var newRow = $emptyRow.clone(true)
+                         .addClass('row' + i)
                          .data("slot", i)
                          .attr("id", "row" + i)
-                         .prepend(
-                            $('<td class="time panels"/>').text(formatDate(d)).toggleClass('has-day', hasDay(d))));
+            newRow.children('td').html('<div class="content" style="z-index:' + (SLOT_COUNT - i) + ';"></div>');
+            $scheduleRoomsBody.append(newRow);
         }
-        $schedBody.on("mouseenter mouseleave", "td", function(e) {
-            var event = $(e.target).data("event");
+        $scheduleRoomsBody.on("mouseenter mouseleave", "td", function(e) {
+            var event = $(e.currentTarget).data("event");
             if (event) {
                 $cells(event)[e.type == "mouseenter" ? "addClass" : "removeClass"]("highlight");
             }
@@ -315,11 +355,24 @@
   </div>
 </div>
 
+
 <div class="schedule-table">
-  <table id="schedule" cellspacing="0" cellpadding="0">
-    <thead><tr><th class="panels"></th></tr></thead>
-    <tbody></tbody>
-  </table>
+  <div class="schedule-times-container">
+    <div class="schedule-times">
+      <table id="schedule_times" cellspacing="0" cellpadding="0">
+        <thead><tr><th class="panels">&nbsp;<br>&nbsp;</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+  <div class="schedule-rooms-container">
+    <div class="schedule-rooms">
+      <table id="schedule_rooms" cellspacing="0" cellpadding="0">
+        <thead><tr></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
 </div>
 
 {% endblock %}
