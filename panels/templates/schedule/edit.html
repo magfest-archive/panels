@@ -326,12 +326,14 @@
             var d = slotToDate(i);
             $scheduleTimesBody.append(
                 $('<tr/>').addClass('row' + i)
+                         .data('row_class', 'row' + i)
                          .data("slot", i)
                          .prepend(
                             $('<td class="time panels"><div class="content">' + formatDate(d) + '</div></td>').toggleClass('has-day', hasDay(d))));
 
             var newRow = $emptyRow.clone(true)
                          .addClass('row' + i)
+                         .data('row_class', 'row' + i)
                          .data("slot", i)
                          .attr("id", "row" + i)
             newRow.children('td').html('<div class="content" style="z-index:' + (SLOT_COUNT - i) + ';"></div>');

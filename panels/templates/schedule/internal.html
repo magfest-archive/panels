@@ -45,7 +45,7 @@
         </thead>
         <tbody>
           {% for time, events in schedule %}
-            <tr class="row{{ loop.index0 }}">{{ format_day_column(time) }}</tr>
+            <tr class="row{{ loop.index0 }}" data-row_class="row{{ loop.index0 }}">{{ format_day_column(time) }}</tr>
           {% endfor %}
         </tbody>
       </table>
