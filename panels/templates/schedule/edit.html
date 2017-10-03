@@ -9,23 +9,8 @@
   padding: 2px 2px 2px 7px;
 }
 
-.schedule-rooms td > .content {
+.schedule-rooms td .content-wrapper {
   overflow: visible;
-  padding: 0;
-}
-
-.schedule-rooms td > .content .text-wrapper {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  min-height: 100%;
-
-  padding: 5px 2px 2px 2px;
-
-  overflow: hidden;
-  text-align: center;
-  text-overflow: ellipsis;
 }
 
 .schedule-rooms tbody {
@@ -161,8 +146,11 @@
     var clearEvents = function() {
         $.each(arguments, function(i,event) {
             $cells(event).removeData("event")
-                         .text("")
-                         .removeClass("box top middle bottom conflict");
+                         .removeClass("box top middle bottom conflict")
+                         .find('.content').css({
+                            'max-height': '',
+                            'min-height': ''
+                         }).text("");
         });
     };
     var renderEvents = function() {
@@ -172,10 +160,12 @@
                      .addClass(event.duration == 1 ? 'box' : i==0 ? 'top' : i==(event.duration - 1) ? 'bottom' : 'middle');
                 if (i == 0) {
                   var parentHeight = $(td).parent().height() || 30;
-                  var paddingTop = 5;
-                  var height = (event.duration * parentHeight) - paddingTop;
-                  $(td).find('div.content').html('<div class="text-wrapper" style="z-index: 1000; max-height: ' + height + 'px;"></div>');
-                  $(td).find('div.text-wrapper').text(event.name);
+                  var padding = event.duration - 1 ? 3 : 0;
+                  var height = (event.duration * parentHeight) - padding;
+                  $(td).find('div.content').css({
+                    'max-height': height + 'px',
+                    'min-height': height + 'px'
+                  }).text(event.name);
                 }
             });
         });
@@ -262,8 +252,9 @@
         $.contextMenu({
             autoHide: true,
             trigger: "left",
-            selector: "#schedule_rooms tbody td:not(.time)",
-            build: function($td, e) {
+            selector: "#schedule_rooms tbody .content",
+            build: function($content, e) {
+                var $td = $content.closest('td');
                 var event = $td.data("event");
                 var $box = event ? $cells(event) : $td;
                 $box.addClass("clicked");
@@ -329,22 +320,40 @@
                          .data('row_class', 'row' + i)
                          .data("slot", i)
                          .prepend(
-                            $('<td class="time panels"><div class="content">' + formatDate(d) + '</div></td>').toggleClass('has-day', hasDay(d))));
+                            $('<td class="time panels">' +
+                                '<div class="content-wrapper">' +
+                                  '<div class="content">' +
+                                    formatDate(d) +
+                                  '</div>' +
+                                '</div>' +
+                              '</td>').toggleClass('has-day', hasDay(d))));
 
             var newRow = $emptyRow.clone(true)
                          .addClass('row' + i)
                          .data('row_class', 'row' + i)
                          .data("slot", i)
                          .attr("id", "row" + i)
-            newRow.children('td').html('<div class="content" style="z-index:' + (SLOT_COUNT - i) + ';"></div>');
+            newRow.children('td').html(
+              '<div class="content-wrapper">' +
+                '<div class="content" style="z-index:' + (SLOT_COUNT - i) + ';"></div>' +
+              '</div>');
             $scheduleRoomsBody.append(newRow);
         }
-        $scheduleRoomsBody.on("mouseenter mouseleave", "td", function(e) {
-            var event = $(e.currentTarget).data("event");
+        $scheduleRoomsBody.on('mouseenter', 'td', function(e) {
+            var event = $(e.currentTarget).data('event');
             if (event) {
-                $cells(event)[e.type == "mouseenter" ? "addClass" : "removeClass"]("highlight");
+              var $eventCells = $cells(event);
+              $scheduleRoomsBody.find('td.highlight').not($eventCells).removeClass('highlight');
+              $eventCells.addClass('highlight');
+            } else {
+              $scheduleRoomsBody.find('td.highlight').removeClass('highlight');
             }
         });
+
+        $scheduleRoomsBody.on('mouseleave', function(e) {
+          $scheduleRoomsBody.find('td.highlight').removeClass('highlight');
+        });
+
         setUpMenu();
         //console.log(new Date(), new Date().getMilliseconds(), "empty table initialized");
         renderAll();

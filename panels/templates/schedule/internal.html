@@ -18,10 +18,12 @@
 {% macro format_day_column(time) -%}
   {%- set has_day = (not time.hour and not time.minute) or (time <= c.EPOCH) or (time.hour == 12 and not time.minute) -%}
   <td class="text-right panels{% if has_day %} has-day{% endif %}">
-    <div class="content">
-      {% if has_day %}{{ time|datetime('%a') }}{% endif %}
-      <a name="{{ time|datetime('%Y-%m-%d %H:%i:%s') }}"></a>
-      {{ format_time(time) }}
+    <div class="content-wrapper">
+      <div class="content">
+        {% if has_day %}{{ time|datetime('%a') }}{% endif %}
+        <a name="{{ time|datetime('%Y-%m-%d %H:%i:%s') }}"></a>
+        {{ format_time(time) }}
+      </div>
     </div>
   </td>
 {%- endmacro %}
@@ -86,7 +88,9 @@
                         {% if event.description %}
                           title="{{ event.description }}"
                         {% endif %}>
-                      <div class="content" style="z-index: {{ z_index }};">{{ event.name }}</div>
+                      <div class="content-wrapper">
+                        <div class="content" style="z-index: {{ z_index }};">{{ event.name }}</div>
+                      </div>
                     </td>
                   {% endif %}
                 {% endfor %}
