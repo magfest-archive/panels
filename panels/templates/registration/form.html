@@ -1,6 +1,6 @@
-{% extends "registration/baseform.html" %}
-
+{% extends "registration/form.html" %}
 {% block pre_regform -%}
+  {{ super() }}
   {% if attendee.panel_applicants -%}
     <div class="form-group">
       <label class="col-sm-3 control-label">Panels</label>
