@@ -57,7 +57,7 @@ class SocialMediaMixin(JSONColumnMixin('social_media', c.SOCIAL_MEDIA)):
 @Session.model_mixin
 class Attendee:
     assigned_panelists = relationship('AssignedPanelist', backref='attendee')
-    panel_applicant = relationship('PanelApplicant', backref='attendee', uselist=False)
+    panel_applicants = relationship('PanelApplicant', backref='attendee')
     panel_applications = relationship('PanelApplication', backref='poc')
     panel_feedback = relationship('EventFeedback', backref='attendee')
 
