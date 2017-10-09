@@ -59,12 +59,12 @@ class Root:
 
         if cherrypy.request.method == 'POST':
             message = check(panelist) or check_extra_verifications(**params)
+            if not message and other_panelists and 'verify_poc' not in params:
+                message = 'You must agree to being the point of contact for your group'
             if not message:
                 message = process_panel_app(session, app, panelist, other_panelists, **params)
-                if not message and other_panelists and 'verify_poc' not in params:
-                    message = 'You must agree to being the point of contact for your group'
-                elif not message:
-                    raise HTTPRedirect('index?message={}', 'Your panel application has been submitted')
+            if not message:
+                raise HTTPRedirect('index?message={}', 'Your panel application has been submitted')
 
         return {
             'app': app,
