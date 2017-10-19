@@ -192,6 +192,7 @@ class Root:
             'panelists': [(a.id, a.full_name)
                           for a in session.query(Attendee)
                                           .filter(or_(Attendee.ribbon == c.PANELIST_RIBBON,
+                                                      Attendee.ribbon == c.STAFF_RIBBON,
                                                       Attendee.badge_type == c.GUEST_BADGE))
                                           .order_by(Attendee.full_name).all()]
         }
