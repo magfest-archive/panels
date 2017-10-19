@@ -173,6 +173,21 @@ class Root:
         event = session.event(params, allowed=['location', 'start_time'])
         if 'name' in params:
             session.add(event)
+
+            # Associate a panel app with this event, and if the event is new, use the panel app's name and title
+            if 'panel_id' in params:
+                add_panel = session.panel_application(id=params['panel_id'])
+                add_panel.event_id = event.id
+                session.add(add_panel)
+                if event.is_new:
+                    event.name = add_panel.name
+                    event.description = add_panel.description
+                    for pa in add_panel.applicants:
+                        if pa.attendee_id:
+                            assigned_panelist = AssignedPanelist(attendee_id=pa.attendee.id, event_id=event.id)
+                            session.add(assigned_panelist)
+                    #event.assigned_panelists = [pa.attendee for pa in add_panel.panel_applicants]
+
             message = check(event)
             if not message:
                 new_panelist_ids = set(listify(panelists))
@@ -194,7 +209,9 @@ class Root:
                           for a in session.query(Attendee)
                                           .filter(or_(Attendee.ribbon.contains(c.PANELIST_RIBBON),
                                                       Attendee.badge_type == c.GUEST_BADGE))
-                                          .order_by(Attendee.full_name).all()]
+                                          .order_by(Attendee.full_name).all()],
+            'approved_panel_apps': session.query(PanelApplication).filter(PanelApplication.status == c.ACCEPTED)
+                .order_by('applied')
         }
 
     @csrf_protected

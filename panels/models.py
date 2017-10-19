@@ -99,7 +99,10 @@ class AssignedPanelist(MagModel):
     event_id    = Column(UUID, ForeignKey('event.id', ondelete='cascade'))
 
     def __repr__(self):
-        return '<{self.attendee.full_name} panelisting {self.event.name}>'.format(self=self)
+        if self.attendee:
+            return '<{self.attendee.full_name} panelisting {self.event.name}>'.format(self=self)
+        else:
+            return super(AssignedPanelist, self).__repr__()
 
 
 class PanelApplication(MagModel):
