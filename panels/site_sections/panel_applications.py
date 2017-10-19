@@ -88,6 +88,8 @@ class Root:
         app = session.panel_application(params, checkgroups=PanelApplication.all_checkgroups, restricted=True, ignore_csrf=True)
         app.poc_id = poc_id
         attendee = session.attendee(id=poc_id)
+        if attendee.badge_type != c.GUEST_BADGE:
+            add_opt(attendee.ribbon_ints, c.PANELIST_RIBBON)
         panelist = PanelApplicant(
             app_id=app.id,
             attendee_id=attendee.id,

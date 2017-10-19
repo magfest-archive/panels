@@ -31,6 +31,15 @@
             addPanelist(id);
         });
     });
+    {% if event.is_new %}
+        var showOrHidePanelDetails = function() {
+            setVisible(".panel-details", !($.val('panel_id')))
+        };
+        $(function() {
+            showOrHidePanelDetails();
+            $.field('panel_id').on('change', showOrHidePanelDetails);
+        });
+    {% endif %}
 </script>
 
 <form method="post" action="form">
@@ -63,21 +72,32 @@
     </td>
 </tr>
 <tr>
-    <td><b>Event Name:</b></td>
-    <td>
-        <input class="focus" type="text" name="name" value="{{ event.name }}" />
-        {% for app in event.applications %}
-            <br/> (<a href="../panel_app_management/app?id={{ app.id }}">view application</a>)
-        {% endfor %}
-    </td>
+  <td>Panel Application:</td>
+  <td>
+    <select name="panel_id" id="panel_id">
+      <option selected="true" value="">Associate a panel application with this event</option>
+      {% for panel in approved_panel_apps %}
+        <option value="{{ panel.id }}">{{ panel.name }} ({{ panel.length_text if panel.length_text else panel.length_label }})</option>
+      {% endfor %}
+    </select>
+    {% for app in event.applications %}
+      <br/> (<a href="../panel_app_management/app?id={{ app.id }}">view application</a>)
+    {% endfor %}
+  </td>
 </tr>
-<tr>
+<tr class="panel-details">
     <td valign="top">Panelists</td>
     <td>
         <a id="add" href="#" onClick="addPanelist(); return false">Add a Panelist</a>
     </td>
 </tr>
-<tr>
+<tr class="panel-details">
+    <td><b>Event Name:</b></td>
+    <td>
+        <input class="focus" type="text" name="name" value="{{ event.name }}" />
+    </td>
+</tr>
+<tr class="panel-details">
     <td valign="top">Description:</td>
     <td> <textarea rows="6" cols="40" name="description">{{ event.description }}</textarea> </td>
 </tr>
