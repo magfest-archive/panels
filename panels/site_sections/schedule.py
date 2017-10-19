@@ -186,7 +186,6 @@ class Root:
                         if pa.attendee_id:
                             assigned_panelist = AssignedPanelist(attendee_id=pa.attendee.id, event_id=event.id)
                             session.add(assigned_panelist)
-                    #event.assigned_panelists = [pa.attendee for pa in add_panel.panel_applicants]
 
             message = check(event)
             if not message:
