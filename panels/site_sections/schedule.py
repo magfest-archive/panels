@@ -175,7 +175,7 @@ class Root:
             session.add(event)
 
             # Associate a panel app with this event, and if the event is new, use the panel app's name and title
-            if 'panel_id' in params:
+            if 'panel_id' in params and params['panel_id']:
                 add_panel = session.panel_application(id=params['panel_id'])
                 add_panel.event_id = event.id
                 session.add(add_panel)
