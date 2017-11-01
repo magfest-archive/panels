@@ -36,7 +36,7 @@
 /** Schedule pages **/
 
 .schedule-header {
-  padding: 15px;
+  padding: 0 15px 15px 15px;
 }
 
 .schedule-header > div:after {
@@ -50,11 +50,10 @@
 }
 
 .schedule-table {
-  position: absolute;
-  top: 100px;
-  left: 15px;
-  right: 15px;
-  bottom: 15px;
+  width: 100%;
+  position: relative;
+  padding-left: 15px;
+  padding-right: 15px;
 }
 
 .schedule-rooms-container {
@@ -64,7 +63,6 @@
   top: 0;
   left: 72px;
   right: 0;
-  bottom: 0;
 
   overflow: hidden;
 }
@@ -88,7 +86,6 @@
   top: 0;
   left: 0;
   width: 72px;
-  bottom: 0;
 
   overflow: hidden;
 }
@@ -274,10 +271,6 @@
       if (isOnlyPanels) {
         $scheduleRooms.scrollLeft(0);
       }
-    });
-
-    $scheduleRooms.scroll(function() {
-      $scheduleTimes.scrollTop($scheduleRooms.scrollTop());
     });
 
     $scheduleTable.on('mouseenter mouseleave', 'tr', function(e) {
