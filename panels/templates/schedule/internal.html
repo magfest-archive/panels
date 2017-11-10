@@ -1,6 +1,12 @@
 {% extends "base.html" %}{% set admin_area=True %}
 {% block title %}Schedule{% endblock %}
 
+{% macro room_class(room) -%}
+{%- set is_panels = room in c.PANEL_ROOMS -%}
+{%- set is_music = room in c.MUSIC_ROOMS
+%} room_{{ room }} {% if is_panels %}panels{% elif is_music %}music{% else %}other{% endif
+%} {% endmacro %}
+
 {% macro format_time(time) -%}
   {% if not time.minute %}
     {{ time|datetime("%-I%p")|lower }}
@@ -17,11 +23,11 @@
 
 {% macro format_day_column(time) -%}
   {%- set has_day = (not time.hour and not time.minute) or (time <= c.EPOCH) or (time.hour == 12 and not time.minute) -%}
-  <td class="text-right panels{% if has_day %} has-day{% endif %}">
+  <td class="text-right {% if has_day %} has-day{% endif %}">
     <div class="content-wrapper">
       <div class="content">
         {% if has_day %}{{ time|datetime('%a') }}{% endif %}
-        <a name="{{ time|datetime('%Y-%m-%d %H:%i:%s') }}"></a>
+        <a name="{{ time|datetime('%Y-%m-%dT%H:%M:%s') }}"></a>
         {{ format_time(time) }}
       </div>
     </div>
@@ -31,11 +37,9 @@
 {% block content %}
 {% include "panels_common.html" %}
 
-<div class="schedule-header">
-  <div class="text-center">
-    <label><input type="checkbox" id="show_only_panels"> Show only panels rooms</label>
-    <div class="text-danger"><b>Note:</b> This schedule is not final.</div>
-  </div>
+
+<div class="text-center">
+  <div class="text-danger"><b>Note:</b> This schedule is not final.</div>
 </div>
 
 <div class="schedule-table">
@@ -43,7 +47,7 @@
     <div class="schedule-times">
       <table cellspacing="0" cellpadding="0">
         <thead>
-          <tr><th class="panels">&nbsp;<br>&nbsp;</th></tr>
+          <tr><th>&nbsp;<br>&nbsp;</th></tr>
         </thead>
         <tbody>
           {% for time, events in schedule %}
@@ -59,8 +63,7 @@
         <thead>
           <tr>
             {% for id, name, colspan in max_simul %}
-              {%- set is_panels = c.ORDERED_EVENT_LOCS[loop.index0] in c.PANEL_ROOMS -%}
-              <th colspan="{{ colspan }}"{% if is_panels %} class="panels"{% endif %}>
+              <th colspan="{{ colspan }}"class="{{ room_class(c.ORDERED_EVENT_LOCS[loop.index0]) }}">
                 {%- for s in name.split('(', 1) -%}
                   {%- if not loop.first -%}
                     <br><span class="text-nowrap">(
@@ -77,14 +80,14 @@
             <tr class="row{{ loop.index0 }}" data-row_class="row{{ loop.index0 }}">
               {%- set z_index = loop.revindex -%}
               {% for location, event_list in events %}
-                {%- set is_panels = c.ORDERED_EVENT_LOCS[loop.index0] in c.PANEL_ROOMS -%}
+                {%- set room = c.ORDERED_EVENT_LOCS[loop.index0] -%}
                 {% for event in event_list %}
                   {% if event.colspan %}
                     <td
                         rowspan="{{ event.duration|default(1) }}"
                         colspan="{{ event.colspan }}"
-                        class="schedule {% if is_panels %} panels{% endif %}{% if event.id %} box{% endif %}"
-                        id='{{ event.id|default("None") }},{{ location }},{{ time|datetime("%Y-%m-%d %H:%i:%s") }}'
+                        class="schedule {{ room_class(room) }}{% if event.id %} box{% endif %}"
+                        id='{{ event.id|default("None") }},{{ location }},{{ time|datetime("%Y-%m-%dT%H:%M:%s") }}'
                         {% if event.description %}
                           title="{{ event.description }}"
                         {% endif %}>
