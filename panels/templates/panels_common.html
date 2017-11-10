@@ -317,6 +317,7 @@ label.radio-label {
       } else {
         $scheduleRooms.find('td, th').hide();
       }
+      $scheduleRooms.scrollLeft(0);
     });
 
     $scheduleTable.on('mouseenter mouseleave', 'tr', function(e) {
