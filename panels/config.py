@@ -41,6 +41,8 @@ c.EVENT_BOOKED = {'colspan': 0}
 c.EVENT_OPEN   = {'colspan': 1}
 
 nesteddict = lambda: defaultdict(nesteddict)
+
+
 def _make_room_trie(rooms):
     root = nesteddict()
     for index, (location, description) in enumerate(rooms):
