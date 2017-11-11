@@ -40,13 +40,29 @@ c.ORDERED_EVENT_LOCS = [loc for loc, desc in c.EVENT_LOCATION_OPTS]
 c.EVENT_BOOKED = {'colspan': 0}
 c.EVENT_OPEN   = {'colspan': 1}
 
-invalid_panel_rooms = [room for room in c.PANEL_ROOMS if not getattr(c, room.upper(), None)]
+nesteddict = lambda: defaultdict(nesteddict)
 
-for room in invalid_panel_rooms:
+
+def _make_room_trie(rooms):
+    root = nesteddict()
+    for index, (location, description) in enumerate(rooms):
+        for word in filter(lambda s: s, re.split(r'\W+', description)):
+            current_dict = root
+            current_dict['__rooms__'][location] = index
+            for letter in word:
+                current_dict = current_dict.setdefault(letter.lower(), nesteddict())
+                current_dict['__rooms__'][location] = index
+    return root
+c.ROOM_TRIE = _make_room_trie(c.EVENT_LOCATION_OPTS)
+
+invalid_rooms = [room for room in (c.PANEL_ROOMS + c.MUSIC_ROOMS) if not getattr(c, room.upper(), None)]
+
+for room in invalid_rooms:
     log.warning('panels plugin: panels_room config problem: '
                 'Ignoring {!r} because it was not also found in [[event_location]] section.'.format(room.upper()))
 
-c.PANEL_ROOMS = [getattr(c, room.upper()) for room in c.PANEL_ROOMS if room not in invalid_panel_rooms]
+c.PANEL_ROOMS = [getattr(c, room.upper()) for room in c.PANEL_ROOMS if room not in invalid_rooms]
+c.MUSIC_ROOMS = [getattr(c, room.upper()) for room in c.MUSIC_ROOMS if room not in invalid_rooms]
 
 # This can go away if/when we implement plugin enum merging
 c.ACCESS.update(c.PANEL_ACCESS_LEVELS)

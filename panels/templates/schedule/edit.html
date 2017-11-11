@@ -290,6 +290,19 @@
         });
     };
 
+    var panel_rooms = {{ c.PANEL_ROOMS|jsonize }};
+    var music_rooms = {{ c.MUSIC_ROOMS|jsonize }};
+    var getRoomClass = function(room) {
+      var roomClass = 'room_' + room;
+      if (panel_rooms.indexOf(room) >= 0) {
+        return roomClass + ' panels';
+      } else if (music_rooms.indexOf(room) >= 0) {
+        return roomClass + ' music';
+      } else {
+        return roomClass + ' other';
+      }
+    };
+
     $(function(){
         //console.log(new Date(), new Date().getMilliseconds(), "document.onReady");
         var $scheduleRooms = $("#schedule_rooms");
@@ -300,18 +313,19 @@
         var $scheduleTimesBody = $scheduleTimes.find("tbody");
 
         var $emptyRow = $("<tr/>");
+
         $.each({{ c.EVENT_LOCATION_OPTS|jsonize }}, function(i,loc) {
-            var is_panels = {{ c.PANEL_ROOMS|jsonize }}.indexOf(loc[0]) >= 0;
             if (loc[1].indexOf(' (') >= 0) {
                 loc[1] = '<span class="text-nowrap">' + loc[1].replace(' (', '</span><br><span class="text-nowrap">(').replace(')', ')</span>');
             } else {
                 loc[1] = '<span class="text-nowrap">' + loc[1].trim() + '</span>';
             }
-            $scheduleRoomsHead.append( $("<th/>").html(loc[1]).toggleClass('panels', is_panels) );
+            var roomClass = getRoomClass(loc[0]);
+            $scheduleRoomsHead.append( $("<th/>").html(loc[1]).addClass(roomClass) );
             $emptyRow.append(
                 $("<td/>").data("location", loc[0])
                           .addClass("loc" + loc[0])
-                          .html("&nbsp;").toggleClass('panels', is_panels) );
+                          .html("&nbsp;").addClass(roomClass) );
         });
         for(var i = 0; i < SLOT_COUNT; i++) {
             var d = slotToDate(i);
@@ -320,7 +334,7 @@
                          .data('row_class', 'row' + i)
                          .data("slot", i)
                          .prepend(
-                            $('<td class="time panels">' +
+                            $('<td class="time">' +
                                 '<div class="content-wrapper">' +
                                   '<div class="content">' +
                                     formatDate(d) +
@@ -360,18 +374,11 @@
     });
 </script>
 
-<div class="schedule-header">
-  <div class="text-center">
-    <label><input type="checkbox" id="show_only_panels"> Show only panels rooms</label>
-  </div>
-</div>
-
-
 <div class="schedule-table">
   <div class="schedule-times-container">
     <div class="schedule-times">
       <table id="schedule_times" cellspacing="0" cellpadding="0">
-        <thead><tr><th class="panels">&nbsp;<br>&nbsp;</th></tr></thead>
+        <thead><tr><th>&nbsp;<br>&nbsp;</th></tr></thead>
         <tbody></tbody>
       </table>
     </div>

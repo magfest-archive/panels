@@ -36,7 +36,7 @@
 /** Schedule pages **/
 
 .schedule-header {
-  padding: 0 15px 15px 15px;
+  margin-bottom: 10px;
 }
 
 .schedule-header > div:after {
@@ -45,8 +45,30 @@
   clear: both;
 }
 
-.schedule-header label {
-  float: left;
+.show_panels td, .show_panels th,
+.show_music td, .show_music th,
+.show_other td, .show_other th {
+  display: none;
+}
+
+.show_all td, .show_all th,
+.show_panels td.panels, .show_panels th.panels,
+.show_music td.music, .show_music th.music,
+.show_other td.other, .show_other th.other {
+  display: table-cell;
+}
+
+label.radio-label {
+  font-weight: normal;
+  margin-left: 7px;
+}
+
+#room_toggle {
+  display: inline-block;
+}
+
+#room_filter {
+  float: right;
 }
 
 .schedule-table {
@@ -104,16 +126,6 @@
 
 .schedule-times th, .schedule-times td {
   width: 72px;
-}
-
-.only-panels td,
-.only-panels th {
-  display: none;
-}
-
-.only-panels td.panels,
-.only-panels th.panels {
-  display: table-cell;
 }
 
 .schedule-table thead tr {
@@ -265,18 +277,53 @@
         $scheduleRooms = $('.schedule-rooms'),
         $scheduleTimes = $('.schedule-times');
 
-    $('#show_only_panels').on('change', function() {
-      var isOnlyPanels = $(this).prop('checked');
-      $scheduleRooms.toggleClass('only-panels', isOnlyPanels);
-      if (isOnlyPanels) {
+    $('#room_toggle').on('change', '.toggle', function() {
+      var classToToggle = $(this).attr('id');
+      var isToggledOn = $(this).prop('checked');
+      $scheduleRooms.removeClass('show_all')
+          .removeClass('show_music')
+          .removeClass('show_panels')
+          .removeClass('show_other');
+      $scheduleRooms.toggleClass(classToToggle, isToggledOn);
+      if (isToggledOn) {
         $scheduleRooms.scrollLeft(0);
       }
+    });
+
+    var roomTrie = {{ c.ROOM_TRIE|jsonize }};
+    $('#room_filter_text').on('keyup', function() {
+      var text = $(this).val().toLowerCase(),
+          textLength = text.length,
+          rooms = roomTrie;
+
+      if (textLength <= 0) {
+        $scheduleRooms.find('td, th').css('display', '');
+        return;
+      }
+
+      for (var i = 0; i < textLength; i++) {
+        var s = text.charAt(i);
+        rooms = rooms[s];
+        if (!rooms) {
+          break;
+        }
+      }
+
+      if (rooms && rooms['__rooms__']) {
+        $scheduleRooms.find('td, th').hide();
+        $.each(rooms['__rooms__'], function(location, index) {
+          $scheduleRooms.find('td.room_' + location + ', th.room_' + location).css('display', '');
+        });
+      } else {
+        $scheduleRooms.find('td, th').hide();
+      }
+      $scheduleRooms.scrollLeft(0);
     });
 
     $scheduleTable.on('mouseenter mouseleave', 'tr', function(e) {
       var rowClass = $(this).data('row_class');
       if (e.type == 'mouseenter') {
-        $scheduleTable.find('tr').not(this).removeClass('active');
+        $scheduleTable.find('tr.active').not(this).removeClass('active');
         $('tr.' + rowClass).addClass('active');
       } else {
         $('tr.' + rowClass).removeClass('active');
@@ -284,3 +331,17 @@
     });
   });
 </script>
+
+<div class="schedule-header">
+  <div id="room_toggle">
+    <label>Show</label>
+    <label class="radio-label"><input type="radio" name="toggle" class="toggle" id="show_all" checked="checked"> All</label>
+    <label class="radio-label"><input type="radio" name="toggle" class="toggle" id="show_music"> Music</label>
+    <label class="radio-label"><input type="radio" name="toggle" class="toggle" id="show_panels"> Panels</label>
+    <label class="radio-label"><input type="radio" name="toggle" class="toggle" id="show_other"> Other</label>
+  </div>
+  <div id="room_filter">
+    <label for="room_filter_text">Filter</label>
+    <input type="text" name="filter" class="filter" id="room_filter_text" autofocus="autofocus">
+  </div>
+</div>
