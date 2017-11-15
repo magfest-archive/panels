@@ -148,9 +148,16 @@
     {% endif %}
 
     <div class="form-group">
+        <label class="col-sm-3 control-label">Availability</label>
+        <div class="col-sm-6 form-control-static">
+            {% if app.available %}{{ app.available|linebreaksbr }}{% else %}<i>Not submitted</i>{% endif %}
+        </div>
+    </div>
+
+    <div class="form-group">
         <label class="col-sm-3 control-label">Unavailability</label>
         <div class="col-sm-6 form-control-static">
-            {{ app.unavailable|linebreaksbr }}
+            {% if app.unavailable %}{{ app.unavailable|linebreaksbr }}{% else %}<i>Not submitted</i>{% endif %}
         </div>
     </div>
 
