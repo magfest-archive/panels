@@ -84,4 +84,7 @@ else:
     schedule_menu = [MenuItem(name='View Schedule', href='../schedule/internal', access=c.STUFF)]
 schedule_menu.append(MenuItem(name='Edit Schedule', href='../schedule/edit', access=c.STUFF))
 
-c.MENU['Schedule'].submenu.extend(schedule_menu)
+if c.MENU['Schedule']:
+    c.MENU['Schedule'].submenu.extend(schedule_menu)
+else:
+    c.MENU.submenu.insert(2, MenuItem(name='Schedule', access=c.STUFF, submenu=schedule_menu))
