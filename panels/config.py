@@ -78,10 +78,10 @@ if getattr(c, 'ALT_SCHEDULE_URL', ''):
         log.warning('Unable to parse ALT_SCHEDULE_URL: "{}"', c.ALT_SCHEDULE_URL)
         schedule_name = 'View Schedule Externally'
     schedule_menu = [
-        MenuItem(name=schedule_name, href='../schedule/'),
-        MenuItem(name='View Schedule Internally', href='../schedule/internal')]
+        MenuItem(name=schedule_name, href='../schedule/', access=c.STUFF),
+        MenuItem(name='View Schedule Internally', href='../schedule/internal', access=c.STUFF)]
 else:
-    schedule_menu = [MenuItem(name='View Schedule', href='../schedule/internal')]
-schedule_menu.append(MenuItem(name='Edit Schedule', href='../schedule/edit'))
+    schedule_menu = [MenuItem(name='View Schedule', href='../schedule/internal', access=c.STUFF)]
+schedule_menu.append(MenuItem(name='Edit Schedule', href='../schedule/edit', access=c.STUFF))
 
-c.MENU.submenu.insert(2, MenuItem(name='Schedule', access=c.STUFF, submenu=schedule_menu))
+c.MENU['Schedule'].submenu.extend(schedule_menu)
