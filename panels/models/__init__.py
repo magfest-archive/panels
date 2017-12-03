@@ -196,3 +196,6 @@ class EventFeedback(MagModel):
     headcount_during = Column(Integer, default=0)
     comments = Column(UnicodeText)
     rating = Column(Choice(c.PANEL_RATING_OPTS), default=c.UNRATED)
+
+
+from panels.models.attraction import *  # noqa: F401,E402,F403
