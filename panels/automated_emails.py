@@ -1,16 +1,27 @@
 from panels import *
 
-AutomatedEmail.queries[PanelApplication] = lambda session: session.query(PanelApplication)
+AutomatedEmail.queries[PanelApplication] = lambda session: session.query(PanelApplication) \
+    .options(subqueryload(PanelApplication.applicants).subqueryload(PanelApplicant.attendee))
 
 _attendee_query = AutomatedEmail.queries[Attendee]
-AutomatedEmail.queries[Attendee] = lambda session: _attendee_query(session).options(subqueryload(Attendee.assigned_panelists))
+AutomatedEmail.queries[Attendee] = lambda session: _attendee_query(session) \
+    .options(subqueryload(Attendee.assigned_panelists))
 
 
 class PanelAppEmail(AutomatedEmail):
     def __init__(self, subject, template, filter, ident, **kwargs):
-        AutomatedEmail.__init__(self, PanelApplication, subject, template,
-                                lambda app: (not app.poc_id or app.poc.badge_type != c.GUEST_BADGE) and filter(app),
-                                ident, sender=c.PANELS_EMAIL, **kwargs)
+        AutomatedEmail.__init__(
+            self,
+            PanelApplication,
+            subject,
+            template,
+            lambda app: filter(app) and (
+                not app.submitter or
+                not app.submitter.attendee_id or
+                app.submitter.attendee.badge_type != c.GUEST_BADGE),
+            ident,
+            sender=c.PANELS_EMAIL,
+            **kwargs)
 
     def computed_subject(self, x):
         return self.subject.replace('<PANEL_NAME>', x.name)
