@@ -67,6 +67,7 @@
 {% endmacro %}
 
 {% macro attraction_form(attraction) %}
+  {%- set is_class = attraction is class -%}
   {{ csrf_token() }}
   <input type="hidden" name="id" value="{{ 'None' if attraction is class else attraction.id }}">
   {{ macros.form_group(attraction, 'name', is_focused=True, is_required=True) }}
@@ -91,7 +92,8 @@
     <label class="col-sm-3 control-label">Attendance Restriction</label>
     <div class="col-sm-6">
       <select name="restriction" class="form-control">
-        {{ options(attraction.RESTRICTION_OPTS, attraction.restriction) }}
+        {%- set restriction = 0 if is_class else attraction.restriction -%}
+        {{ options(attraction.RESTRICTION_OPTS, restriction) }}
       </select>
     </div>
   </div>
@@ -99,8 +101,8 @@
     <label class="col-sm-3 control-label">Required Checkin</label>
     <div class="col-sm-6">
       <select name="required_checkin" class="form-control">
-        {%- set required_checkin = 0 if attraction is class else attraction.required_checkin -%}
-        {{ options(attraction.REQUIRED_CHECKIN_OPTS, attraction.required_checkin) }}
+        {%- set required_checkin = 0 if is_class else attraction.required_checkin -%}
+        {{ options(attraction.REQUIRED_CHECKIN_OPTS, required_checkin) }}
       </select>
     </div>
   </div>
