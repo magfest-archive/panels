@@ -466,6 +466,14 @@
     <p>{{ attraction.RESTRICTIONS[attraction.restriction].split('–')|last|trim }}.</p>
   {%- endif %}
 
+  {% if attraction.required_checkin > -1 -%}
+    <p>
+      Attendees must check in
+      {{ humanize_timedelta(seconds=attraction.required_checkin, now='when', prefix='at least ', suffix=' before') }}
+      the event starts.
+    </p>
+  {%- endif %}
+
   {% if attraction.notifications %}
     {% if attraction.notifications|length == 1 %}
       <p>Attendees will be notified about {{ attraction.name }} events

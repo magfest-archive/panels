@@ -59,9 +59,31 @@ class Attraction(MagModel):
     )]
     RESTRICTIONS = dict(RESTRICTION_OPTS)
 
+    REQUIRED_CHECKIN_OPTS = [
+        (-1, 'Anytime during event'),
+        (0, 'When the event starts'),
+        (300, '5 minutes before'),
+        (600, '10 minutes before'),
+        (900, '15 minutes before'),
+        (1200, '20 minutes before'),
+        (1800, '30 minutes before'),
+        (2700, '45 minutes before'),
+        (3600, '1 hour before'),]
+
+    NOTIFICATIONS_OPTS = [
+        ('', 'Never'),
+        (0, 'When the event starts'),
+        (300, '5 minutes before'),
+        (900, '15 minutes before'),
+        (1800, '30 minutes before'),
+        (3600, '1 hour before'),
+        (7200, '2 hours before'),
+        (86400, '1 day before'),]
+
     name = Column(UnicodeText, unique=True)
     description = Column(UnicodeText)
     notifications = Column(JSON, default=[], server_default='[]')
+    required_checkin = Column(Integer, default=0)  # In seconds
     restriction = Column(Choice(RESTRICTION_OPTS), default=NONE)
     department_id = Column(UUID, ForeignKey('department.id'), nullable=True)
     owner_id = Column(UUID, ForeignKey('admin_account.id'))
@@ -203,9 +225,9 @@ class AttractionFeature(MagModel):
 # TODO: This, along with the panels.models.Event class, should be
 #       refactored into a more generic "SchedulableMixin". Any model
 #       class that has a location, a start time, and a duration would
-#       inherit from the SchedulableMixin. I have discovered a truly
-#       remarkable implementation of this design, which this pull-
-#       request is too small to contain.
+#       inherit from the SchedulableMixin. Unfortunately the
+#       panels.models.Event stores its duration as an integer number
+#       of whole minutes, thus is not usable by Attractions.
 # =====================================================================
 class AttractionEvent(MagModel):
     attraction_feature_id = Column(UUID, ForeignKey('attraction_feature.id'))

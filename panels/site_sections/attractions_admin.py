@@ -208,14 +208,16 @@ class Root:
         if cherrypy.request.method == 'POST':
             message = check(event)
             if not message:
+                is_new = event.is_new
                 session.add(event)
                 session.flush()
                 session.refresh(event)
                 message = 'The event for {} was successfully {}'.format(
-                    event.label, 'created' if event.is_new else 'updated')
+                    event.label, 'created' if is_new else 'updated')
 
-                for delay in [0, 900, 1800, 2700, 3600, 5400]:
-                    if 'save_another_{}'.format(delay) in params:
+                for param in params.keys():
+                    if param.startswith('save_another_'):
+                        delay = param[13:]
                         raise HTTPRedirect(
                             'event?previous_id={}&delay={}&message={}',
                             event.id, delay, message)
