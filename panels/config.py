@@ -1,3 +1,4 @@
+from uber import custom_tags
 from panels import *
 
 
@@ -89,7 +90,5 @@ schedule_menu.extend([
 
 c.MENU.submenu.insert(2, MenuItem(name='Schedule', access=c.STUFF, submenu=schedule_menu))
 
-
-from uber import custom_tags
-from panels.models import Attraction
+from panels.models import Attraction  # noqa: E402
 custom_tags.form_link_site_sections[Attraction] = 'attractions_admin'

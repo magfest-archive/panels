@@ -68,7 +68,7 @@ class Attraction(MagModel):
         (1200, '20 minutes before'),
         (1800, '30 minutes before'),
         (2700, '45 minutes before'),
-        (3600, '1 hour before'),]
+        (3600, '1 hour before')]
 
     NOTIFICATIONS_OPTS = [
         ('', 'Never'),
@@ -78,7 +78,7 @@ class Attraction(MagModel):
         (1800, '30 minutes before'),
         (3600, '1 hour before'),
         (7200, '2 hours before'),
-        (86400, '1 day before'),]
+        (86400, '1 day before')]
 
     name = Column(UnicodeText, unique=True)
     description = Column(UnicodeText)
