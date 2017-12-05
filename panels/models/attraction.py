@@ -53,7 +53,7 @@ class Attraction(MagModel):
         'Attendees can only attend each feature once'
     ), (
         PER_ATTRACTION,
-        'Once Per Atraction – '
+        'Once Per Attraction – '
         'Attendees can only attend this attraction once '
         '(most restrictive)'
     )]
