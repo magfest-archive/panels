@@ -1,0 +1,32 @@
+{% extends "preregistration/preregbase.html" %}
+{% block title %}Attractions{% endblock %}
+
+{% block content %}
+{% include 'attractions/attractions_common.html' %}
+<style type="text/css">
+
+</style>
+
+<div class="masthead"></div>
+<div class="panel panel-default">
+  <div class="panel-body">
+    {% block body %}
+      <h1 class="text-center">Sign up for {{ c.EVENT_NAME }} Attractions</h1>
+      <hr>
+      {% for attraction in attractions %}
+        <a class="attraction hover-btn" href="features?id={{ attraction.id }}">
+          <div class="hover-btn-body">
+            <button class="btn btn-success btn-next pull-right">
+              <span class="glyphicon glyphicon-chevron-right"></span>
+            </button>
+            <h2><span class="bling-icon"></span> {{ attraction.name }}</h2>
+            <p>
+              {{ attraction.description|linebreaksbr }}
+            </p>
+          </div>
+        </a>
+      {% endfor %}
+    {% endblock %}
+  </div>
+</div>
+{% endblock %}

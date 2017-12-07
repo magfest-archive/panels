@@ -1,0 +1,167 @@
+{% extends "preregistration/preregbase.html" %}
+{% block title %}{{ attraction.name }}{% endblock %}
+
+{% block content %}
+{% include 'attractions/attractions_common.html' %}
+<style type="text/css">
+
+  h1 {
+    margin-top: 5px;
+  }
+
+  .btn-back {
+  }
+
+  #badge_num_modal .control-label {
+    padding-right: 0;
+    padding-top: 10px;
+  }
+
+  #badge_num_modal .control-label,
+  #badge_num_modal .help-block {
+    color: #808080;
+    font-weight: normal;
+    font-size: 1.2em;
+  }
+
+  input#badge_num {
+    -moz-appearance: textfield;
+    appearance: textfield;
+  }
+
+  input#badge_num::-webkit-inner-spin-button,
+  input#badge_num::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    appearance: none;
+    margin: 0;
+  }
+</style>
+
+<script>
+  $(function() {
+    var $badgeNumModal = $('#badge_num_modal'),
+        $badgeNumForm = $('#badge_num_form'),
+        $badgeNumOkButton = $('#badge_num_ok'),
+        $badgeNum = $('#badge_num');
+
+    $badgeNumModal.on('shown.bs.modal', function (event) {
+      $('#badge_num').focus();
+    });
+
+    $badgeNumModal.on('show.bs.modal', function (event) {
+      var $openButton = $(event.relatedTarget),
+          featureId = $openButton.data('featureId'),
+          featureName = $openButton.data('featureName');
+      $badgeNumOkButton.data('featureId', featureId);
+      $badgeNumModal.find('#badge_num_modal_title').text('Sign up for ' + featureName);
+    });
+
+    $badgeNumModal.on('hidden.bs.modal', function (event) {
+      $badgeNum.val('');
+    });
+
+    $badgeNumForm.on('submit', function(event) {
+      event.preventDefault();
+      var badgeNum = $badgeNum.val();
+      if (!badgeNum) {
+        return;
+      }
+
+      var featureId = $badgeNumOkButton.data('featureId');
+      $.ajax({
+        method: 'POST',
+        url: 'is_badge_num_valid',
+        data: {
+          badge_num: badgeNum,
+          csrf_token: csrf_token
+        },
+        success: function(response, status) {
+          if (response && response['result']) {
+            toastr.info('Sweet!', '', {timeOut: 3000});
+          } else {
+            toastr.error('Unrecognized badge number: ' + badgeNum, '', {timeOut: 3000});
+          }
+        },
+        error: function(response, status, statusText) {
+          toastr.error('Unrecognized badge number: ' + badgeNum, '', {timeOut: 3000});
+        }
+      });
+    });
+  });
+</script>
+
+<div class="masthead"></div>
+<div class="panel panel-default">
+  <div class="panel-body">
+    {% block body %}
+      <div
+          id="badge_num_modal"
+          class="modal fade"
+          tabindex="-1"
+          role="dialog"
+          aria-labelledby="badge_num_modal_title"
+          style="display: none">
+        <div class="modal-dialog modal-md" role="document">
+          <div class="modal-content">
+            <div class="modal-header">
+              <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+              </button>
+              <h4 class="modal-title">
+                <span class="bling-icon"></span>
+                <span class="modal-title-text" id="badge_num_modal_title"></span>
+              </h4>
+            </div>
+            <form id="badge_num_form" method="post" action="is_badge_num_valid" class="form-horizontal" role="form">
+              <div class="modal-body">
+                <div class="help-block text-center">
+                  All we need is your badge number!
+                </div>
+                <div class="form-group">
+                  <div class="col-sm-offset-3 col-sm-6">
+                    <input
+                      class="form-control input-lg text-center"
+                      type="number"
+                      id="badge_num"
+                      name="badge_num"
+                      placeholder="Badge #"
+                      required="required"
+                      min="1">
+                  </div>
+                </div>
+              </div>
+              <div class="modal-footer">
+                <button type="submit" id="badge_num_ok" class="btn btn-success btn-lg">
+                  <span class="glyphicon glyphicon-ok"></span> Okay
+                </button>
+                <button id="badge_num_cancel" class="btn btn-default btn-lg" data-dismiss="modal">Nevermind</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+      <a class="btn btn-success btn-back" href="index">
+        <span class="glyphicon glyphicon-chevron-left"></span>
+        All Attractions
+      </a>
+      <h1 class="text-center">{{ attraction.name }}</h1>
+      <hr>
+      {% for feature in attraction.features %}
+        <div class="feature hover-btn"
+            data-toggle="modal"
+            data-target="#badge_num_modal"
+            data-feature-id="{{ feature.id }}"
+            data-feature-name="{{ feature.name }}">
+          <div class="hover-btn-body">
+            <button class="btn btn-success btn-next pull-right">
+              <span class="glyphicon glyphicon-chevron-right"></span>
+            </button>
+            <h2><span class="bling-icon"></span> {{ feature.name }}</h2>
+            <p>{{ feature.description|linebreaksbr }}</p>
+          </div>
+        </div>
+      {% endfor %}
+    {% endblock %}
+  </div>
+</div>
+{% endblock %}
