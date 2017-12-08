@@ -1,5 +1,6 @@
 {% extends "preregistration/preregbase.html" %}
 {% block title %}Attractions{% endblock %}
+{% import 'attractions/attractions_macros.html' as attractions_macros with context %}
 
 {% block content %}
 {% include 'attractions/attractions_common.html' %}
@@ -11,18 +12,35 @@
 <div class="panel panel-default">
   <div class="panel-body">
     {% block body %}
+      {{ attractions_macros.greeting(first_name, badge_num) }}
+
       <h1 class="text-center">Sign up for {{ c.EVENT_NAME }} Attractions</h1>
       <hr>
       {% for attraction in attractions %}
-        <a class="attraction hover-btn" href="features?id={{ attraction.id }}">
-          <div class="hover-btn-body">
+        <a class="attraction hover-btn" href="features?id={{ attraction.id }}{% if badge_num %}&badge_num={{ badge_num }}{%endif%}">
+          <div class="hover-btn-title">
             <button class="btn btn-success btn-next pull-right">
               <span class="glyphicon glyphicon-chevron-right"></span>
             </button>
             <h2><span class="bling-icon"></span> {{ attraction.name }}</h2>
+          </div>
+          <div class="hover-btn-body">
             <p>
               {{ attraction.description|linebreaksbr }}
             </p>
+            {% if attraction.features %}
+              <ul>
+                {% for feature in attraction.features[:4] %}
+                  <li>
+                    {% if loop.index0 > 2 %}
+                      And more...
+                    {% else %}
+                      {{ feature.name }}
+                    {% endif %}
+                  </li>
+                {% endfor %}
+              </ul>
+            {% endif %}
           </div>
         </a>
       {% endfor %}

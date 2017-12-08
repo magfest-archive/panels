@@ -1,15 +1,14 @@
 {% extends "preregistration/preregbase.html" %}
 {% block title %}{{ attraction.name }}{% endblock %}
+{% import 'attractions/attractions_macros.html' as attractions_macros with context %}
 
 {% block content %}
 {% include 'attractions/attractions_common.html' %}
 <style type="text/css">
 
-  h1 {
-    margin-top: 5px;
-  }
-
-  .btn-back {
+  .hover-btn h3 {
+    margin: 5px 0;
+    font-size: 1.125em;
   }
 
   #badge_num_modal .control-label {
@@ -62,7 +61,7 @@
 
     $badgeNumForm.on('submit', function(event) {
       event.preventDefault();
-      var badgeNum = $badgeNum.val();
+      badgeNum = $badgeNum.val();
       if (!badgeNum) {
         return;
       }
@@ -77,7 +76,7 @@
         },
         success: function(response, status) {
           if (response && response['result']) {
-            toastr.info('Sweet!', '', {timeOut: 3000});
+            window.location = 'events?id=' + featureId + '&badge_num=' + badgeNum;
           } else {
             toastr.error('Unrecognized badge number: ' + badgeNum, '', {timeOut: 3000});
           }
@@ -90,76 +89,101 @@
   });
 </script>
 
+<div id="badge_num_modal"
+    class="modal fade"
+    tabindex="-1"
+    role="dialog"
+    aria-labelledby="badge_num_modal_title"
+    style="display: none">
+  <div class="modal-dialog modal-md" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+        <h4 class="modal-title">
+          <span class="bling-icon"></span>
+          <span class="modal-title-text" id="badge_num_modal_title"></span>
+        </h4>
+      </div>
+      <form id="badge_num_form" method="post" action="is_badge_num_valid" class="form-horizontal" role="form">
+        <div class="modal-body">
+          <div class="help-block text-center">
+            All we need is your badge number!
+          </div>
+          <div class="form-group">
+            <div class="col-sm-offset-3 col-sm-6">
+              <input class="form-control input-lg text-center"
+                type="number"
+                id="badge_num"
+                name="badge_num"
+                placeholder="Badge #"
+                required="required"
+                min="1">
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="submit" id="badge_num_ok" class="btn btn-success btn-lg">
+            <span class="glyphicon glyphicon-ok"></span> Okay
+          </button>
+          <button id="badge_num_cancel" class="btn btn-default btn-lg" data-dismiss="modal">Nevermind</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
 <div class="masthead"></div>
 <div class="panel panel-default">
   <div class="panel-body">
     {% block body %}
-      <div
-          id="badge_num_modal"
-          class="modal fade"
-          tabindex="-1"
-          role="dialog"
-          aria-labelledby="badge_num_modal_title"
-          style="display: none">
-        <div class="modal-dialog modal-md" role="document">
-          <div class="modal-content">
-            <div class="modal-header">
-              <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                <span aria-hidden="true">&times;</span>
-              </button>
-              <h4 class="modal-title">
-                <span class="bling-icon"></span>
-                <span class="modal-title-text" id="badge_num_modal_title"></span>
-              </h4>
-            </div>
-            <form id="badge_num_form" method="post" action="is_badge_num_valid" class="form-horizontal" role="form">
-              <div class="modal-body">
-                <div class="help-block text-center">
-                  All we need is your badge number!
-                </div>
-                <div class="form-group">
-                  <div class="col-sm-offset-3 col-sm-6">
-                    <input
-                      class="form-control input-lg text-center"
-                      type="number"
-                      id="badge_num"
-                      name="badge_num"
-                      placeholder="Badge #"
-                      required="required"
-                      min="1">
-                  </div>
-                </div>
-              </div>
-              <div class="modal-footer">
-                <button type="submit" id="badge_num_ok" class="btn btn-success btn-lg">
-                  <span class="glyphicon glyphicon-ok"></span> Okay
-                </button>
-                <button id="badge_num_cancel" class="btn btn-default btn-lg" data-dismiss="modal">Nevermind</button>
-              </div>
-            </form>
-          </div>
-        </div>
-      </div>
-      <a class="btn btn-success btn-back" href="index">
+      <a class="btn btn-success btn-back" href="index{% if badge_num %}?badge_num={{ badge_num }}{%endif%}">
         <span class="glyphicon glyphicon-chevron-left"></span>
-        All Attractions
+        <span class="hide-xs">All Attractions</span>
+        <span class="show-xs">Back</span>
       </a>
+      {{ attractions_macros.greeting(first_name, badge_num) }}
+
       <h1 class="text-center">{{ attraction.name }}</h1>
+      <p class="text-center">
+        {{ attraction.description|linebreaksbr }}
+      </p>
       <hr>
       {% for feature in attraction.features %}
-        <div class="feature hover-btn"
+        <a class="feature hover-btn"
+          {% if badge_num %}
+            href="events?id={{ feature.id }}&badge_num={{ badge_num }}"
+          {% else %}
+            href="#"
             data-toggle="modal"
             data-target="#badge_num_modal"
             data-feature-id="{{ feature.id }}"
-            data-feature-name="{{ feature.name }}">
-          <div class="hover-btn-body">
+            data-feature-name="{{ feature.name }}"
+          {% endif %}>
+          <div class="hover-btn-title">
             <button class="btn btn-success btn-next pull-right">
               <span class="glyphicon glyphicon-chevron-right"></span>
             </button>
             <h2><span class="bling-icon"></span> {{ feature.name }}</h2>
-            <p>{{ feature.description|linebreaksbr }}</p>
           </div>
-        </div>
+          <div class="hover-btn-body">
+            <p>{{ feature.description|linebreaksbr }}</p>
+            {%- set summary = feature.available_events_summary -%}
+            {% if summary %}
+              {% for day, times in summary.items() %}
+                <h3>{{ day }}</h3>
+                <ul>
+                  {% for time_of_day, slots in times.items() %}
+                    <li>{{ time_of_day }}: {{ slots }} slot{{ slots|pluralize }} available</li>
+                  {% endfor %}
+                </ul>
+              {% endfor %}
+            {% else %}
+              <em class="help-block">No events are available for {{ feature.name }}.</em>
+            {% endif %}
+          </div>
+        </a>
       {% endfor %}
     {% endblock %}
   </div>

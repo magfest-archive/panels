@@ -1,5 +1,7 @@
+import pytz
+
 from collections import OrderedDict
-from datetime import timedelta
+from datetime import datetime, timedelta
 
 from sideboard.lib.sa import JSON, CoerceUTF8 as UnicodeText, UTCDateTime, UUID
 from sqlalchemy.ext.hybrid import hybrid_property
@@ -14,7 +16,8 @@ from uber.decorators import validation
 from uber.models import MagModel, Session
 from uber.models.types import default_relationship as relationship, Choice, \
     DefaultColumn as Column
-from uber.utils import ceil_datetime, floor_datetime
+from uber.utils import ceil_datetime, floor_datetime, noon_datetime, \
+    evening_datetime
 
 
 __all__ = [
@@ -135,6 +138,17 @@ class Attraction(MagModel):
         return [(l, s) for l, s in c.EVENT_LOCATION_OPTS if l not in locs]
 
     @property
+    def required_checkin_label(self):
+        if self.required_checkin < 0:
+            return 'anytime during the event'
+        return humanize_timedelta(
+            seconds=self.required_checkin,
+            separator=' ',
+            now='by the time the event starts',
+            prefix='at least ',
+            suffix=' before the event starts')
+
+    @property
     def start_times(self):
         return [
             self.START_TIME_SLOT + timedelta(seconds=i * self.SLOT_DURATION)
@@ -220,6 +234,43 @@ class AttractionFeature(MagModel):
             events_by_location[event.location].append(event)
         return events_by_location
 
+    @property
+    def available_events(self):
+        return [
+            e for e in self.events if not (e.is_started and e.is_checkin_over)]
+
+    @property
+    def available_events_summary(self):
+        summary = OrderedDict()
+        for event in self.available_events:
+            start_time = event.start_time_local
+            day = start_time.strftime('%A')
+            if day not in summary:
+                summary[day] = OrderedDict()
+
+            time_of_day = 'Evening'
+            if start_time < noon_datetime(start_time):
+                time_of_day = 'Morning'
+            elif start_time < evening_datetime(start_time):
+                time_of_day = 'Afternoon'
+            if time_of_day not in summary[day]:
+                summary[day][time_of_day] = 0
+
+            summary[day][time_of_day] += event.remaining_slots
+
+        return summary
+
+    @property
+    def available_events_by_day(self):
+        events_by_day = OrderedDict()
+        for event in self.available_events:
+            start_time = event.start_time_local
+            day = start_time.strftime('%A')
+            if day not in events_by_day:
+                events_by_day[day] = []
+            events_by_day[day].append(event)
+        return events_by_day
+
 
 # =====================================================================
 # TODO: This, along with the panels.models.Event class, should be
@@ -251,11 +302,42 @@ class AttractionEvent(MagModel):
         return cls.start_time + (cls.duration * text("interval '1 second'"))
 
     @property
+    def end_time_local(self):
+        return self.end_time.astimezone(c.EVENT_TIMEZONE)
+
+    @property
+    def start_time_local(self):
+        return self.start_time.astimezone(c.EVENT_TIMEZONE)
+
+    @property
     def start_time_label(self):
         if self.start_time:
-            start_time = self.start_time.astimezone(c.EVENT_TIMEZONE)
-            return start_time.strftime('%-I:%M %p %A')
+            return self.start_time_local.strftime('%-I:%M %p %A')
         return 'unknown start time'
+
+    @property
+    def checkin_time(self):
+        required_checkin = self.attraction.required_checkin
+        if required_checkin < 0:
+            return self.end_time_local
+        else:
+            return self.start_time_local - timedelta(seconds=required_checkin)
+
+    @property
+    def is_checkin_over(self):
+        return self.checkin_time < datetime.utcnow().replace(tzinfo=pytz.UTC)
+
+    @property
+    def is_sold_out(self):
+        return self.slots <= len(self.attendees)
+
+    @property
+    def is_started(self):
+        return self.start_time < datetime.utcnow().replace(tzinfo=pytz.UTC)
+
+    @property
+    def remaining_slots(self):
+        return max(self.slots - len(self.attendees), 0)
 
     @property
     def time_span_label(self):

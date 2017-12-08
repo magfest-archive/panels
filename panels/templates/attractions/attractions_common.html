@@ -1,6 +1,82 @@
 
 <style type="text/css">
 
+  html, body { font-size: 0.85em; }
+  h1 { font-size: 30px; }
+  h2 { font-size: 25px; }
+  @media(min-width: 480px) {
+    html, body { font-size: 1em; }
+    h1 { font-size: 36px; }
+    h2 { font-size: 30px; }
+  }
+
+  .show-xs, .show-sm { display: initial; }
+  .hide-xs, .hide-sm { display: none; }
+
+  @media(min-width: 480px) {
+    .show-xs { display: none; }
+    .hide-xs { display: initial; }
+  }
+
+  @media(min-width: 768px) {
+    .show-sm { display: none; }
+    .hide-sm { display: initial; }
+  }
+
+  .greeting {
+    float: right;
+    text-align: right;
+  }
+
+  .greeting > div {
+    white-space: nowrap;
+    margin-right: -5px;
+  }
+
+  .greeting > a {
+    padding: 0.3em 0.9em 0.4em;
+  }
+
+  .greeting .badge_num {
+    color: #808080;
+    font-weight: bold;
+    vertical-align: super;
+  }
+
+  .greeting .name {
+    font-size: 1.75em;
+    font-weight: bold;
+  }
+
+  .btn-next {
+    font-size: 32px;
+    width: 64px;
+    height: 64px;
+    padding: 0;
+    max-width: 20%;
+  }
+
+  @media(min-width: 480px) {
+    .btn-next {
+      font-size: 42px;
+      width: 84px;
+      height: 84px;
+      padding: 0;
+      max-width: 20%;
+    }
+  }
+
+  .btn-next-sm {
+    font-size: 24px;
+    width: 48px;
+    height: 48px;
+    padding: 0;
+    max-width: 20%;
+  }
+
+  .btn-back {
+  }
+
   .hover-btn {
     display: block;
   }
@@ -9,13 +85,7 @@
     margin-top: 15px;
   }
 
-  .hover-btn:focus, .hover-btn:hover, .hover-btn:hover * {
-    text-decoration: none;
-    outline: none;
-    outline-offset: 0;
-  }
-
-  .hover-btn-body {
+  .hover-btn {
     border: 1px solid transparent;
     border-radius: 3px;
     color: #333;
@@ -23,30 +93,39 @@
     padding: 15px;
   }
 
-  .hover-btn-body:after {
+  .hover-btn:after {
     content: ' ';
     clear: both;
     display: block;
   }
 
-  .hover-btn-body:hover {
+  .hover-btn:hover {
     background-color: #f0faf4;
     border-color: #e0eae4;
+    color: #333;
     cursor: pointer;
+    outline: none;
+    outline-offset: 0;
+    text-decoration: none;
   }
 
-  .hover-btn-body h2 {
+  .hover-btn:focus {
+    color: #333;
+    outline: none;
+    outline-offset: 0;
+    text-decoration: none;
+  }
+
+  .hover-btn:focus *, .hover-btn:hover * {
+    text-decoration: none;
+  }
+
+  .hover-btn-title h2 {
     margin-top: 0;
+    display: inline;
   }
 
-  .hover-btn-body p {
+  .hover-btn-body {
     padding-left: 0.75em;
-  }
-
-  .btn-next {
-    font-size: 42px;
-    width: 84px;
-    height: 84px;
-    padding: 10px;
   }
 </style>

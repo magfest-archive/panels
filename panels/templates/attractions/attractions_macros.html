@@ -1,0 +1,14 @@
+{% import 'macros.html' as macros %}
+
+{% macro greeting(first_name, badge_num) %}
+  {% if badge_num and first_name %}
+    <div class="greeting">
+      <div>
+        <span class="name">Hello {{ first_name }}</span>
+        <span class="badge_num">#{{ badge_num }}</span>
+      </div>
+      <a href="index" class="label label-danger">Hey, I'm somebody else!</a>
+    </div>
+    <div class="clearfix"></div>
+  {% endif%}
+{% endmacro %}
