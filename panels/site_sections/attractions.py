@@ -4,16 +4,10 @@ from uber.site_sections.preregistration import check_post_con
 from panels.models import *
 
 
-def _first_name_and_badge_num(session, badge_num):
-    first_name = ''
+def _attendee_for_badge_num(session, badge_num):
     if badge_num:
-        attendee = session.query(Attendee).filter_by(badge_num=badge_num).first()
-        first_name = attendee.first_name if attendee else ''
-
-    if not first_name:
-        badge_num = ''
-
-    return (first_name, badge_num)
+        return session.query(Attendee).filter_by(badge_num=badge_num).first()
+    return None
 
 
 @all_renderable()
@@ -23,11 +17,10 @@ class Root:
     def index(self, session, badge_num=''):
         attractions = session.query(Attraction).options(
             subqueryload(Attraction.features)).order_by(Attraction.name).all()
-        first_name, badge_num = _first_name_and_badge_num(session, badge_num)
+        attendee = _attendee_for_badge_num(session, badge_num)
         return {
             'attractions': attractions,
-            'badge_num': badge_num,
-            'first_name': first_name
+            'attendee': attendee
         }
 
     def features(self, session, id=None, badge_num=''):
@@ -39,11 +32,10 @@ class Root:
             attraction = session.query(Attraction).filter_by(id=id).first()
 
         if attraction:
-            first_name, badge_num = _first_name_and_badge_num(session, badge_num)
+            attendee = _attendee_for_badge_num(session, badge_num)
             return {
                 'attraction': attraction,
-                'badge_num': badge_num,
-                'first_name': first_name
+                'attendee': attendee
             }
         else:
             raise HTTPRedirect('index')
@@ -57,11 +49,10 @@ class Root:
             feature = session.query(AttractionFeature).filter_by(id=id).first()
 
         if feature and badge_num:
-            first_name, badge_num = _first_name_and_badge_num(session, badge_num)
+            attendee = _attendee_for_badge_num(session, badge_num)
             return {
                 'feature': feature,
-                'badge_num': badge_num,
-                'first_name': first_name
+                'attendee': attendee
             }
         else:
             raise HTTPRedirect('index')

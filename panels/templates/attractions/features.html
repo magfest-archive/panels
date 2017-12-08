@@ -138,12 +138,12 @@
 <div class="panel panel-default">
   <div class="panel-body">
     {% block body %}
-      <a class="btn btn-success btn-back" href="index{% if badge_num %}?badge_num={{ badge_num }}{%endif%}">
+      <a class="btn btn-success btn-back" href="index{% if attendee %}?badge_num={{ attendee.badge_num }}{%endif%}">
         <span class="glyphicon glyphicon-chevron-left"></span>
         <span class="hide-xs">All Attractions</span>
         <span class="show-xs">Back</span>
       </a>
-      {{ attractions_macros.greeting(first_name, badge_num) }}
+      {{ attractions_macros.greeting(attendee) }}
 
       <h1 class="text-center">{{ attraction.name }}</h1>
       <p class="text-center">
@@ -152,8 +152,8 @@
       <hr>
       {% for feature in attraction.features %}
         <a class="feature hover-btn"
-          {% if badge_num %}
-            href="events?id={{ feature.id }}&badge_num={{ badge_num }}"
+          {% if attendee %}
+            href="events?id={{ feature.id }}&badge_num={{ attendee.badge_num }}"
           {% else %}
             href="#"
             data-toggle="modal"

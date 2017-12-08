@@ -23,27 +23,66 @@
     .hide-sm { display: initial; }
   }
 
-  .greeting {
+  .label-danger-empty {
+    background-color: transparent;
+    border: 1px solid #d9534f;
+    color: #d9534f;
+  }
+
+  .label-danger-empty:hover, .label-danger-empty:focus {
+    border: 1px solid #c9302c;
+    color: #fff;
+  }
+
+  .event.soldout {
+    display: none;
+  }
+
+  .show-soldout .event.soldout {
+    display: block;
+  }
+
+  .panel-body .greeting {
     float: right;
     text-align: right;
   }
 
-  .greeting > div {
+  .modal-body .greeting {
+    margin: 0 0 10px -15px;
+  }
+
+  .panel-body .greeting > div {
     white-space: nowrap;
     margin-right: -5px;
   }
 
-  .greeting > a {
-    padding: 0.3em 0.9em 0.4em;
+  .modal-body .greeting > div {
+    display: inline;
+    font-size: 1.2em;
+    font-weight: bold;
+    white-space: nowrap;
   }
 
-  .greeting .badge_num {
+  .panel-body .greeting > a {
+    padding: 0.3em 0.6em;
+  }
+
+  .modal-body .greeting > a {
+    float: right;
+    font-size: 65%;
+    margin: 4px 0;
+    padding: 0.3em 0.6em;
+  }
+
+  .panel-body .greeting .badge_num,
+  .modal-body .greeting .badge_num {
     color: #808080;
+    font-size: 65%;
     font-weight: bold;
     vertical-align: super;
   }
 
-  .greeting .name {
+  .panel-body .greeting > div {
     font-size: 1.75em;
     font-weight: bold;
   }
@@ -74,23 +113,46 @@
     max-width: 20%;
   }
 
+  .signedup .btn-next {
+    text-shadow: none;
+    background-color: transparent;
+    background-image: none;
+    border-color: #4cae4c;
+    color: #4cae4c;
+    cursor: default;
+  }
+
+  .signedup .btn-next:hover,
+  .signedup .btn-next:focus {
+    background-color: transparent;
+  }
+
+  .signedup .btn-next:active,
+  .signedup .btn-next.active {
+    background-color: transparent;
+  }
+
+  .signedup .btn-next:disabled,
+  .signedup .btn-next[disabled] {
+    color: #808080;
+    background-color: #e0e0e0;
+    border-color: #e0e0e0;
+  }
+
   .btn-back {
-  }
-
-  .hover-btn {
-    display: block;
-  }
-
-  .hover-btn + .hover-btn {
-    margin-top: 15px;
   }
 
   .hover-btn {
     border: 1px solid transparent;
     border-radius: 3px;
     color: #333;
+    display: block;
     text-decoration: none;
-    padding: 15px;
+    padding: 10px;
+  }
+
+  .hover-btn + .hover-btn {
+    margin-top: 15px;
   }
 
   .hover-btn:after {
@@ -101,12 +163,17 @@
 
   .hover-btn:hover {
     background-color: #f0faf4;
-    border-color: #e0eae4;
+    border-color: #4cae4c;
     color: #333;
     cursor: pointer;
     outline: none;
     outline-offset: 0;
     text-decoration: none;
+  }
+
+  .hover-btn.signedup:hover {
+    background-color: transparent;
+    cursor: default;
   }
 
   .hover-btn:focus {

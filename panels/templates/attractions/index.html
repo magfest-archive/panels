@@ -12,12 +12,12 @@
 <div class="panel panel-default">
   <div class="panel-body">
     {% block body %}
-      {{ attractions_macros.greeting(first_name, badge_num) }}
+      {{ attractions_macros.greeting(attendee) }}
 
       <h1 class="text-center">Sign up for {{ c.EVENT_NAME }} Attractions</h1>
       <hr>
       {% for attraction in attractions %}
-        <a class="attraction hover-btn" href="features?id={{ attraction.id }}{% if badge_num %}&badge_num={{ badge_num }}{%endif%}">
+        <a class="attraction hover-btn" href="features?id={{ attraction.id }}{% if attendee %}&badge_num={{ attendee.badge_num }}{%endif%}">
           <div class="hover-btn-title">
             <button class="btn btn-success btn-next pull-right">
               <span class="glyphicon glyphicon-chevron-right"></span>
