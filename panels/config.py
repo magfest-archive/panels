@@ -1,9 +1,11 @@
 from panels import *
+from uber.config import dynamic
 
 
 @Config.mixin
 class Config:
     @request_cached_property
+    @dynamic
     def PANEL_POC_OPTS(self):
         with Session() as session:
             return sorted([
@@ -14,18 +16,22 @@ class Config:
             ], key=lambda tup: tup[1], reverse=False)
 
     @property
+    @dynamic
     def PANEL_ACCEPTED_EMAIL_APPROVED(self):
         return AutomatedEmail.instances['panel_accepted'].approved
 
     @property
+    @dynamic
     def PANEL_DECLINED_EMAIL_APPROVED(self):
         return AutomatedEmail.instances['panel_declined'].approved
 
     @property
+    @dynamic
     def PANEL_WAITLISTED_EMAIL_APPROVED(self):
         return AutomatedEmail.instances['panel_waitlisted'].approved
 
     @property
+    @dynamic
     def PANEL_SCHEDULED_EMAIL_APPROVED(self):
         return AutomatedEmail.instances['panel_scheduled'].approved
 
