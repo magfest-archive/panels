@@ -7,11 +7,18 @@
 <style type="text/css">
   form {
     max-width: 738px;
-    margin-bottom: 200px;
   }
 
-  h2 {
+  .event-title {
     margin-bottom: 30px;
+  }
+
+  .attendees-title {
+    margin-top: 30px;
+  }
+
+  .footer {
+    padding: 100px 0;
   }
 
   .save_another .dropdown-menu > li > a {
@@ -27,7 +34,7 @@
   }
 </style>
 
-<h2>
+<h2 class="event-title">
   {%- if event.is_new -%}
     <span class="glyphicon glyphicon-plus"></span> New event for the {{ attraction|form_link }} attraction
   {%- else -%}
@@ -110,4 +117,38 @@
     </div>
   </div>
 </form>
+
+{%- if event.signups -%}
+  <h2 class="attendees-title">Attendees Signed Up</h2>
+  <table class="table table-hover table-responsive datatable attendees-body"
+      data-paging="false"
+      data-info="false">
+    <thead>
+      <tr>
+        <th>Attendee</th>
+        <th>Badge #</th>
+        <th>Signup Time</th>
+        <th class="text-right">Checkin Time</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for signup in event.signups %}
+        <tr>
+          <td>{{ signup.attendee|form_link }}</td>
+          <td>#{{ signup.attendee.badge_num }}</td>
+          <td>{{ signup.signup_time|datetime_local('%A, %b %-e at %-I:%M%p') }}</td>
+          <td class="text-right">
+            {% if signup.checkin_time %}
+              {{ signup.checkin_time|datetime_local('%A, %b %-e at %-I:%M%p') }}
+            {% else %}
+              <em>Not checked in</em>
+            {% endif %}
+          </td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{%- endif -%}
+
+<div class="footer"></div>
 {% endblock %}

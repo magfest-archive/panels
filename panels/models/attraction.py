@@ -15,7 +15,7 @@ from uber.custom_tags import humanize_timedelta
 from uber.decorators import validation
 from uber.models import MagModel, Session
 from uber.models.types import default_relationship as relationship, Choice, \
-    DefaultColumn as Column
+    DefaultColumn as Column, utcnow
 from uber.utils import ceil_datetime, floor_datetime, noon_datetime, \
     evening_datetime
 
@@ -26,6 +26,11 @@ __all__ = [
 
 @Session.model_mixin
 class Attendee:
+    attraction_signups = relationship(
+        'AttractionSignup',
+        backref='attendee',
+        order_by='AttractionSignup.signup_time')
+
     def can_admin_attraction(self, attraction):
         if not self.admin_account:
             return False
@@ -34,14 +39,6 @@ class Attendee:
 
 
 class Attraction(MagModel):
-    SLOT_DURATION = 15 * 60  # 15 minutes expressed in seconds
-    START_TIME_SLOT = ceil_datetime(
-        c.EPOCH, timedelta(seconds=SLOT_DURATION))
-    END_TIME_SLOT = floor_datetime(
-        c.ESCHATON, timedelta(seconds=SLOT_DURATION))
-    TIME_SLOT_COUNT = int(
-        (END_TIME_SLOT - START_TIME_SLOT).total_seconds() // SLOT_DURATION)
-
     NONE = 0
     PER_FEATURE = 1
     PER_ATTRACTION = 2
@@ -147,33 +144,6 @@ class Attraction(MagModel):
             now='by the time the event starts',
             prefix='at least ',
             suffix=' before the event starts')
-
-    @property
-    def start_times(self):
-        return [
-            self.START_TIME_SLOT + timedelta(seconds=i * self.SLOT_DURATION)
-            for i in range(self.TIME_SLOT_COUNT)]
-
-    @property
-    def start_time_opts(self):
-        return [(time, time.strftime('%-I:%M %p %A'))
-                for time in self.start_times]
-
-    @property
-    def start_time_opts_by_day(self):
-        time_slots_by_day = OrderedDict()
-        for time in self.start_times:
-            day = time.strftime('%A')
-            if day not in time_slots_by_day:
-                time_slots_by_day[day] = []
-            time_slots_by_day[day].append(
-                (time, time.strftime('%-I:%M %p %A')))
-        return time_slots_by_day
-
-    @property
-    def duration_opts(self):
-        ts = [i * self.SLOT_DURATION for i in range(1, 33)]
-        return [(t, humanize_timedelta(seconds=t, separator=' ')) for t in ts]
 
     @property
     def location_opts(self):
@@ -283,15 +253,21 @@ class AttractionFeature(MagModel):
 class AttractionEvent(MagModel):
     attraction_feature_id = Column(UUID, ForeignKey('attraction_feature.id'))
     location = Column(Choice(c.EVENT_LOCATION_OPTS))
-    start_time = Column(UTCDateTime, default=Attraction.START_TIME_SLOT)
-    duration = Column(Integer, default=Attraction.SLOT_DURATION)  # In seconds
+    start_time = Column(UTCDateTime, default=c.EPOCH)
+    duration = Column(Integer, default=900)  # In seconds
     slots = Column(Integer, default=1)
+
+    signups = relationship(
+        'AttractionSignup',
+        backref='event',
+        order_by='AttractionSignup.signup_time')
 
     attendees = relationship(
         'Attendee',
         backref='attraction_events',
         cascade='save-update,merge,refresh-expire,expunge',
-        secondary='attraction_signup')
+        secondary='attraction_signup',
+        order_by='attraction_signup.c.signup_time')
 
     @hybrid_property
     def end_time(self):
@@ -391,6 +367,7 @@ class AttractionSignup(MagModel):
     attraction_event_id = Column(UUID, ForeignKey('attraction_event.id'))
     attendee_id = Column(UUID, ForeignKey('attendee.id'))
 
+    signup_time = Column(UTCDateTime, server_default=utcnow())
     checkin_time = Column(UTCDateTime, nullable=True)
 
     __mapper_args__ = {'confirm_deleted_rows': False}

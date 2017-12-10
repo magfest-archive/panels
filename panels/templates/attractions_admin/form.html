@@ -145,9 +145,14 @@
     margin-top: 0;
   }
 
-  .event:hover {
+  .event.info-block:hover {
     -webkit-box-shadow: inset 0 0 0 1px #428bca;
     box-shadow: inset 0 0 0 1px #428bca;
+  }
+
+  .event.success-block:hover {
+    -webkit-box-shadow: inset 0 0 0 1px #4cae4c;
+    box-shadow: inset 0 0 0 1px #4cae4c;
   }
 
   .event-spacer {
@@ -158,6 +163,11 @@
   .event-overlap {
     font-weight: bold;
     background-color: #fff8f8;
+  }
+
+  .slots {
+    font-size: 1.2em;
+    vertical-align: middle;
   }
 
   .empty-message {
@@ -189,8 +199,13 @@
   }
 
   .info-block {
-    border-left: 4px solid #428bca;
-    border-radius: 4px;
+    border-left: 5px solid #428bca;
+    border-radius: 3px;
+  }
+
+  .success-block {
+    border-left: 5px solid #4cae4c;
+    border-radius: 3px;
   }
 
   .row-stacked {
@@ -591,7 +606,8 @@
                         </div>
                         <div class="room-body">
                           {% for event in events %}
-                            <div class="event info-block" style="min-height: {{ (event.duration // 90) - 6 }}px">
+                            <div class="event {% if event.remaining_slots > 0 %} info-block{% else %} success-block{% endif%}"
+                                style="min-height: {{ (event.duration // 90) - 6 }}px">
                               {% if can_admin_attraction -%}
                                 <div class="controls pull-right">
                                   <a class="btn btn-xs btn-primary btn-fade"
@@ -605,8 +621,21 @@
                                 </div>
                               {%- endif %}
                               <div class="event-body">
-                                <div>{{ event.time_span_label }}</div>
-                                <div>{{ event.duration_label }} ({{ event.attendees|length }} / {{ event.slots }} slots taken)</div>
+                                <div>
+                                  {{ event.time_span_label }}
+                                  <em class="text-nowrap text-muted">{{ event.duration_label }}</em>
+                                </div>
+                                <div>
+                                  {% if event.is_sold_out %}
+                                    <span class="text-success">
+                                      <b class="slots">FULL</b> all
+                                      <em class="slots">{{ event.slots }}</em> slot{{ event.remaining_slots|pluralize }} taken
+                                    </span>
+                                  {% else %}
+                                    <em class="slots">{{ event.remaining_slots }}</em> out of
+                                    <em class="slots">{{ event.slots }}</em> slot{{ event.remaining_slots|pluralize }} available
+                                  {% endif %}
+                                </div>
                               </div>
                             </div>
                             {% set overlap = event.overlap(events[loop.index]) %}

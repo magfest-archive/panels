@@ -4,23 +4,30 @@
   html, body { font-size: 0.85em; }
   h1 { font-size: 30px; }
   h2 { font-size: 25px; }
-  @media(min-width: 480px) {
+  @media(min-width: 500px) {
     html, body { font-size: 1em; }
     h1 { font-size: 36px; }
     h2 { font-size: 30px; }
   }
 
-  .show-xs, .show-sm { display: initial; }
-  .hide-xs, .hide-sm { display: none; }
+  .visible-xs-block { display: none !important; }
+  .visible-xs-inline { display: none !important; }
+  .visible-xs-inline-block { display: none !important; }
+  .hidden-xs { display: initial !important; }
 
-  @media(min-width: 480px) {
-    .show-xs { display: none; }
-    .hide-xs { display: initial; }
+  /* override the default *-xs width */
+  @media (max-width: 767px) {
+    .visible-xs-block { display: none !important; }
+    .visible-xs-inline { display: none !important; }
+    .visible-xs-inline-block { display: none !important; }
+    .hidden-xs { display: initial !important; }
   }
 
-  @media(min-width: 768px) {
-    .show-sm { display: none; }
-    .hide-sm { display: initial; }
+  @media(max-width: 499px) {
+    .visible-xs-block { display: block !important; }
+    .visible-xs-inline { display: inline !important; }
+    .visible-xs-inline-block { display: inline-block !important; }
+    .hidden-xs { display: none !important; }
   }
 
   .label-danger-empty {
@@ -47,50 +54,57 @@
     text-align: right;
   }
 
-  .modal-body .greeting {
-    margin: 0 0 10px -15px;
-  }
-
-  .panel-body .greeting > div {
+  .panel-body .greeting .attendee {
     white-space: nowrap;
     margin-right: -5px;
   }
 
-  .modal-body .greeting > div {
-    display: inline;
+  .modal-body > .form-group:last-child {
+    margin-bottom: 0;
+  }
+
+  .modal-header .greeting .attendee {
     font-size: 1.2em;
     font-weight: bold;
     white-space: nowrap;
   }
 
-  .panel-body .greeting > a {
+  .panel-body .greeting .logout {
     padding: 0.3em 0.6em;
   }
 
-  .modal-body .greeting > a {
-    float: right;
+  .modal-header .greeting .logout {
     font-size: 65%;
     margin: 4px 0;
     padding: 0.3em 0.6em;
   }
 
-  .panel-body .greeting .badge_num,
-  .modal-body .greeting .badge_num {
+  .attendee .badge-num {
     color: #808080;
     font-size: 65%;
     font-weight: bold;
-    vertical-align: super;
   }
 
-  .panel-body .greeting > div {
+  .attendee .ident {
+    white-space: nowrap;
+  }
+
+  .panel-body .greeting .attendee {
     font-size: 1.75em;
     font-weight: bold;
+  }
+
+  .btn-xl {
+    padding: 15px 20px;
+    font-size: 20px;
+    white-space: normal;
   }
 
   .btn-next {
     font-size: 32px;
     width: 64px;
     height: 64px;
+    margin-left: 5px;
     padding: 0;
     max-width: 20%;
   }
@@ -105,6 +119,13 @@
     }
   }
 
+  .btn-next:disabled,
+  .btn-next[disabled] {
+    color: #e0e0e0;
+    background-color: #808080;
+    border-color: #808080;
+  }
+
   .btn-next-sm {
     font-size: 24px;
     width: 48px;
@@ -115,28 +136,28 @@
 
   .signedup .btn-next {
     text-shadow: none;
-    background-color: transparent;
+    background-color: #fff;
     background-image: none;
     border-color: #4cae4c;
     color: #4cae4c;
-    cursor: default;
   }
 
   .signedup .btn-next:hover,
   .signedup .btn-next:focus {
-    background-color: transparent;
+    background-color: #fff;
   }
 
   .signedup .btn-next:active,
   .signedup .btn-next.active {
-    background-color: transparent;
+    background-color: #fff;
   }
 
-  .signedup .btn-next:disabled,
-  .signedup .btn-next[disabled] {
-    color: #808080;
-    background-color: #e0e0e0;
-    border-color: #e0e0e0;
+  .show-signedup {
+    display: none;
+  }
+
+  .signedup .show-signedup {
+    display: initial;
   }
 
   .btn-back {
@@ -171,8 +192,10 @@
     text-decoration: none;
   }
 
-  .hover-btn.signedup:hover {
-    background-color: transparent;
+  .hover-btn:hover:disabled,
+  .hover-btn:hover[disabled] {
+    background-color: #f6f6f6;
+    border-color: #888888;
     cursor: default;
   }
 
@@ -187,6 +210,10 @@
     text-decoration: none;
   }
 
+  .hover-btn-title {
+    margin-bottom: 5px;
+  }
+
   .hover-btn-title h2 {
     margin-top: 0;
     display: inline;
@@ -194,5 +221,17 @@
 
   .hover-btn-body {
     padding-left: 0.75em;
+  }
+
+  input#badge_num {
+    -moz-appearance: textfield;
+    appearance: textfield;
+  }
+
+  input#badge_num::-webkit-inner-spin-button,
+  input#badge_num::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    appearance: none;
+    margin: 0;
   }
 </style>

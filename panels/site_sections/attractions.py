@@ -20,8 +20,7 @@ class Root:
         attendee = _attendee_for_badge_num(session, badge_num)
         return {
             'attractions': attractions,
-            'attendee': attendee
-        }
+            'attendee': attendee}
 
     def features(self, session, id=None, badge_num=''):
         try:
@@ -35,10 +34,8 @@ class Root:
             attendee = _attendee_for_badge_num(session, badge_num)
             return {
                 'attraction': attraction,
-                'attendee': attendee
-            }
-        else:
-            raise HTTPRedirect('index')
+                'attendee': attendee}
+        raise HTTPRedirect('index')
 
     def events(self, session, id=None, badge_num=''):
         try:
@@ -52,27 +49,36 @@ class Root:
             attendee = _attendee_for_badge_num(session, badge_num)
             return {
                 'feature': feature,
-                'attendee': attendee
-            }
-        else:
-            raise HTTPRedirect('index')
+                'attendee': attendee}
+        raise HTTPRedirect('index')
 
     @ajax
     def is_badge_num_valid(self, session, badge_num):
         attendee = session.query(Attendee).filter_by(badge_num=badge_num).first()
-        return {'result': bool(attendee)}
+        if not attendee:
+            return {'error': 'Unrecognized badge number: {}'.format(badge_num)}
+
+        return {
+            'first_name': attendee.first_name,
+            'badge_num': attendee.badge_num}
 
     @ajax
     def signup_for_event(self, session, badge_num, id):
         attendee = session.query(Attendee).filter_by(badge_num=badge_num).first()
+        if not attendee:
+            return {'error': 'Unrecognized badge number: {}'.format(badge_num)}
+
         try:
             uuid.UUID(id)
         except Exception as ex:
-            event = None
-        else:
-            event = session.query(AttractionEvent).filter_by(id=id).first()
-        if attendee and event:
-            event.attendees.append(attendee)
-            session.commit()
-            return {'result': True}
-        return {'result': False}
+            return {'error': 'Invalid event id: {}'.format(id)}
+
+        event = session.query(AttractionEvent).filter_by(id=id).first()
+        if not event:
+            return {'error': 'Unrecognized event id: {}'.format(id)}
+
+        event.attendees.append(attendee)
+        session.commit()
+        return {
+            'result': True,
+            'remaining_slots': event.remaining_slots}

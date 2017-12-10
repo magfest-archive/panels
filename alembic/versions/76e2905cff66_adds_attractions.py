@@ -88,6 +88,7 @@ def upgrade():
     sa.Column('id', sideboard.lib.sa.UUID(), nullable=False),
     sa.Column('attraction_event_id', sideboard.lib.sa.UUID(), nullable=False),
     sa.Column('attendee_id', sideboard.lib.sa.UUID(), nullable=False),
+    sa.Column('signup_time', sideboard.lib.sa.UTCDateTime(), server_default=sa.text(utcnow_server_default), nullable=False),
     sa.Column('checkin_time', sideboard.lib.sa.UTCDateTime(), nullable=True),
     sa.ForeignKeyConstraint(['attendee_id'], ['attendee.id'], name=op.f('fk_attraction_signup_attendee_id_attendee')),
     sa.ForeignKeyConstraint(['attraction_event_id'], ['attraction_event.id'], name=op.f('fk_attraction_signup_attraction_event_id_attraction_event')),

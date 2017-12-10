@@ -1,13 +1,22 @@
 {% import 'macros.html' as macros %}
 
+{% macro attendee_name(attendee, salutation='') %}
+  {% if attendee %}
+    <div class="attendee">{#- strip -#}
+      <span class="salutation">{{ salutation }}</span>{#- strip -#}
+      <span class="ident">{#- strip -#}
+        <span class="name">{{ attendee.first_name }}</span>
+        <sup class="badge-num">#{{ attendee.badge_num }}</sup>{#- strip -#}
+      </span>{#- strip -#}
+    </div>
+  {% endif %}
+{% endmacro %}
+
 {% macro greeting(attendee) %}
   {% if attendee %}
     <div class="greeting">
-      <div>
-        <span class="name">Hello {{ attendee.first_name }}</span>
-        <span class="badge_num">#{{ attendee.badge_num }}</span>
-      </div>
-      <a href="index" class="label label-danger label-danger-empty">Hey, I'm somebody else!</a>
+      {{ attendee_name(attendee, 'Hello ') }}
+      <a href="index" class="label label-danger label-danger-empty logout">Hey, I'm somebody else!</a>
     </div>
     <div class="clearfix"></div>
   {% endif%}

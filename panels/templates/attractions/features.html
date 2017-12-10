@@ -22,18 +22,6 @@
     font-weight: normal;
     font-size: 1.2em;
   }
-
-  input#badge_num {
-    -moz-appearance: textfield;
-    appearance: textfield;
-  }
-
-  input#badge_num::-webkit-inner-spin-button,
-  input#badge_num::-webkit-outer-spin-button {
-    -webkit-appearance: none;
-    appearance: none;
-    margin: 0;
-  }
 </style>
 
 <script>
@@ -75,8 +63,8 @@
           csrf_token: csrf_token
         },
         success: function(response, status) {
-          if (response && response['result']) {
-            window.location = 'events?id=' + featureId + '&badge_num=' + badgeNum;
+          if (response && response['first_name'] && response['badge_num']) {
+            window.location = 'events?id=' + featureId + '&badge_num=' + response['badge_num'];
           } else {
             toastr.error('Unrecognized badge number: ' + badgeNum, '', {timeOut: 3000});
           }
@@ -107,6 +95,7 @@
         </h4>
       </div>
       <form id="badge_num_form" method="post" action="is_badge_num_valid" class="form-horizontal" role="form">
+        {{ csrf_token() }}
         <div class="modal-body">
           <div class="help-block text-center">
             All we need is your badge number!
@@ -124,10 +113,10 @@
           </div>
         </div>
         <div class="modal-footer">
-          <button type="submit" id="badge_num_ok" class="btn btn-success btn-lg">
+          <button type="submit" id="badge_num_ok" class="btn btn-success btn-xl">
             <span class="glyphicon glyphicon-ok"></span> Okay
           </button>
-          <button id="badge_num_cancel" class="btn btn-default btn-lg" data-dismiss="modal">Nevermind</button>
+          <button id="badge_num_cancel" class="btn btn-default btn-xl" data-dismiss="modal">Nevermind</button>
         </div>
       </form>
     </div>
@@ -140,8 +129,8 @@
     {% block body %}
       <a class="btn btn-success btn-back" href="index{% if attendee %}?badge_num={{ attendee.badge_num }}{%endif%}">
         <span class="glyphicon glyphicon-chevron-left"></span>
-        <span class="hide-xs">All Attractions</span>
-        <span class="show-xs">Back</span>
+        <span class="hidden-xs">All Attractions</span>
+        <span class="visible-xs-inline">Back</span>
       </a>
       {{ attractions_macros.greeting(attendee) }}
 
