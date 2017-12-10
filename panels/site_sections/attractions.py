@@ -53,7 +53,7 @@ class Root:
         raise HTTPRedirect('index')
 
     @ajax
-    def is_badge_num_valid(self, session, badge_num):
+    def verify_badge_num(self, session, badge_num):
         attendee = session.query(Attendee).filter_by(badge_num=badge_num).first()
         if not attendee:
             return {'error': 'Unrecognized badge number: {}'.format(badge_num)}
@@ -77,8 +77,28 @@ class Root:
         if not event:
             return {'error': 'Unrecognized event id: {}'.format(id)}
 
-        event.attendees.append(attendee)
-        session.commit()
+        if event not in attendee.attraction_events:
+            attraction = event.feature.attraction
+            if attraction.restriction == Attraction.PER_ATTRACTION:
+                if attraction in attendee.attractions:
+                    return {
+                        'error': '{} is already signed up for {}'.format(
+                            attendee.first_name, attraction.name)}
+            elif attraction.restriction == Attraction.PER_FEATURE:
+                if event.feature in attendee.attraction_features:
+                    return {
+                        'error': '{} is already signed up for {}'.format(
+                            attendee.first_name, event.feature.name)}
+
+            if event.is_sold_out:
+                return {'error': '{} is already sold out'.format(event.label)}
+
+            event.attendees.append(attendee)
+            session.commit()
+
         return {
-            'result': True,
+            'first_name': attendee.first_name,
+            'badge_num': attendee.badge_num,
+            'event_id': event.id,
+            'is_sold_out': event.is_sold_out,
             'remaining_slots': event.remaining_slots}

@@ -19,6 +19,7 @@
 
   .filter-bar {
     margin-bottom: 20px;
+    text-align: right;
   }
 
   .slots {
@@ -26,7 +27,8 @@
     vertical-align: middle;
   }
 
-  .modal-body .text-success {
+  .modal-body .text-hilite {
+    color: #555;
     font-weight: bold;
   }
 
@@ -65,9 +67,9 @@
 <script>
   $(function() {
     var $body = $('body'),
+        $modals = $('.modal'),
         $signupModal = $('#signup_modal'),
         $signupForm = $('#signup_form'),
-        $signupOkButton = $('#signup_ok'),
         $signupEventLabels = $('.signup-event-label'),
         $signupEventLocations = $('.signup-event-location'),
         $btnShowSoldout = $('#btn_show_soldout'),
@@ -82,6 +84,26 @@
       $body.toggleClass('show-soldout', !isShowing);
     });
 
+    $('#events').on('click', '.event', function(event) {
+      event.preventDefault();
+      var $event = $(this);
+      if ($event.hasClass('soldout')) {
+        return;
+      }
+
+      var eventId = $event.data('eventId'),
+          isSignedup = $event.hasClass('signedup'),
+          $modal = (isSignedup ? $signupDoneModal : $signupModal);
+
+      $modals.data('eventId', eventId);
+      $modals.removeClass('soldout');
+      $modals.toggleClass('signedup', isSignedup);
+      $signupEventLabels.html($('#' + eventId + ' .event-label').html());
+      $signupEventLocations.html($('#' + eventId + ' .event-location').html());
+
+      $modal.modal('show');
+    });
+
     var signupForEvent = function(eventId, badgeNum, callback) {
       $.ajax({
         method: 'POST',
@@ -92,7 +114,13 @@
           csrf_token: csrf_token
         },
         success: function(response, status) {
-          if (response && response['result']) {
+          if (response && response['event_id']) {
+            $signupDoneModal.toggleClass('soldout', response['is_sold_out']);
+            $('#' + eventId).toggleClass('soldout', response['is_sold_out']);
+            $('#' + eventId + ' .remaining-slots').text(response['remaining_slots']);
+            if (badgeNum === '{{ attendee.badge_num }}') {
+              $('#' + eventId).addClass('signedup');
+            }
             callback(response);
           } else {
             toastr.error(response['error'] || 'Error signing up for event', '', {timeOut: 3000});
@@ -106,29 +134,23 @@
       });
     };
 
-    $signupModal.on('show.bs.modal', function(event) {
-      var $openButton = $(event.relatedTarget),
-          eventId = $openButton.data('eventId'),
-          eventName = $openButton.data('eventName'),
-          eventStartTime = $openButton.data('eventStartTime'),
-          $eventLocation = $('#' + eventId + ' .event-location');
-      $signupOkButton.data('eventId', eventId);
-      $signupEventLabels.html('<span class="text-success">' + eventName + '</span> at <span class="text-success">' + eventStartTime + '</span>');
-      $signupEventLocations.html($eventLocation.html());
-    });
-
     $signupForm.on('submit', function(event) {
       event.preventDefault();
-      var eventId = $signupOkButton.data('eventId'),
-          badgeNum = '{{ attendee.badge_num }}';
-      signupForEvent(eventId, badgeNum, function(response) {
+      var eventId = $signupModal.data('eventId');
+      signupForEvent(eventId, '{{ attendee.badge_num }}', function(response) {
         if (response) {
-          $('#' + eventId).addClass('signedup');
           $signupModal.modal('hide');
-          $signupDoneModal.data('remainingSlots', response['remaining_slots']);
           $signupDoneModal.modal('show');
         }
       });
+    });
+
+    $signupDoneModal.on('show.bs.modal', function (event) {
+      $badgeNum.val('');
+      $('#friend_confirm').hide();
+      $('#friend_label').show();
+      $('#friend_row').hide();
+      $('#badge_num_row').show();
     });
 
     $signupDoneModal.on('shown.bs.modal', function (event) {
@@ -163,13 +185,13 @@
 
     $('#friend_row .btn-success').on('click', function (event) {
       event.preventDefault();
-      var eventId = $signupOkButton.data('eventId'),
-          badgeNum = $badgeNum.val();
-      signupForEvent(eventId, badgeNum, function(response) {
+      var eventId = $signupDoneModal.data('eventId');
+      signupForEvent(eventId, $badgeNum.val(), function(response) {
         if (response) {
-          $signupDoneModal.data('remainingSlots', response['remaining_slots']);
-          toastr.info($('#friend_row .attendee').html() + ' signed up!');
+          toastr.info($('#friend_row .attendee').html() + ' signed up for ' + $('#' + eventId + ' .event-label').html());
           hideFriend(true);
+        } else {
+          hideFriend(false);
         }
       });
     });
@@ -189,7 +211,7 @@
 
       $.ajax({
         method: 'POST',
-        url: 'is_badge_num_valid',
+        url: 'verify_badge_num',
         data: {
           badge_num: badgeNum,
           csrf_token: csrf_token
@@ -230,12 +252,12 @@
         <div class="modal-body">
           <p>
             Sign up for
-            <span class="text-success">{{ feature.attraction.name }} –</span>
+            <span class="text-hilite">{{ feature.attraction.name }} –</span>
             <span class="signup-event-label"></span>?
           </p>
           <p>
             The event will be held in
-            <span class="text-success signup-event-location"></span>.
+            <span class="text-hilite signup-event-location"></span>.
           </p>
           <p>
             You {% if feature.attraction.required_checkin < 0 %}may{% else %}must{% endif %}
@@ -270,15 +292,15 @@
       <div class="modal-body form-horizontal">
         <p>
           Congratulations, you're signed up for
-          <span class="text-success">{{ feature.attraction.name }} –</span>
+          <span class="text-hilite">{{ feature.attraction.name }} –</span>
           <span class="signup-event-label"></span>!
         </p>
         <p>
           The event will be held in
-          <span class="text-success signup-event-location"></span>.
+          <span class="text-hilite signup-event-location"></span>.
           Please check in {{ feature.attraction.required_checkin_label }}.
         </p>
-        <form id="badge_num_form" method="post" action="is_badge_num_valid" role="form">
+        <form id="badge_num_form" method="post" action="verify_badge_num" role="form" class="hidden-soldout">
           <p>
             Want to go as a group? You can sign up some friends below...
           </p>
@@ -327,6 +349,9 @@
           </div>
           <div class="form-group text-center"><b>OR</b></div>
         </form>
+        <div class="form-group text-center visible-soldout-block">
+          <em class="text-danger">This event is <b>SOLD OUT</b>!</em>
+        </div>
         <div class="form-group">
           <div class="col-sm-offset-2 col-sm-8">
             <button class="btn btn-lg btn-xl btn-default" data-dismiss="modal" style="width: 100%">
@@ -363,72 +388,73 @@
         {{ feature.description|linebreaksbr }}
       </p>
       <hr>
-      <div class="filter-bar">
-        <button id="btn_show_soldout" class="btn btn-default btn-xs">
-          <span class="glyphicon glyphicon-filter"></span>
-          Show sold out
-        </button>
-      </div>
-      {%- set is_multi_day = feature.available_events_by_day|length > 1 -%}
-      {% for day, events in feature.available_events_by_day.items() %}
-        {% if not loop.first %}<hr>{% endif %}
-        {% if is_multi_day %}
-          <div class="pull-right">
-            {% for jump_day in feature.available_events_by_day.keys() %}
-              {% if jump_day == day %}
-                {{ jump_day[:3] }}
-              {% else %}
-                <a href="#{{ jump_day }}">{{ jump_day[:3] }}</a>
-              {% endif %}
-            {% endfor %}
-          </div>
-        {% endif %}
-        <h2 id="{{ day }}">{{ day }}</h2>
-        {% for event in events %}
-          {%- set is_signed_up = event in attendee.attraction_events -%}
-          {%- set is_sold_out = event.is_sold_out -%}
-          <a class="event hover-btn {% if event.is_sold_out %} soldout{% endif%} {% if is_signed_up %} signedup{% endif %}"
-              id="{{ event.id }}"
-            {% if is_sold_out %}
-              disabled="disabled"
-            {% elif is_signed_up %}
-              href="#"
-              data-toggle="modal"
-              data-target="#signup_done_modal"
-            {% else %}
-              href="#"
-              data-toggle="modal"
-              data-target="#signup_modal"
-            {%- endif %}
-              data-event-id="{{ event.id }}"
-              data-event-name="{{ event.name }}"
-              data-event-location="{{ event.location }}"
-              data-event-start-time="{{ event.start_time_label }}">
-            <div class="hover-btn-title">
-              <button class="btn btn-success btn-next btn-next-sm pull-right"
-                  {% if is_sold_out %}disabled="disabled"{% endif %}>
-                <span class="glyphicon glyphicon-ok"></span>
-              </button>
-              <h2><span class="bling-icon"></span> {{ event.time_span_label }}</h2>
-              <em class="text-nowrap">{{ event.duration_label }}</em>
+      {%- set available_events_by_day = feature.available_events_by_day -%}
+      {%- set is_multi_day = available_events_by_day|length > 1 -%}
+      {% if available_events_by_day %}
+        <div class="filter-bar">
+          <button id="btn_show_soldout" class="btn btn-default btn-xs">
+            <span class="glyphicon glyphicon-filter"></span>
+            Show sold out
+          </button>
+        </div>
+      {% endif %}
+      <div id="events">
+        {% for day, events in available_events_by_day.items() %}
+          {% if not loop.first %}<hr>{% endif %}
+          {% if is_multi_day %}
+            <div class="pull-right">
+              {% for jump_day in available_events_by_day.keys() %}
+                {% if jump_day == day %}
+                  {{ jump_day[:3] }}
+                {% else %}
+                  <a href="#{{ jump_day }}">{{ jump_day[:3] }}</a>
+                {% endif %}
+              {% endfor %}
             </div>
-            <div class="hover-btn-body">
-              <p class="event-location">{{ format_location(event.location, separator=' ', spacer='', text_class='') }}</p>
-              <p>
-                {% if is_sold_out %}
-                  <span class="text-danger">
+          {% endif %}
+          <h2 id="{{ day }}">{{ day }}</h2>
+          {% for event in events %}
+            {%- set is_signed_up = event in attendee.attraction_events -%}
+            {%- set is_sold_out = event.is_sold_out -%}
+            <a class="event hover-btn {% if event.is_sold_out %} soldout{% endif%} {% if is_signed_up %} signedup{% endif %}"
+                id="{{ event.id }}"
+                href="#"
+                data-event-id="{{ event.id }}"
+                data-event-name="{{ event.name }}"
+                data-event-slots="{{ event.slots }}"
+                data-event-location="{{ event.location }}"
+                data-event-start-time="{{ event.start_time_label }}">
+              <div class="hover-btn-title">
+                <button class="btn btn-success btn-next btn-next-sm pull-right">
+                  <span class="glyphicon glyphicon-ok"></span>
+                </button>
+                <h2><span class="bling-icon"></span> {{ event.time_span_label }}</h2>
+                <em class="text-nowrap">{{ event.duration_label }}</em>
+              </div>
+              <div class="hover-btn-body">
+                <p class="event-label" style="display: none">
+                  <span class="text-hilite">{{ event.name }}</span> at <span class="text-hilite">{{ event.start_time_label }}</span>
+                </p>
+                <p class="event-location">
+                  {{ format_location(event.location, separator=' ', spacer='', text_class='') }}
+                </p>
+                <p>
+                  <span class="visible-soldout-inline text-danger">
                     <b class="slots">SOLD OUT</b> all <em class="slots">{{ event.slots }}</em> slot{{ event.remaining_slots|pluralize }} taken
                   </span>
-                {% else %}
-                  <em class="slots">{{ event.remaining_slots }}</em> out of
-                  <em class="slots">{{ event.slots }}</em> slot{{ event.remaining_slots|pluralize }} available
-                {% endif %}
-              </p>
-              <p class="show-signedup"><em class="text-success">You are signed up for this event!</em></p>
-            </div>
-          </a>
+                  <span class="hidden-soldout">
+                    <em class="slots remaining-slots">{{ event.remaining_slots }}</em> out of
+                    <em class="slots total-slots">{{ event.slots }}</em> slot{{ event.remaining_slots|pluralize }} available
+                  </span>
+                </p>
+                <p class="visible-signedup-inline"><em class="text-success">You are signed up for this event!</em></p>
+              </div>
+            </a>
+          {% endfor %}
+        {% else %}
+          <em class="help-block text-center">No events are available for {{ feature.name }}.</em>
         {% endfor %}
-      {% endfor %}
+      </div>
     {% endblock %}
   </div>
 </div>

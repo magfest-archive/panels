@@ -32,6 +32,11 @@
     margin: 0;
     padding: 3px 20px;
   }
+
+  .table .controls {
+    text-align: right;
+    white-space: nowrap;
+  }
 </style>
 
 <h2 class="event-title">
@@ -128,7 +133,8 @@
         <th>Attendee</th>
         <th>Badge #</th>
         <th>Signup Time</th>
-        <th class="text-right">Checkin Time</th>
+        <th>Checkin Time</th>
+        <th class="controls" data-orderable="false"></th>
       </tr>
     </thead>
     <tbody>
@@ -137,12 +143,17 @@
           <td>{{ signup.attendee|form_link }}</td>
           <td>#{{ signup.attendee.badge_num }}</td>
           <td>{{ signup.signup_time|datetime_local('%A, %b %-e at %-I:%M%p') }}</td>
-          <td class="text-right">
+          <td>
             {% if signup.checkin_time %}
               {{ signup.checkin_time|datetime_local('%A, %b %-e at %-I:%M%p') }}
             {% else %}
               <em>Not checked in</em>
             {% endif %}
+          </td>
+          <td class="controls">
+            <button class="btn btn-xs btn-danger">
+              <span class="glyphicon glyphicon-remove"></span>
+            </button>
           </td>
         </tr>
       {% endfor %}

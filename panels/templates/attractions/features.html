@@ -57,7 +57,7 @@
       var featureId = $badgeNumOkButton.data('featureId');
       $.ajax({
         method: 'POST',
-        url: 'is_badge_num_valid',
+        url: 'verify_badge_num',
         data: {
           badge_num: badgeNum,
           csrf_token: csrf_token
@@ -94,7 +94,7 @@
           <span class="modal-title-text" id="badge_num_modal_title"></span>
         </h4>
       </div>
-      <form id="badge_num_form" method="post" action="is_badge_num_valid" class="form-horizontal" role="form">
+      <form id="badge_num_form" method="post" action="verify_badge_num" class="form-horizontal" role="form">
         {{ csrf_token() }}
         <div class="modal-body">
           <div class="help-block text-center">
@@ -173,6 +173,8 @@
             {% endif %}
           </div>
         </a>
+      {% else %}
+        <em class="help-block text-center">{{ attraction.name }} doesn't have any features yet.</em>
       {% endfor %}
     {% endblock %}
   </div>

@@ -101,35 +101,30 @@
   }
 
   .btn-next {
-    font-size: 32px;
-    width: 64px;
-    height: 64px;
-    margin-left: 5px;
+    font-size: 24px;
+    width: 48px;
+    height: 48px;
+    margin: 0 0 6px 6px;
     padding: 0;
     max-width: 20%;
   }
 
   @media(min-width: 480px) {
     .btn-next {
-      font-size: 42px;
-      width: 84px;
-      height: 84px;
+      font-size: 32px;
+      width: 64px;
+      height: 64px;
+      margin: 0 0 6px 6px;
       padding: 0;
       max-width: 20%;
     }
-  }
-
-  .btn-next:disabled,
-  .btn-next[disabled] {
-    color: #e0e0e0;
-    background-color: #808080;
-    border-color: #808080;
   }
 
   .btn-next-sm {
     font-size: 24px;
     width: 48px;
     height: 48px;
+    margin: 0 0 6px 6px;
     padding: 0;
     max-width: 20%;
   }
@@ -152,12 +147,41 @@
     background-color: #fff;
   }
 
-  .show-signedup {
+  .soldout .btn-next,
+  .btn-next:disabled,
+  .btn-next[disabled] {
+    color: #8cc789;
+    background-color: #fff;
+    border-color: #8cc789;
+  }
+
+  .soldout .hidden-soldout,
+  .signedup .hidden-signedup {
     display: none;
   }
 
-  .signedup .show-signedup {
-    display: initial;
+  .visible-soldout-block,
+  .visible-signedup-block,
+  .visible-soldout-inline,
+  .visible-signedup-inline,
+  .visible-soldout-inline-block,
+  .visible-signedup-inline-block {
+    display: none;
+  }
+
+  .soldout .visible-soldout-block,
+  .signedup .visible-signedup-block {
+    display: block;
+  }
+
+  .soldout .visible-soldout-inline,
+  .signedup .visible-signedup-inline {
+    display: inline;
+  }
+
+  .soldout .visible-soldout-inline-block,
+  .signedup .visible-signedup-inline-block {
+    display: inline-block;
   }
 
   .btn-back {
@@ -192,6 +216,7 @@
     text-decoration: none;
   }
 
+  .hover-btn.soldout:hover,
   .hover-btn:hover:disabled,
   .hover-btn:hover[disabled] {
     background-color: #f6f6f6;

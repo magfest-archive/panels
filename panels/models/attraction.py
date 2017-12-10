@@ -31,6 +31,14 @@ class Attendee:
         backref='attendee',
         order_by='AttractionSignup.signup_time')
 
+    @property
+    def attraction_features(self):
+        return list({e.feature for e in self.attraction_events})
+
+    @property
+    def attractions(self):
+        return list({e.feature.attraction for e in self.attraction_events})
+
     def can_admin_attraction(self, attraction):
         if not self.admin_account:
             return False

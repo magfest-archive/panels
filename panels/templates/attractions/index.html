@@ -18,10 +18,10 @@
       <hr>
       {% for attraction in attractions %}
         <a class="attraction hover-btn" href="features?id={{ attraction.id }}{% if attendee %}&badge_num={{ attendee.badge_num }}{%endif%}">
+          <button class="btn btn-success btn-next pull-right">
+            <span class="glyphicon glyphicon-chevron-right"></span>
+          </button>
           <div class="hover-btn-title">
-            <button class="btn btn-success btn-next pull-right">
-              <span class="glyphicon glyphicon-chevron-right"></span>
-            </button>
             <h2><span class="bling-icon"></span> {{ attraction.name }}</h2>
           </div>
           <div class="hover-btn-body">
@@ -44,7 +44,7 @@
           </div>
         </a>
       {% else %}
-        <em class="help-block text-center">There aren't any attractions available yet!</em>
+        <em class="help-block text-center">There aren't any attractions available yet.</em>
       {% endfor %}
     {% endblock %}
   </div>
