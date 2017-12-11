@@ -1,6 +1,5 @@
 
 <style type="text/css">
-
   html, body { font-size: 0.85em; }
   h1 { font-size: 30px; }
   h2 { font-size: 25px; }
@@ -105,7 +104,7 @@
     width: 48px;
     height: 48px;
     margin: 0 0 6px 6px;
-    padding: 0;
+    padding: 6px;
     max-width: 20%;
   }
 
@@ -115,7 +114,7 @@
       width: 64px;
       height: 64px;
       margin: 0 0 6px 6px;
-      padding: 0;
+      padding: 10px;
       max-width: 20%;
     }
   }
@@ -150,37 +149,54 @@
   .soldout .btn-next,
   .btn-next:disabled,
   .btn-next[disabled] {
+    color: #909090;
+    background-color: #fff;
+    background-image: none;
+    border-color: #909090;
+  }
+
+  .soldout.signedup .btn-next,
+  .btn-next:disabled,
+  .btn-next[disabled] {
     color: #8cc789;
     background-color: #fff;
+    background-image: none;
     border-color: #8cc789;
   }
 
   .soldout .hidden-soldout,
-  .signedup .hidden-signedup {
+  .signedup .hidden-signedup ,
+  .loggedin .hidden-loggedin {
     display: none;
   }
 
   .visible-soldout-block,
   .visible-signedup-block,
+  .visible-loggedin-block,
   .visible-soldout-inline,
   .visible-signedup-inline,
+  .visible-loggedin-inline,
   .visible-soldout-inline-block,
-  .visible-signedup-inline-block {
+  .visible-signedup-inline-block,
+  .visible-loggedin-inline-block {
     display: none;
   }
 
   .soldout .visible-soldout-block,
-  .signedup .visible-signedup-block {
+  .signedup .visible-signedup-block,
+  .loggedin .visible-loggedin-block {
     display: block;
   }
 
   .soldout .visible-soldout-inline,
-  .signedup .visible-signedup-inline {
+  .signedup .visible-signedup-inline,
+  .loggedin .visible-loggedin-inline {
     display: inline;
   }
 
   .soldout .visible-soldout-inline-block,
-  .signedup .visible-signedup-inline-block {
+  .signedup .visible-signedup-inline-block,
+  .loggedin .visible-loggedin-inline-block {
     display: inline-block;
   }
 
@@ -248,15 +264,40 @@
     padding-left: 0.75em;
   }
 
-  input#badge_num {
+  input.badge-num {
     -moz-appearance: textfield;
     appearance: textfield;
   }
 
-  input#badge_num::-webkit-inner-spin-button,
-  input#badge_num::-webkit-outer-spin-button {
+  input.badge-num::-webkit-inner-spin-button,
+  input.badge-num::-webkit-outer-spin-button {
     -webkit-appearance: none;
     appearance: none;
     margin: 0;
   }
 </style>
+
+
+<script>
+  var updateGreeting = function(firstName, badgeNum) {
+    if (firstName && badgeNum) {
+      $('.greeting').css('display', '');
+      $('.attendee').css('display', '');
+      $('.attendee .name').text(firstName);
+      $('.attendee .badge-num').text('#' + badgeNum);
+    } else {
+      $('.greeting').css('display', 'none');
+      $('.attendee').css('display', 'none');
+      $('.attendee .name').text('');
+      $('.attendee .badge-num').text('#');
+    }
+  };
+
+  var clickNextButton = function(event) {
+    event.preventDefault();
+    var $next = $(this).find('a.btn-next');
+    if ($next.attr('href')) {
+      window.location = $next.attr('href');
+    }
+  };
+</script>

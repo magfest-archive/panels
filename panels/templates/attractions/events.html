@@ -3,7 +3,18 @@
 {% import 'attractions/attractions_macros.html' as attractions_macros with context %}
 
 {% block content %}
+
 {% include 'attractions/attractions_common.html' %}
+
+{%- set restriction = feature.attraction.restriction -%}
+{%- set is_restricted_per_attraction = attendee.is_signed_up_for_attraction(feature.attraction)
+    if attendee and restriction == Attraction.PER_ATTRACTION
+    else False -%}
+{%- set is_restricted_per_feature = attendee.is_signed_up_for_attraction_feature(feature)
+    if attendee and restriction == Attraction.PER_FEATURE
+    else False -%}
+{%- set is_restricted = is_restricted_per_attraction or is_restricted_per_feature -%}
+
 <style type="text/css">
   .hover-btn + .hover-btn {
     margin-top: 0;
@@ -37,12 +48,18 @@
     padding-left: 2em;
   }
 
-  #signup_done_modal form p {
+  #badge_num_modal .help-block {
+    color: #808080;
+    font-weight: normal;
+    font-size: 1.2em;
+  }
+
+  #done_modal form p {
     margin-bottom: 20px;
   }
 
   #friend_row .attendee,
-  #signup_done_modal .btn .attendee {
+  #done_modal .btn .attendee {
     display: inline-block;
   }
 
@@ -65,43 +82,49 @@
 </style>
 
 <script>
+  var isRestrictedPerAttraction = {{ is_restricted_per_attraction|string|lower }};
+  var isRestrictedPerFeature = {{ is_restricted_per_feature|string|lower }};
+  var isRestricted = {{ is_restricted|string|lower }};
+  var isLoggedin = {{ attendee is not none|string|lower }};
+
   $(function() {
-    var $body = $('body'),
-        $modals = $('.modal'),
+    var $modals = $('.modal'),
+        $badgeNumModal = $('#badge_num_modal'),
         $signupModal = $('#signup_modal'),
-        $signupForm = $('#signup_form'),
-        $signupEventLabels = $('.signup-event-label'),
-        $signupEventLocations = $('.signup-event-location'),
-        $btnShowSoldout = $('#btn_show_soldout'),
-        $signupDoneModal = $('#signup_done_modal'),
-        $badgeNumForm = $('#badge_num_form'),
-        $badgeNum = $('#badge_num');
+        $doneModal = $('#done_modal'),
+        $badgeNum = $('#badge_num'),
+        $friendBadgeNum = $('#friend_badge_num'),
+        $btnShowSoldout = $('#btn_show_soldout');
 
     $btnShowSoldout.on('click', function(event) {
       var isShowing = $btnShowSoldout.hasClass('btn-plain');
       $btnShowSoldout.toggleClass('btn-default', isShowing);
       $btnShowSoldout.toggleClass('btn-plain', !isShowing);
-      $body.toggleClass('show-soldout', !isShowing);
+      $('body').toggleClass('show-soldout', !isShowing);
+    });
+
+    $modals.on('hide.bs.modal', function (event) {
+      removeHashFromUrl();
     });
 
     $('#events').on('click', '.event', function(event) {
       event.preventDefault();
-      var $event = $(this);
-      if ($event.hasClass('soldout')) {
+      var $event = $(this),
+          eventId = $event.data('eventId'),
+          isSoldout = $event.hasClass('soldout'),
+          isSignedup = $event.hasClass('signedup');
+
+      if (isSoldout && !isSignedup) {
         return;
       }
 
-      var eventId = $event.data('eventId'),
-          isSignedup = $event.hasClass('signedup'),
-          $modal = (isSignedup ? $signupDoneModal : $signupModal);
-
       $modals.data('eventId', eventId);
-      $modals.removeClass('soldout');
+      $modals.toggleClass('soldout', isSoldout);
       $modals.toggleClass('signedup', isSignedup);
-      $signupEventLabels.html($('#' + eventId + ' .event-label').html());
-      $signupEventLocations.html($('#' + eventId + ' .event-location').html());
+      $('.signup-event-label').html($('#' + eventId + ' .event-label').html());
+      $('.signup-event-location').html($('#' + eventId + ' .event-location').html());
 
-      $modal.modal('show');
+      (isLoggedin ? (isSignedup ? $doneModal : $signupModal) : $badgeNumModal).modal('show');
     });
 
     var signupForEvent = function(eventId, badgeNum, callback) {
@@ -115,10 +138,10 @@
         },
         success: function(response, status) {
           if (response && response['event_id']) {
-            $signupDoneModal.toggleClass('soldout', response['is_sold_out']);
+            $modals.toggleClass('soldout', response['is_sold_out']);
             $('#' + eventId).toggleClass('soldout', response['is_sold_out']);
             $('#' + eventId + ' .remaining-slots').text(response['remaining_slots']);
-            if (badgeNum === '{{ attendee.badge_num }}') {
+            if ('' + badgeNum === '{{ attendee.badge_num }}') {
               $('#' + eventId).addClass('signedup');
             }
             callback(response);
@@ -134,31 +157,77 @@
       });
     };
 
-    $signupForm.on('submit', function(event) {
+    // ****************************************
+    // Badge Num Modal
+    // ****************************************
+
+    $badgeNumModal.on('shown.bs.modal', function (event) {
+      $('#badge_num').focus();
+    });
+
+    $('#badge_num_form').on('submit', function(event) {
       event.preventDefault();
-      var eventId = $signupModal.data('eventId');
-      signupForEvent(eventId, '{{ attendee.badge_num }}', function(response) {
-        if (response) {
-          $signupModal.modal('hide');
-          $signupDoneModal.modal('show');
+      var badgeNum = $badgeNum.val();
+      if (!badgeNum) {
+        return;
+      }
+
+      $.ajax({
+        method: 'POST',
+        url: 'verify_badge_num',
+        data: {
+          badge_num: badgeNum,
+          csrf_token: csrf_token
+        },
+        success: function(response, status) {
+          if (response && response['first_name'] && response['badge_num']) {
+            window.location = 'events?id={{ feature.id }}&badge_num=' + response['badge_num'] + '#' + $signupModal.data('eventId');
+          } else {
+            toastr.error('Unrecognized badge number: ' + badgeNum, '', {timeOut: 3000});
+            $badgeNum.focus();
+          }
+        },
+        error: function(response, status, statusText) {
+          toastr.error('Unrecognized badge number: ' + badgeNum, '', {timeOut: 3000});
+          $badgeNum.focus();
         }
       });
     });
 
-    $signupDoneModal.on('show.bs.modal', function (event) {
-      $badgeNum.val('');
+    // ****************************************
+    // Signup Modal
+    // ****************************************
+
+    $('#signup_form').on('submit', function(event) {
+      event.preventDefault();
+      var eventId = $signupModal.data('eventId'),
+          badgeNum = $signupModal.data('badgeNum');
+      signupForEvent(eventId, badgeNum, function(response) {
+        if (response) {
+          $signupModal.modal('hide');
+          $doneModal.modal('show');
+        }
+      });
+    });
+
+    // ****************************************
+    // Done Modal
+    // ****************************************
+
+    $doneModal.on('show.bs.modal', function (event) {
+      $friendBadgeNum.val('');
       $('#friend_confirm').hide();
       $('#friend_label').show();
       $('#friend_row').hide();
-      $('#badge_num_row').show();
+      $('#friend_badge_num_row').show();
     });
 
-    $signupDoneModal.on('shown.bs.modal', function (event) {
-      $('#badge_num').focus();
+    $doneModal.on('shown.bs.modal', function (event) {
+      $('#friend_badge_num').focus();
     });
 
     var showFriend = function() {
-      $('#badge_num_row').hide('slide', {direction: 'left'}, 250);
+      $('#friend_badge_num_row').hide('slide', {direction: 'left'}, 250);
       $('#friend_row').show('slide', {direction: 'right'}, 250);
       $('#friend_label').fadeOut(125, function() {
         $('#friend_confirm').fadeIn(125);
@@ -170,11 +239,11 @@
         $('#friend_label').fadeIn(125);
       });
       $('#friend_row').hide('slide', {direction: 'right'}, 250);
-      $('#badge_num_row').show('slide', {direction: 'left'}, 250, function() {
+      $('#friend_badge_num_row').show('slide', {direction: 'left'}, 250, function() {
         if (clear) {
-          $badgeNum.val('');
+          $friendBadgeNum.val('');
         }
-        $badgeNum.focus();
+        $friendBadgeNum.focus();
       });
     };
 
@@ -185,8 +254,8 @@
 
     $('#friend_row .btn-success').on('click', function (event) {
       event.preventDefault();
-      var eventId = $signupDoneModal.data('eventId');
-      signupForEvent(eventId, $badgeNum.val(), function(response) {
+      var eventId = $doneModal.data('eventId');
+      signupForEvent(eventId, $friendBadgeNum.val(), function(response) {
         if (response) {
           toastr.info($('#friend_row .attendee').html() + ' signed up for ' + $('#' + eventId + ' .event-label').html());
           hideFriend(true);
@@ -196,16 +265,16 @@
       });
     });
 
-    $badgeNumForm.on('submit', function(event) {
+    $('#friend_badge_num_form').on('submit', function(event) {
       event.preventDefault();
-      badgeNum = $badgeNum.val();
+      var badgeNum = $friendBadgeNum.val();
       if (!badgeNum) {
         return;
       }
 
       if (badgeNum === '{{ attendee.badge_num }}') {
         toastr.warning("Hey, that's you!", '', {timeOut: 3000});
-        $badgeNum.focus();
+        $friendBadgeNum.focus();
         return;
       }
 
@@ -223,22 +292,69 @@
             showFriend();
           } else {
             toastr.error('Unrecognized badge number: ' + badgeNum, '', {timeOut: 3000});
+            $friendBadgeNum.focus();
           }
         },
         error: function(response, status, statusText) {
           toastr.error('Unrecognized badge number: ' + badgeNum, '', {timeOut: 3000});
+          $friendBadgeNum.focus();
         }
       });
     });
+
+    // ****************************************
+    // Page refresh after login
+    // ****************************************
+
+    if (window.location.hash && window.location.hash.length > 1) {
+      $(window.location.hash).click();
+    }
   });
 </script>
 
-<div id="signup_modal"
-    class="modal fade"
-    tabindex="-1"
-    role="dialog"
+<div id="badge_num_modal" class="modal fade" tabindex="-1" role="dialog" style="display: none"
+    aria-labelledby="badge_num_modal_title"
+    data-badge-num="{{ attendee.badge_num }}">
+  <div class="modal-dialog modal-md" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+        <h4 class="modal-title">
+          <span class="bling-icon"></span> Sign up for <span class="signup-event-label"></span>?
+        </h4>
+      </div>
+      <form id="badge_num_form" method="post" action="verify_badge_num" class="form-horizontal" role="form">
+        {{ csrf_token() }}
+        <div class="modal-body">
+          <div class="help-block text-center">All we need is your badge number!</div>
+          <div class="form-group">
+            <div class="col-sm-offset-3 col-sm-6">
+              <input class="form-control input-lg text-center badge-num"
+                type="number"
+                id="badge_num"
+                name="badge_num"
+                placeholder="Badge #"
+                required="required"
+                min="1">
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-success btn-xl">
+            <span class="glyphicon glyphicon-ok"></span> Log in
+          </button>
+          <button class="btn btn-default btn-xl" data-dismiss="modal">Nevermind</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<div id="signup_modal" class="modal fade" tabindex="-1" role="dialog" style="display: none"
     aria-labelledby="signup_modal_title"
-    style="display: none">
+    data-badge-num="{{ attendee.badge_num }}">
   <div class="modal-dialog modal-md" role="document">
     <div class="modal-content">
       <div class="modal-header">
@@ -265,22 +381,19 @@
           </p>
         </div>
         <div class="modal-footer">
-          <button type="submit" id="signup_ok" class="btn btn-success btn-lg btn-xl">
-            <span class="glyphicon glyphicon-ok"></span> Okay
+          <button type="submit" class="btn btn-success btn-lg btn-xl">
+            <span class="glyphicon glyphicon-ok"></span> Sign up
           </button>
-          <button id="signup_cancel" class="btn btn-default btn-lg btn-xl" data-dismiss="modal">Nevermind</button>
+          <button class="btn btn-default btn-lg btn-xl" data-dismiss="modal">Nevermind</button>
         </div>
       </form>
     </div>
   </div>
 </div>
 
-<div id="signup_done_modal"
-    class="modal fade"
-    tabindex="-1"
-    role="dialog"
-    aria-labelledby="signup_done_modal_title"
-    style="display: none">
+<div id="done_modal" class="modal fade" tabindex="-1" role="dialog" style="display: none"
+    aria-labelledby="done_modal_title"
+    data-badge-num="{{ attendee.badge_num }}">
   <div class="modal-dialog modal-md" role="document">
     <div class="modal-content">
       <div class="modal-header">
@@ -300,23 +413,21 @@
           <span class="text-hilite signup-event-location"></span>.
           Please check in {{ feature.attraction.required_checkin_label }}.
         </p>
-        <form id="badge_num_form" method="post" action="verify_badge_num" role="form" class="hidden-soldout">
-          <p>
-            Want to go as a group? You can sign up some friends below...
-          </p>
+        <form id="friend_badge_num_form" method="post" action="verify_badge_num" role="form" class="hidden-soldout">
+          <p>Want to go as a group? You can sign up some friends below...</p>
           {{ csrf_token() }}
           <div class="form-group">
             <label class="col-sm-offset-2 col-sm-8">
               <span id="friend_label">Sign up a friend</span>
               <span id="friend_confirm" style="display: none;">Is this the right person?</span>
-              &nbsp;
+              <span>&nbsp;</span>
             </label>
             <div class="col-sm-offset-2 col-sm-8 slide-box">
-              <div id="badge_num_row" class="row">
+              <div id="friend_badge_num_row" class="row">
                 <div class="col-xs-6" style="padding-right: 7px;">
-                  <input class="form-control input-lg text-center"
+                  <input class="form-control input-lg text-center badge-num"
                       type="number"
-                      id="badge_num"
+                      id="friend_badge_num"
                       name="badge_num"
                       placeholder="Badge #"
                       required="required"
@@ -324,8 +435,7 @@
                 </div>
                 <div class="col-xs-6" style="padding-left: 8px;">
                   <button class="btn btn-lg btn-success" style="width: 100%">
-                    <span class="glyphicon glyphicon-ok"></span>
-                    Sign up
+                    <span class="glyphicon glyphicon-ok"></span> Sign up
                   </button>
                 </div>
               </div>
@@ -362,8 +472,7 @@
         <div class="form-group">
           <div class="col-sm-offset-2 col-sm-8">
             <a class="btn btn-lg btn-xl btn-primary" style="width: 100%" href="index">
-              <span class="glyphicon glyphicon-off"></span>
-              All done, log me out!
+              <span class="glyphicon glyphicon-off"></span> All done, log me out!
             </a>
           </div>
         </div>
@@ -373,10 +482,11 @@
 </div>
 
 <div class="masthead"></div>
-<div class="panel panel-default">
+<div class="panel panel-default{% if is_restricted %} restricted{% endif %}">
   <div class="panel-body">
     {% block body %}
-      <a class="btn btn-success btn-back" href="features?id={{ feature.attraction.id }}{% if attendee %}&badge_num={{ attendee.badge_num }}{%endif%}">
+      <a class="btn btn-success btn-back" href="features?id={{ feature.attraction.id }}
+          {%- if attendee %}&badge_num={{ attendee.badge_num }}{%endif%}">
         <span class="glyphicon glyphicon-chevron-left"></span>
         <span class="hidden-xs">{{ feature.attraction.name }}</span>
         <span class="visible-xs-inline">Back</span>
@@ -394,7 +504,7 @@
         <div class="filter-bar">
           <button id="btn_show_soldout" class="btn btn-default btn-xs">
             <span class="glyphicon glyphicon-filter"></span>
-            Show sold out
+            Include sold out
           </button>
         </div>
       {% endif %}
@@ -414,11 +524,12 @@
           {% endif %}
           <h2 id="{{ day }}">{{ day }}</h2>
           {% for event in events %}
-            {%- set is_signed_up = event in attendee.attraction_events -%}
-            {%- set is_sold_out = event.is_sold_out -%}
-            <a class="event hover-btn {% if event.is_sold_out %} soldout{% endif%} {% if is_signed_up %} signedup{% endif %}"
+            {%- set is_signedup = event in attendee.attraction_events -%}
+            {%- set is_soldout = event.is_sold_out -%}
+            <div class="event hover-btn
+                {%- if is_soldout %} soldout{% endif%}
+                {%- if is_signedup %} signedup{% endif %}"
                 id="{{ event.id }}"
-                href="#"
                 data-event-id="{{ event.id }}"
                 data-event-name="{{ event.name }}"
                 data-event-slots="{{ event.slots }}"
@@ -433,14 +544,17 @@
               </div>
               <div class="hover-btn-body">
                 <p class="event-label" style="display: none">
-                  <span class="text-hilite">{{ event.name }}</span> at <span class="text-hilite">{{ event.start_time_label }}</span>
+                  <span class="text-hilite">{{ event.name }}</span> at
+                  <span class="text-hilite">{{ event.start_time_label }}</span>{#- strip -#}
                 </p>
                 <p class="event-location">
-                  {{ format_location(event.location, separator=' ', spacer='', text_class='') }}
+                  {{ format_location(event.location, separator=' ', spacer='', text_class='') }}{#- strip -#}
                 </p>
                 <p>
                   <span class="visible-soldout-inline text-danger">
-                    <b class="slots">SOLD OUT</b> all <em class="slots">{{ event.slots }}</em> slot{{ event.remaining_slots|pluralize }} taken
+                    <b class="slots">SOLD OUT</b> all
+                    <em class="slots">{{ event.slots }}</em>
+                    slot{{ event.remaining_slots|pluralize }} taken
                   </span>
                   <span class="hidden-soldout">
                     <em class="slots remaining-slots">{{ event.remaining_slots }}</em> out of
@@ -449,7 +563,7 @@
                 </p>
                 <p class="visible-signedup-inline"><em class="text-success">You are signed up for this event!</em></p>
               </div>
-            </a>
+            </div>
           {% endfor %}
         {% else %}
           <em class="help-block text-center">No events are available for {{ feature.name }}.</em>

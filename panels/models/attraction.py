@@ -39,6 +39,12 @@ class Attendee:
     def attractions(self):
         return list({e.feature.attraction for e in self.attraction_events})
 
+    def is_signed_up_for_attraction(self, attraction):
+        return attraction in self.attractions
+
+    def is_signed_up_for_attraction_feature(self, feature):
+        return feature in self.attraction_features
+
     def can_admin_attraction(self, attraction):
         if not self.admin_account:
             return False

@@ -1,23 +1,19 @@
 {% import 'macros.html' as macros %}
 
 {% macro attendee_name(attendee, salutation='') %}
-  {% if attendee %}
-    <div class="attendee">{#- strip -#}
-      <span class="salutation">{{ salutation }}</span>{#- strip -#}
-      <span class="ident">{#- strip -#}
-        <span class="name">{{ attendee.first_name }}</span>
-        <sup class="badge-num">#{{ attendee.badge_num }}</sup>{#- strip -#}
-      </span>{#- strip -#}
-    </div>
-  {% endif %}
+  <div class="attendee"{% if not attendee %} style="display:none"{% endif %}>{#- strip -#}
+    <span class="salutation">{{ salutation }}</span>{#- strip -#}
+    <span class="ident">{#- strip -#}
+      <span class="name">{{ attendee.first_name }}</span>
+      <sup class="badge-num">#{{ attendee.badge_num }}</sup>{#- strip -#}
+    </span>{#- strip -#}
+  </div>
 {% endmacro %}
 
 {% macro greeting(attendee) %}
-  {% if attendee %}
-    <div class="greeting">
-      {{ attendee_name(attendee, 'Hello ') }}
-      <a href="index" class="label label-danger label-danger-empty logout">I'm somebody else, log out!</a>
-    </div>
-    <div class="clearfix"></div>
-  {% endif%}
+  <div class="greeting"{% if not attendee %} style="display:none"{% endif %}>{#- strip -#}
+    {{ attendee_name(attendee, 'Hello ') }}{#- strip -#}
+    <a href="index" class="label label-danger label-danger-empty logout">I'm somebody else, log out!</a>{#- strip -#}
+  </div>
+  <div class="clearfix"></div>
 {% endmacro %}

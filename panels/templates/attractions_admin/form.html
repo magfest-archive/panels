@@ -137,7 +137,7 @@
   .event {
     background-color: #fff;
     border-radius: 3px;
-    margin: 6px 0 0 0;
+    margin: 0 0 0 0;
     padding: 5px 5px 5px 9px;
   }
 
@@ -156,13 +156,51 @@
   }
 
   .event-spacer {
-    margin: 0 4px -6px 4px;
-    padding: 5px 0;
+    margin: 0 4px;
+    padding: 3px 0;
+    position: relative;
   }
 
-  .event-overlap {
-    font-weight: bold;
+  .event-spacer, .event-spacer a {
+    color: #31708f;
+  }
+
+  .event-spacer.gap {
+    padding: 6px 0;
+  }
+
+  .event-spacer.overlap {
     background-color: #fff8f8;
+  }
+
+  .event-spacer.overlap, .event-spacer.overlap a {
+    font-weight: bold;
+    color: #a94442;
+  }
+
+  .event-spacer .glyphicon-time {
+    line-height: 16px;
+    height: 16px;
+    width: 16px;
+    font-size: 16px;
+    vertical-align: middle;
+    background-color: #fff;
+    border-radius: 50%;
+
+    display: block;
+    position: absolute;
+    top: -5px;
+    left: 50%;
+    margin-left: -8px;
+  }
+
+  .event-spacer.gap .glyphicon-time,
+  .event-spacer.overlap .glyphicon-time {
+    display: inline-block;
+    position: static;
+    top: 0;
+    left: 0;
+    margin-left: 0;
   }
 
   .slots {
@@ -273,6 +311,25 @@
     var features = {{ attraction.feature_names_by_id|jsonize }};
     var locations = {{ attraction.locations_by_feature_id|jsonize }};
     var allLocations = {{ c.EVENT_LOCATIONS|jsonize }};
+
+    $('#features').on('click', '.event-spacer a', function(event) {
+      event.preventDefault();
+      var eventId = $(this).data('eventId'),
+          overlap = $(this).data('overlap'),
+          sign = overlap < 0 ? 1 : -1,
+          overlap = Math.abs(overlap),
+          hours = Math.floor(overlap / 3600),
+          minutes = Math.floor((overlap - (hours * 3600)) / 60);
+      $('#attractionevent input[name="gap"]').val(overlap * sign);
+      $('#attractionevent input.gap_hours').val(hours * sign);
+      $('#attractionevent input.gap_minutes').val(minutes * sign);
+      $('#edit_event_gap input[name="id"]').val(eventId);
+      $('#edit_event_gap').modal('show');
+    });
+
+    $('#edit_event_gap').on('shown.bs.modal', function (event) {
+      $('#attractionevent input.gap_minutes').focus();
+    });
 
     var deleteEvent = function(eventId, callback) {
       callback = callback || function() {}
@@ -412,34 +469,65 @@
 </script>
 
 {%- set can_admin_attraction = admin_account.attendee.can_admin_attraction(attraction) -%}
-<div
-    id="edit_attraction"
-    class="modal fade"
-    tabindex="-1"
-    role="dialog"
-    aria-labelledby="edit_attraction_title"
-    style="display: none">
-  <div class="modal-dialog modal-lg" role="document">
-    <div class="modal-content">
-      <div class="modal-header">
-        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-        <h4 class="modal-title" id="edit_attraction_title">
-          <span class="glyphicon glyphicon-cog"></span>
-          Edit {{ attraction.name }}
-        </h4>
+{% if can_admin_attraction -%}
+  <div id="edit_attraction" class="modal fade" tabindex="-1" role="dialog" style="display: none"
+      aria-labelledby="edit_attraction_title">
+    <div class="modal-dialog modal-lg" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+          <h4 class="modal-title" id="edit_attraction_title">
+            <span class="glyphicon glyphicon-cog"></span>
+            Edit {{ attraction.name }}
+          </h4>
+        </div>
+        <form method="post" action="form" class="form-horizontal" role="form">
+          <div class="modal-body">
+            {{ attractions_macros.attraction_form(attraction) }}
+          </div>
+          <div class="modal-footer">
+            <button type="submit" class="btn btn-primary">Save</button>
+            <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+          </div>
+        </form>
       </div>
-      <form method="post" action="form" class="form-horizontal" role="form">
-        <div class="modal-body">
-          {{ attractions_macros.attraction_form(attraction) }}
-        </div>
-        <div class="modal-footer">
-          <button type="submit" class="btn btn-primary">Save</button>
-          <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
-        </div>
-      </form>
     </div>
   </div>
-</div>
+
+  <div class="modal fade" id="edit_event_gap" tabindex="-1" role="dialog"
+      aria-labelledby="edit_event_gap_title">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+          <h4 class="modal-title" id="edit_event_gap_title">
+            <span class="glyphicon glyphicon-time"></span>
+            Edit Time Between Events
+          </h4>
+        </div>
+        <form id="edit_event_gap_form" method="post" action="edit_event_gap" class="form-horizontal" role="form">
+          {{ csrf_token() }}
+          <input name="id" type="hidden" value="">
+          <div class="modal-body">
+            <div class="form-group">
+              <div class="col-sm-offset-2 col-sm-8">
+                {{ attractions_macros.form_duration(AttractionEvent, 'gap', min=None) }}
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="submit" class="btn btn-primary">Save</button>
+            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+{%- endif %}
 
 <h1>
   {% if can_admin_attraction -%}
@@ -544,7 +632,7 @@
       </ul>
     </div>
     <div class="col-sm-stacked-content">
-      <div class="features tab-content">
+      <div id="features" class="features tab-content">
         {% if events_by_feature %}
           {% for feature, events_by_location in events_by_feature.items() %}
             <div role="tabpanel" class="tab-pane feature {% if loop.index0 == 0 %}active{% endif %}" id="feature_{{ feature.id }}">
@@ -638,15 +726,29 @@
                                 </div>
                               </div>
                             </div>
-                            {% set overlap = event.overlap(events[loop.index]) %}
-                            {% if overlap > 0 %}
-                              <div class="event-spacer event-overlap text-center text-danger">
-                                {{ humanize_timedelta(seconds=overlap, separator=' ') }} overlap
-                              </div>
-                            {% elif overlap < 0 %}
-                              <div class="event-spacer text-center text-info" style="line-height: {{ [[(overlap // -180) + 6, 16]|sort|last, 100]|sort|first }}px">
-                                {{ humanize_timedelta(seconds=overlap, separator=' ') }} available
-                              </div>
+                            {% if not loop.last %}
+                              {% set overlap = event.overlap(events[loop.index]) %}
+                              {% if overlap > 0 %}
+                                <div class="event-spacer text-center overlap">
+                                  {%- if can_admin_attraction -%}<a href="#" data-event-id="{{ event.id }}" data-overlap="{{ overlap }}">{% endif %}
+                                    <span class="glyphicon glyphicon-time"></span>
+                                    {{ humanize_timedelta(seconds=overlap, separator=' ') }} overlap
+                                  {% if can_admin_attraction -%}</a>{%- endif -%}
+                                </div>
+                              {% elif overlap < 0 %}
+                                <div class="event-spacer text-center gap" style="line-height: {{ [[(overlap // -180) + 6, 16]|sort|last, 100]|sort|first }}px">
+                                  {%- if can_admin_attraction -%}<a href="#" data-event-id="{{ event.id }}" data-overlap="{{ overlap }}">{% endif %}
+                                    <span class="glyphicon glyphicon-time"></span>
+                                    {{ humanize_timedelta(seconds=overlap, separator=' ') }} available
+                                  {% if can_admin_attraction -%}</a>{%- endif -%}
+                                </div>
+                              {% else %}
+                                <div class="event-spacer text-center">
+                                  {%- if can_admin_attraction -%}<a href="#" data-event-id="{{ event.id }}" data-overlap="{{ overlap }}">
+                                    <span class="glyphicon glyphicon-time"></span>
+                                  </a>{%- endif -%}
+                                </div>
+                              {% endif %}
                             {% endif %}
                           {% endfor %}
                         </div>

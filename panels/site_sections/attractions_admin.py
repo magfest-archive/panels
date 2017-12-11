@@ -251,6 +251,33 @@ class Root:
             'message': message
         }
 
+    @csrf_protected
+    def edit_event_gap(self, session, id=None, gap=0):
+        if not id or id == 'None':
+            raise HTTPRedirect('index')
+
+        ref_event = session.query(AttractionEvent).get(id)
+        attraction_id = ref_event.feature.attraction_id
+
+        try:
+            gap = int(gap)
+        except Exception:
+            gap = None
+
+        if gap is not None and cherrypy.request.method == 'POST':
+            delta = None
+            prev_event = None
+            for event in ref_event.feature.events_by_location[ref_event.location]:
+                if prev_event == ref_event:
+                    prev_gap = (event.start_time - prev_event.end_time).total_seconds()
+                    delta = timedelta(seconds=(gap - prev_gap))
+                if delta is not None:
+                    event.start_time += delta
+                prev_event = event
+            raise HTTPRedirect(
+                'form?id={}&message={}', attraction_id, 'Events updated')
+        raise HTTPRedirect('form?id={}', attraction_id)
+
     @ajax
     def update_locations(self, session, feature_id, old_location, new_location):
         message = ''
