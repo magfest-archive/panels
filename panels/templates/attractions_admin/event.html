@@ -213,7 +213,7 @@
           <td class="controls"
               {%- if signup.checkin_time %} title="You cannot cancel a signup that has already checked in"{% endif %}>
             <button class="btn btn-xs btn-danger"
-                {%- if signup.checkin_time %} disabled="disabled" {% endif -%}
+                {%- if signup.checkin_time %} disabled="disabled"{% endif %}
                 data-signup-id="{{ signup.id }}"
                 data-attendee-name="{{ signup.attendee.full_name }}">
               <span class="glyphicon glyphicon-remove"></span>
