@@ -97,7 +97,7 @@ class Root:
                 raise HTTPRedirect(
                     'form?id={}&message={}',
                     id,
-                    "You cannot delete a attraction that you don't own")
+                    "You cannot delete an attraction that you don't own")
 
             session.delete(attraction)
             raise HTTPRedirect(
@@ -152,7 +152,7 @@ class Root:
         if cherrypy.request.method == 'POST':
             attraction = session.query(Attraction).get(attraction_id)
             if not session.admin_attendee().can_admin_attraction(attraction):
-                message = "You cannot delete a feature from a attraction you don't own"
+                message = "You cannot delete a feature from an attraction you don't own"
             else:
                 session.delete(feature)
                 raise HTTPRedirect(
@@ -301,9 +301,26 @@ class Root:
         if cherrypy.request.method == 'POST':
             attraction = session.query(Attraction).get(attraction_id)
             if not session.admin_attendee().can_admin_attraction(attraction):
-                message = "You cannot delete a event from a attraction you don't own"
+                message = "You cannot delete a event from an attraction you don't own"
             else:
                 session.delete(event)
+                session.commit()
+        if message:
+            return {'error': message}
+
+    @ajax
+    def cancel_signup(self, session, id):
+        signup = session.query(AttractionSignup).get(id)
+        attraction_id = signup.event.feature.attraction_id
+        message = ''
+        if cherrypy.request.method == 'POST':
+            attraction = session.query(Attraction).get(attraction_id)
+            if not session.admin_attendee().can_admin_attraction(attraction):
+                message = "You cannot cancel a signup for an attraction you don't own"
+            elif signup.checkin_time:
+                message = "You cannot cancel a signup that has already checked in"
+            else:
+                session.delete(signup)
                 session.commit()
         if message:
             return {'error': message}

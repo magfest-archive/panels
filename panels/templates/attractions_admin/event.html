@@ -39,6 +39,66 @@
   }
 </style>
 
+<script>
+  $(function() {
+    var cancelSignup = function(signupId, callback) {
+      callback = callback || function() {}
+      $.ajax({
+        method: 'POST',
+        url: 'cancel_signup',
+        data: {
+          id: signupId,
+          csrf_token: csrf_token
+        },
+        success: function(response, status) {
+          if (response && response['error']) {
+            callback('There was an error cancelling the signup: ' + response['error']);
+          } else {
+            callback();
+          }
+        },
+        error: function(response, status, statusText) {
+          callback('There was an error cancelling the signup: ' + statusText);
+        }
+      });
+    };
+
+    var $attendeesTable = $('#attendees-table');
+    $attendeesTable.on('click', '.btn-danger', function(event) {
+      event.preventDefault();
+      var $button = $(this);
+          signupId = $button.data('signupId'),
+          attendeeName = $button.data('attendeeName');
+
+      var callback = function(error) {
+        if(error) {
+          toastr.error(error, '', {timeOut: 3000});
+        } else {
+          var $signupRow = $button.closest('tr');
+          $signupRow.fadeOut(function() {
+            $attendeesTable.DataTable().row($signupRow).remove().draw();
+          });
+          toastr.success('Signup for ' + attendeeName + ' successfully cancelled', '', {timeOut: 3000});
+        }
+      };
+
+      bootbox.confirm({
+        backdrop: true,
+        message: '<p>Are you sure you want to cancel the signup for ' + attendeeName + '?</p>',
+        buttons: {
+          confirm: { label: 'Cancel Signup', className: 'btn-danger' },
+          cancel: { label: 'Nevermind', className: 'btn-default' }
+        },
+        callback: function (result) {
+          if (result) {
+            cancelSignup(signupId, callback);
+          }
+        }
+      });
+    });
+  });
+</script>
+
 <h2 class="event-title">
   {%- if event.is_new -%}
     <span class="glyphicon glyphicon-plus"></span> New event for the {{ attraction|form_link }} attraction
@@ -125,7 +185,7 @@
 
 {%- if event.signups -%}
   <h2 class="attendees-title">Attendees Signed Up</h2>
-  <table class="table table-hover table-responsive datatable attendees-body"
+  <table id="attendees-table" class="table table-hover table-responsive datatable"
       data-paging="false"
       data-info="false">
     <thead>
@@ -150,8 +210,12 @@
               <em>Not checked in</em>
             {% endif %}
           </td>
-          <td class="controls">
-            <button class="btn btn-xs btn-danger">
+          <td class="controls"
+              {%- if signup.checkin_time %} title="You cannot cancel a signup that has already checked in"{% endif %}>
+            <button class="btn btn-xs btn-danger"
+                {%- if signup.checkin_time %} disabled="disabled" {% endif -%}
+                data-signup-id="{{ signup.id }}"
+                data-attendee-name="{{ signup.attendee.full_name }}">
               <span class="glyphicon glyphicon-remove"></span>
             </button>
           </td>
