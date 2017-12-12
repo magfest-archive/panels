@@ -4,7 +4,7 @@ from uber.site_sections.preregistration import check_post_con
 from panels.models import *
 
 
-def _attendee_for_badge_num(session, badge_num):
+def _attendee_for_badge_num(session, badge_num, options=None):
     if not badge_num:
         return None
 
@@ -12,10 +12,14 @@ def _attendee_for_badge_num(session, badge_num):
         badge_num = int(badge_num)
     except Exception:
         return None
-    return session.query(Attendee).filter_by(badge_num=badge_num).first()
+
+    query = session.query(Attendee).filter_by(badge_num=badge_num)
+    if options:
+        query = query.options(options)
+    return query.first()
 
 
-def _model_for_id(session, model, id):
+def _model_for_id(session, model, id, options=None):
     if not id:
         return None
 
@@ -23,7 +27,11 @@ def _model_for_id(session, model, id):
         uuid.UUID(id)
     except Exception:
         return None
-    return session.query(model).filter_by(id=id).first()
+
+    query = session.query(model).filter_by(id=id)
+    if options:
+        query = query.options(options)
+    return query.first()
 
 
 @all_renderable()
@@ -36,13 +44,22 @@ class Root:
         return {'attractions': attractions}
 
     def features(self, session, id=None, **params):
-        attraction = _model_for_id(session, Attraction, id)
+        attraction = _model_for_id(
+            session, Attraction, id,
+            subqueryload(Attraction.features)
+                .subqueryload(AttractionFeature.events)
+                    .subqueryload(AttractionEvent.attendees))
+
         if not attraction:
             raise HTTPRedirect('index')
         return {'attraction': attraction}
 
     def events(self, session, id=None, **params):
-        feature = _model_for_id(session, AttractionFeature, id)
+        feature = _model_for_id(
+            session, AttractionFeature, id,
+            subqueryload(AttractionFeature.events)
+                .subqueryload(AttractionEvent.attendees))
+
         if not feature:
             raise HTTPRedirect('index')
         return {'feature': feature}

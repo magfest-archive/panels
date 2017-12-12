@@ -50,8 +50,12 @@ class Root:
         else:
             attraction = session.query(Attraction) \
                 .filter_by(id=attraction_id) \
-                .order_by(Attraction.id) \
-                .one()
+                .options(
+                    subqueryload(Attraction.department),
+                    subqueryload(Attraction.features)
+                        .subqueryload(AttractionFeature.events)
+                            .subqueryload(AttractionEvent.attendees)) \
+                .order_by(Attraction.id).one()
 
         return {
             'admin_account': session.current_admin_account(),
