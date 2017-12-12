@@ -30,36 +30,25 @@ def _model_for_id(session, model, id):
 @check_post_con
 class Root:
 
-    def index(self, session, badge_num=''):
+    def index(self, session, **params):
         attractions = session.query(Attraction).options(
             subqueryload(Attraction.features)).order_by(Attraction.name).all()
-        attendee = _attendee_for_badge_num(session, badge_num)
-        return {
-            'attractions': attractions,
-            'attendee': attendee}
+        return {'attractions': attractions}
 
-    def features(self, session, id=None, badge_num=''):
+    def features(self, session, id=None, **params):
         attraction = _model_for_id(session, Attraction, id)
         if not attraction:
             raise HTTPRedirect('index')
+        return {'attraction': attraction}
 
-        attendee = _attendee_for_badge_num(session, badge_num)
-        return {
-            'attraction': attraction,
-            'attendee': attendee}
-
-    def events(self, session, id=None, badge_num=''):
+    def events(self, session, id=None, **params):
         feature = _model_for_id(session, AttractionFeature, id)
         if not feature:
             raise HTTPRedirect('index')
-
-        attendee = _attendee_for_badge_num(session, badge_num)
-        return {
-            'feature': feature,
-            'attendee': attendee}
+        return {'feature': feature}
 
     @ajax
-    def verify_badge_num(self, session, badge_num):
+    def verify_badge_num(self, session, badge_num, **params):
         attendee = _attendee_for_badge_num(session, badge_num)
         if not attendee:
             return {'error': 'Unrecognized badge number: {}'.format(badge_num)}
@@ -69,7 +58,7 @@ class Root:
             'badge_num': attendee.badge_num}
 
     @ajax
-    def signup_for_event(self, session, badge_num, id):
+    def signup_for_event(self, session, badge_num, id, **params):
         attendee = _attendee_for_badge_num(session, badge_num)
         if not attendee:
             return {'error': 'Unrecognized badge number: {}'.format(badge_num)}
@@ -77,6 +66,8 @@ class Root:
         event = _model_for_id(session, AttractionEvent, id)
         if not event:
             return {'error': 'Unrecognized event id: {}'.format(id)}
+
+        old_remaining_slots = event.remaining_slots
 
         if event not in attendee.attraction_events:
             attraction = event.feature.attraction
@@ -102,4 +93,5 @@ class Root:
             'badge_num': attendee.badge_num,
             'event_id': event.id,
             'is_sold_out': event.is_sold_out,
-            'remaining_slots': event.remaining_slots}
+            'remaining_slots': event.remaining_slots,
+            'old_remaining_slots': old_remaining_slots}

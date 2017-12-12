@@ -94,9 +94,17 @@
   }
 
   .btn-xl {
-    padding: 15px 20px;
-    font-size: 20px;
+    padding: 13px 18px;
+    font-size: 18px;
     white-space: normal;
+  }
+
+  @media(min-width: 480px) {
+    .btn-xl {
+      padding: 15px 20px;
+      font-size: 20px;
+      white-space: normal;
+    }
   }
 
   .btn-next {
@@ -264,13 +272,13 @@
     padding-left: 0.75em;
   }
 
-  input.badge-num {
+  input[name=badge_num] {
     -moz-appearance: textfield;
     appearance: textfield;
   }
 
-  input.badge-num::-webkit-inner-spin-button,
-  input.badge-num::-webkit-outer-spin-button {
+  input[name=badge_num]::-webkit-inner-spin-button,
+  input[name=badge_num]::-webkit-outer-spin-button {
     -webkit-appearance: none;
     appearance: none;
     margin: 0;
@@ -279,17 +287,18 @@
 
 
 <script>
-  var updateGreeting = function(firstName, badgeNum) {
+  var updateGreeting = function(firstName, badgeNum, parent) {
+    var $parent = $(parent || document);
     if (firstName && badgeNum) {
-      $('.greeting').css('display', '');
-      $('.attendee').css('display', '');
-      $('.attendee .name').text(firstName);
-      $('.attendee .badge-num').text('#' + badgeNum);
+      $parent.find('.greeting').css('display', '');
+      $parent.find('.attendee').css('display', '');
+      $parent.find('.attendee .name').text(firstName);
+      $parent.find('.attendee .badge-num').text('#' + badgeNum);
     } else {
-      $('.greeting').css('display', 'none');
-      $('.attendee').css('display', 'none');
-      $('.attendee .name').text('');
-      $('.attendee .badge-num').text('#');
+      $parent.find('.greeting').css('display', 'none');
+      $parent.find('.attendee').css('display', 'none');
+      $parent.find('.attendee .name').text('');
+      $parent.find('.attendee .badge-num').text('#');
     }
   };
 

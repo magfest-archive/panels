@@ -58,7 +58,11 @@
         var hours = parseInt($('#{{ html_id }} input.{{ field_name ~ "_hours" }}').val().trim() || 0);
         var minutes = parseInt($('#{{ html_id }} input.{{ field_name ~ "_minutes" }}').val().trim() || 0);
         if ($.isNumeric(hours) && $.isNumeric(minutes)) {
+          {% if min is none %}
+          var seconds = (hours * 3600) + (minutes * 60);
+          {% else %}
           var seconds = (Math.max(hours, 0) * 3600) + (Math.max(minutes, 0) * 60);
+          {% endif %}
           $('#{{ html_id }} input[name="{{ field_name }}"]').val(seconds);
         }
       } catch(ex) {}
