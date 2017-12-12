@@ -1,3 +1,4 @@
+from uber import custom_tags
 from panels import *
 from uber.config import dynamic
 
@@ -88,6 +89,12 @@ if getattr(c, 'ALT_SCHEDULE_URL', ''):
         MenuItem(name='View Schedule Internally', href='../schedule/internal')]
 else:
     schedule_menu = [MenuItem(name='View Schedule', href='../schedule/internal')]
-schedule_menu.append(MenuItem(name='Edit Schedule', href='../schedule/edit'))
+
+schedule_menu.extend([
+    MenuItem(name='Edit Schedule', href='../schedule/edit'),
+    MenuItem(name='Attractions', href='../attractions_admin/')])
 
 c.MENU.submenu.insert(2, MenuItem(name='Schedule', access=c.STUFF, submenu=schedule_menu))
+
+from panels.models import Attraction  # noqa: E402
+custom_tags.form_link_site_sections[Attraction] = 'attractions_admin'
