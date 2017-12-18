@@ -1,4 +1,5 @@
 import pytz
+import re
 
 from collections import OrderedDict
 from datetime import datetime, timedelta
@@ -12,7 +13,7 @@ from sqlalchemy.types import Integer
 
 from uber.config import c
 from uber.custom_tags import humanize_timedelta
-from uber.decorators import validation
+from uber.decorators import presave_adjustment, validation
 from uber.models import MagModel, Session
 from uber.models.types import default_relationship as relationship, Choice, \
     DefaultColumn as Column, utcnow
@@ -21,7 +22,15 @@ from uber.utils import ceil_datetime, floor_datetime, noon_datetime, \
 
 
 __all__ = [
-    'Attraction', 'AttractionFeature', 'AttractionEvent', 'AttractionSignup']
+    'Attraction', 'AttractionFeature', 'AttractionEvent', 'AttractionSignup',
+    'sluggify']
+
+
+RE_SLUG = re.compile(r'[\W_]+')
+
+
+def sluggify(s):
+    return RE_SLUG.sub('-', s).lower()
 
 
 @Session.model_mixin
@@ -95,6 +104,7 @@ class Attraction(MagModel):
         (86400, '1 day before')]
 
     name = Column(UnicodeText, unique=True)
+    slug = Column(UnicodeText, unique=True)
     description = Column(UnicodeText)
     notifications = Column(JSON, default=[], server_default='[]')
     required_checkin = Column(Integer, default=0)  # In seconds
@@ -128,6 +138,10 @@ class Attraction(MagModel):
         secondary='attraction_feature',
         viewonly=True,
         order_by='[AttractionEvent.start_time, AttractionEvent.id]')
+
+    @presave_adjustment
+    def sluggify_name(self):
+        self.slug = sluggify(self.name)
 
     @property
     def feature_opts(self):
@@ -176,16 +190,10 @@ class Attraction(MagModel):
             locations_by_feature_id[feature.id] = feature.locations
         return locations_by_feature_id
 
-    @property
-    def events_by_feature(self):
-        events_by_feature = OrderedDict()
-        for feature in self.features:
-            events_by_feature[feature] = feature.events_by_location
-        return events_by_feature
-
 
 class AttractionFeature(MagModel):
     name = Column(UnicodeText)
+    slug = Column(UnicodeText)
     description = Column(UnicodeText)
     attraction_id = Column(UUID, ForeignKey('attraction.id'))
 
@@ -194,7 +202,13 @@ class AttractionFeature(MagModel):
         backref='feature',
         order_by='[AttractionEvent.start_time, AttractionEvent.id]')
 
-    __table_args__ = (UniqueConstraint('name', 'attraction_id'),)
+    __table_args__ = (
+        UniqueConstraint('name', 'attraction_id'),
+        UniqueConstraint('slug', 'attraction_id'),)
+
+    @presave_adjustment
+    def sluggify_name(self):
+        self.slug = sluggify(self.name)
 
     @property
     def location_opts(self):
@@ -216,6 +230,21 @@ class AttractionFeature(MagModel):
             if event.location not in events_by_location:
                 events_by_location[event.location] = []
             events_by_location[event.location].append(event)
+        return events_by_location
+
+    @property
+    def events_by_location_by_day(self):
+        events = sorted(
+            self.events,
+            key=lambda e: (c.EVENT_LOCATIONS[e.location], e.start_time))
+        events_by_location = OrderedDict()
+        for event in events:
+            if event.location not in events_by_location:
+                events_by_location[event.location] = OrderedDict()
+            day = event.start_time_local.strftime('%A')
+            if day not in events_by_location[event.location]:
+                events_by_location[event.location][day] = []
+            events_by_location[event.location][day].append(event)
         return events_by_location
 
     @property
@@ -248,8 +277,7 @@ class AttractionFeature(MagModel):
     def available_events_by_day(self):
         events_by_day = OrderedDict()
         for event in self.available_events:
-            start_time = event.start_time_local
-            day = start_time.strftime('%A')
+            day = event.start_time_local.strftime('%A')
             if day not in events_by_day:
                 events_by_day[day] = []
             events_by_day[day].append(event)
@@ -262,7 +290,7 @@ class AttractionFeature(MagModel):
 #       class that has a location, a start time, and a duration would
 #       inherit from the SchedulableMixin. Unfortunately the
 #       panels.models.Event stores its duration as an integer number
-#       of whole minutes, thus is not usable by Attractions.
+#       of half hours, thus is not usable by Attractions.
 # =====================================================================
 class AttractionEvent(MagModel):
     attraction_feature_id = Column(UUID, ForeignKey('attraction_feature.id'))

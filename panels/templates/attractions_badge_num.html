@@ -1,0 +1,80 @@
+<script>
+
+  var resetBadgeNum = function($parent) {
+    $parent.find('input[name=badge_num]').val('');
+    $parent.find('.confirm-label, .confirm-row').hide();
+    $parent.find('.badge-num-label, .badge-num-row').show();
+  };
+
+  var focusBadgeNum = function($parent) {
+    $parent.find('input[name=badge_num]').focus();
+  };
+
+  var showBadgeNumConfirm = function($parent) {
+    $parent.find('.badge-num-row').hide('slide', {direction: 'left'}, 250);
+    $parent.find('.confirm-row').show('slide', {direction: 'right'}, 250);
+    $parent.find('.badge-num-label').fadeOut(125, function() {
+      $parent.find('.confirm-label').fadeIn(125);
+    });
+  };
+
+  var hideBadgeNumConfirm = function($parent, clear) {
+    var $badgeNum = $parent.find('input[name=badge_num]');
+    $parent.find('.confirm-label').fadeOut(125, function() {
+      $parent.find('.badge-num-label').fadeIn(125);
+    });
+    $parent.find('.confirm-row').hide('slide', {direction: 'right'}, 250);
+    $parent.find('.badge-num-row').show('slide', {direction: 'left'}, 250, function() {
+      if (clear) {
+        $badgeNum.val('');
+      }
+      $badgeNum.focus();
+    });
+  };
+
+  $(function() {
+    $('.badge-num-form .confirm-row .btn-danger').on('click', function (event) {
+      event.preventDefault();
+      hideBadgeNumConfirm($(this).closest('form'), false);
+    });
+
+    $('.badge-num-form').on('submit', function(event) {
+      event.preventDefault();
+      var $form = $(this),
+          $badgeNum = $form.find('input[name=badge_num]'),
+          badgeNum = $badgeNum.val();
+
+      if (!badgeNum) {
+        return;
+      }
+
+      if (badgeNum === $form.closest('.modal').data('badgeNum')) {
+        toastr.warning("Hey, that's you!", '', {timeOut: 3000});
+        $badgeNum.focus();
+        return;
+      }
+
+      $.ajax({
+        method: 'POST',
+        url: 'verify_badge_num',
+        data: {
+          badge_num: badgeNum,
+          csrf_token: csrf_token
+        },
+        success: function(response, status) {
+          if (response && response['first_name'] && response['badge_num']) {
+            updateGreeting(response['first_name'], response['badge_num'], $form.find('.confirm-row'));
+            showBadgeNumConfirm($form);
+          } else {
+            toastr.error('Unrecognized badge number: ' + badgeNum, '', {timeOut: 3000});
+            $badgeNum.focus();
+          }
+        },
+        error: function(response, status, statusText) {
+          toastr.error('Unrecognized badge number: ' + badgeNum, '', {timeOut: 3000});
+          $badgeNum.focus();
+        }
+      });
+    });
+  });
+</script>

@@ -1,5 +1,71 @@
 {% import 'macros.html' as macros %}
 
+{% macro attendee_name(attendee=None, field='first_name', salutation='') %}
+  <div class="attendee"{% if not attendee %} style="display:none"{% endif %}>{#- strip -#}
+    <span class="salutation">{{ salutation }}</span>{#- strip -#}
+    <span class="ident">{#- strip -#}
+      <span class="name">{{ attendee[field] }}</span>
+      <sup class="badge-num">#{{ attendee.badge_num }}</sup>{#- strip -#}
+    </span>{#- strip -#}
+  </div>
+{% endmacro %}
+
+
+{% macro greeting(attendee=None) %}
+  <div class="greeting"{% if not attendee %} style="display:none"{% endif %}>{#- strip -#}
+    {{ attendee_name(attendee, 'Hello ') }}{#- strip -#}
+    <a href="index" class="label label-danger label-danger-empty logout">I'm somebody else, log out!</a>{#- strip -#}
+  </div>
+  <div class="clearfix"></div>
+{% endmacro %}
+
+
+{% macro badge_num_form(label='Sign up', confirm_label='Is this right?') %}
+  <form class="form-horizontal badge-num-form" method="post" action="verify_badge_num" role="form">
+    <div class="form-group">
+      <label class="col-sm-offset-2 col-sm-8">
+        <span class="badge-num-label">{{label }}</span>
+        <span class="confirm-label" style="display: none;">{{ confirm_label }}</span>
+        <span>&nbsp;</span>
+      </label>
+      <div class="col-sm-offset-2 col-sm-8 slide-box">
+        <div class="badge-num-row row">
+          <div class="col-xs-6" style="padding-right: 7px;">
+            <input class="form-control input-lg text-center"
+                type="number"
+                name="badge_num"
+                placeholder="Badge #"
+                required="required"
+                min="1">
+          </div>
+          <div class="col-xs-6" style="padding-left: 8px;">
+            <button class="btn btn-lg btn-success" style="width: 100%">
+              <span class="glyphicon glyphicon-ok"></span> Sign up
+            </button>
+          </div>
+        </div>
+        <div class="confirm-row row" style="display: none;">
+          <div class="col-xs-12">
+            <div class="attendee form-control-static">
+              <span class="name"></span>
+              <sup class="badge-num"></sup>
+            </div>
+            <div class="controls pull-right">
+              <button class="btn btn-lg btn-danger">
+                <span class="glyphicon glyphicon-remove"></span>
+              </button>
+              <button class="btn btn-lg btn-success">
+                <span class="glyphicon glyphicon-ok"></span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </form>
+{% endmacro %}
+
+
 {% macro form_datetime(model, field_name) %}
   {%- set is_class = model is class -%}
   {%- set html_id = model.__name__|lower if is_class else model.__class__.__name__|lower ~ '_' ~ model.id -%}
@@ -25,6 +91,7 @@
     });
   </script>
 {% endmacro %}
+
 
 {% macro form_duration(model, field_name, min=0) %}
   {%- set is_class = model is class -%}
@@ -69,6 +136,7 @@
     });
   </script>
 {% endmacro %}
+
 
 {% macro attraction_form(attraction) %}
   {%- set is_class = attraction is class -%}

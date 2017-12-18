@@ -1,5 +1,6 @@
 from uber.common import *
 from panels.models.attraction import *
+from panels.site_sections.attractions import _attendee_for_badge_num
 
 
 @all_renderable(c.STUFF)
@@ -91,6 +92,17 @@ class Root:
             'attraction': attraction,
             'message': message,
         }
+
+    def checkin(self, session, message='', **params):
+        attraction_id = params.get('id')
+        if not attraction_id or attraction_id == 'None':
+            raise HTTPRedirect('index')
+
+        attraction = session.query(Attraction) \
+            .filter_by(id=attraction_id) \
+            .order_by(Attraction.id).one()
+
+        return {'attraction': attraction, 'message': message}
 
     @csrf_protected
     def delete(self, session, id, message=''):
@@ -260,15 +272,15 @@ class Root:
         if not id or id == 'None':
             raise HTTPRedirect('index')
 
-        ref_event = session.query(AttractionEvent).get(id)
-        attraction_id = ref_event.feature.attraction_id
-
         try:
             gap = int(gap)
         except Exception:
             gap = None
 
         if gap is not None and cherrypy.request.method == 'POST':
+            ref_event = session.query(AttractionEvent).get(id)
+            attraction_id = ref_event.feature.attraction_id
+
             delta = None
             prev_event = None
             for event in ref_event.feature.events_by_location[ref_event.location]:
@@ -299,10 +311,10 @@ class Root:
 
     @ajax
     def delete_event(self, session, id):
-        event = session.query(AttractionEvent).get(id)
-        attraction_id = event.feature.attraction_id
         message = ''
         if cherrypy.request.method == 'POST':
+            event = session.query(AttractionEvent).get(id)
+            attraction_id = event.feature.attraction_id
             attraction = session.query(Attraction).get(attraction_id)
             if not session.admin_attendee().can_admin_attraction(attraction):
                 message = "You cannot delete a event from an attraction you don't own"
@@ -313,11 +325,49 @@ class Root:
             return {'error': message}
 
     @ajax
+    def get_signups(self, session, badge_num, attraction_id=None):
+        if cherrypy.request.method == 'POST':
+            attendee = _attendee_for_badge_num(
+                session,
+                badge_num,
+                subqueryload(Attendee.attraction_signups)
+                    .subqueryload(AttractionSignup.event)
+                        .subqueryload(AttractionEvent.feature))
+
+            if not attendee:
+                return {'error': 'Unrecognized badge number: {}'.format(badge_num)}
+
+            signups = attendee.attraction_signups
+            if attraction_id:
+                signups = [s for s in signups if s.event.feature.attraction_id == attraction_id]
+
+            read_spec = {
+                'signup_time': True,
+                'checkin_time': True,
+                'event': {
+                    'location': True,
+                    'location_label': True,
+                    'start_time': True,
+                    'start_time_label': True,
+                    'duration': True,
+                    'time_span_label': True,
+                    'slots': True,
+                    'feature': True}}
+
+            signups = sorted(signups, key=lambda s: s.event.start_time)
+            return {
+                'result': {
+                    'signups': [s.to_dict(read_spec) for s in signups],
+                    'attendee': attendee.to_dict()
+                }
+            }
+
+    @ajax
     def cancel_signup(self, session, id):
-        signup = session.query(AttractionSignup).get(id)
-        attraction_id = signup.event.feature.attraction_id
         message = ''
         if cherrypy.request.method == 'POST':
+            signup = session.query(AttractionSignup).get(id)
+            attraction_id = signup.event.feature.attraction_id
             attraction = session.query(Attraction).get(attraction_id)
             if not session.admin_attendee().can_admin_attraction(attraction):
                 message = "You cannot cancel a signup for an attraction you don't own"
@@ -328,3 +378,24 @@ class Root:
                 session.commit()
         if message:
             return {'error': message}
+
+    @ajax
+    def checkin_signup(self, session, id):
+        message = ''
+        if cherrypy.request.method == 'POST':
+            signup = session.query(AttractionSignup).get(id)
+            if signup.checkin_time:
+                message = "You cannot check in a signup that has already checked in"
+            else:
+                signup.checkin_time = datetime.utcnow().replace(tzinfo=pytz.UTC)
+                session.commit()
+                return {'result': signup.checkin_time.astimezone(c.EVENT_TIMEZONE)}
+        if message:
+            return {'error': message}
+
+    @ajax
+    def undo_checkin_signup(self, session, id):
+        if cherrypy.request.method == 'POST':
+            signup = session.query(AttractionSignup).get(id)
+            signup.checkin_time = None
+            session.commit()

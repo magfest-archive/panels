@@ -1,7 +1,7 @@
 {% extends "base.html" %}{% set admin_area=True %}
 {% block title %}{{ attraction.name }}{% endblock %}
 
-{% import 'attractions_admin/attractions_macros.html' as attractions_macros with context %}
+{% import 'attractions_macros.html' as attractions_macros with context %}
 
 {% block content %}
 
@@ -17,6 +17,10 @@
 
   .btn.pull-right {
     margin-bottom: 15px;
+  }
+
+  .form-delete {
+    margin-left: 15px;
   }
 
   .attraction-info {
@@ -112,6 +116,10 @@
     background-color: #f0f0f0;
     border-radius: 0 0 3px 3px;
     padding: 10px;
+  }
+
+  .room-body > h2 {
+    margin-top: 0;
   }
 
   .room-title {
@@ -341,14 +349,10 @@
           csrf_token: csrf_token
         },
         success: function(response, status) {
-          if (response && response['error']) {
-            callback('There was an error deleting the event: ' + response['error']);
-          } else {
-            callback();
-          }
+          callback(response);
         },
         error: function(response, status, statusText) {
-          callback('There was an error deleting the event: ' + statusText);
+          callback({'error': 'There was an error deleting the event: ' + statusText});
         }
       });
     };
@@ -359,9 +363,9 @@
           eventId = $button.data('eventId'),
           eventLabel = $button.data('eventLabel');
 
-      var callback = function(error) {
-        if(error) {
-          toastr.error(error, '', {timeOut: 3000});
+      var callback = function(response) {
+        if(response && response['error']) {
+          toastr.error(response['error'], '', {timeOut: 3000});
         } else {
           var $event = $button.closest('.event');
           $event.css({'height': $event.height(), 'min-height': ''});
@@ -399,14 +403,10 @@
           csrf_token: csrf_token
         },
         success: function(response, status) {
-          if (response && response['error']) {
-            callback('There was an error updating the room: ' + response['error']);
-          } else {
-            callback();
-          }
+          callback(response);
         },
         error: function(response, status, statusText) {
-          callback('There was an error updating the room: ' + statusText);
+          callback({'error': 'There was an error updating the room: ' + statusText});
         }
       });
     };
@@ -434,9 +434,9 @@
               },
               callback: function(result) {
                 if (result) {
-                  updateLocations(featureId, oldValue, newValue, function(error) {
-                    if(error) {
-                      toastr.error(error);
+                  updateLocations(featureId, oldValue, newValue, function(response) {
+                    if(response && response['error']) {
+                      toastr.error(response['error']);
                       $select.val(oldValue);
                     } else {
                       window.location = window.location + '&message=Successfully merged rooms!';
@@ -448,9 +448,9 @@
               }
             });
           } else {
-            updateLocations(featureId, oldValue, newValue, function(error) {
-              if(error) {
-                toastr.error(error);
+            updateLocations(featureId, oldValue, newValue, function(response) {
+              if(response && response['error']) {
+                toastr.error(response['error']);
                 $select.val(oldValue);
               } else {
                 $select.data('initialValue', newValue);
@@ -534,7 +534,7 @@
     <form
         method="post"
         action="delete"
-        class="pull-right"
+        class="pull-right form-delete"
         role="form"
         onsubmit="return confirm('Are you sure you want to delete this attraction?');"
         {% if attraction.features %}title="You cannot delete an attraction that has any features"{% endif %}>
@@ -560,6 +560,10 @@
       <span class="glyphicon glyphicon-cog"></span>
     </button>
   {%- endif %}
+  <a href="checkin?id={{ attraction.id }}" class="btn btn-xs btn-primary">
+    <span class="glyphicon glyphicon-check"></span>
+    Check In Attendees
+  </a>
 </h1>
 
 <div class="attraction-info info-block">
@@ -616,67 +620,65 @@
 {% if attraction.features %}
   {% set used_location_opts = attraction.used_location_opts %}
   {% set unused_location_opts = attraction.unused_location_opts %}
-  {% set events_by_feature = attraction.events_by_feature %}
   <div class="row row-stacked feature-container">
     <div class="col-sm-stacked">
       <ul class="nav nav-pills nav-sm-stacked">
-        {% if events_by_feature %}
-          {% for feature, events_by_location in events_by_feature.items() %}
-            <li role="presentation" class="{% if loop.index0 == 0 %}active{% endif %}">
-              <a href="#feature_{{ feature.id }}" data-toggle="pill">
-                <h3>{{ feature.name }}</h3>
-              </a>
-            </li>
-          {% endfor %}
-        {% endif %}
+        {% for feature in attraction.features %}
+          <li role="presentation" class="{% if loop.index0 == 0 %}active{% endif %}">
+            <a href="#feature_{{ feature.id }}" data-toggle="pill">
+              <h3>{{ feature.name }}</h3>
+            </a>
+          </li>
+        {% endfor %}
       </ul>
     </div>
     <div class="col-sm-stacked-content">
       <div id="features" class="features tab-content">
-        {% if events_by_feature %}
-          {% for feature, events_by_location in events_by_feature.items() %}
-            <div role="tabpanel" class="tab-pane feature {% if loop.index0 == 0 %}active{% endif %}" id="feature_{{ feature.id }}">
-              <div class="feature-heading">
-                <h3 class="feature-title">
-                  {% if can_admin_attraction -%}
-                    <div class="controls pull-right">
-                      <a class="btn btn-xs btn-primary btn-fade"
-                          title="Edit the {{ feature.name }} feature"
-                          href="feature?id={{ feature.id }}">
-                        <span class="glyphicon glyphicon-cog"></span>
-                      </a>
-                      <form
-                          method="post"
-                          action="delete_feature"
-                          role="form"
-                          onsubmit="return confirm('Are you sure you want to delete this feature? This will also delete any associated events.');"
-                          title="Delete the {{ feature.name }} feature">
-                        {{ csrf_token() }}
-                        <input type="hidden" name="id" value="{{ feature.id }}">
-                        <button type="submit" class="btn btn-xs btn-danger btn-fade">
-                          <span class="glyphicon glyphicon-remove"></span>
-                        </button>
-                      </form>
-                    </div>
-                  {%- endif %}
-                  <span>{{ feature.name }}</span>
-                  {% if can_admin_attraction -%}
-                    <a class="btn btn-xs btn-primary"
-                        title="Schedule a new {{ feature.name }} event"
-                        href="event?feature_id={{ feature.id }}">
-                      <span class="glyphicon glyphicon-time"></span>
-                      Schedule Event
+        {% for feature in attraction.features %}
+          <div role="tabpanel" class="tab-pane feature {% if loop.index0 == 0 %}active{% endif %}" id="feature_{{ feature.id }}">
+            <div class="feature-heading">
+              <h3 class="feature-title">
+                {% if can_admin_attraction -%}
+                  <div class="controls pull-right">
+                    <a class="btn btn-xs btn-primary btn-fade"
+                        title="Edit the {{ feature.name }} feature"
+                        href="feature?id={{ feature.id }}">
+                      <span class="glyphicon glyphicon-cog"></span>
                     </a>
-                  {%- endif %}
-                </h3>
-              </div>
-              <div class="feature-body">
-                <div class="feature-description">{{ feature.description|linebreaksbr }}</div>
-                {% if events_by_location %}
-                  {% set col_count = [events_by_location|length, 2]|sort|first %}
-                  {% set col_width = 12 // (col_count if col_count > 0 else 1) %}
-                  {% for location, events in events_by_location.items() %}
-                    {% if (loop.index0 % col_count) == 0 %}<div class="row">{% endif %}
+                    <form
+                        method="post"
+                        action="delete_feature"
+                        role="form"
+                        onsubmit="return confirm('Are you sure you want to delete this feature? This will also delete any associated events.');"
+                        title="Delete the {{ feature.name }} feature">
+                      {{ csrf_token() }}
+                      <input type="hidden" name="id" value="{{ feature.id }}">
+                      <button type="submit" class="btn btn-xs btn-danger btn-fade">
+                        <span class="glyphicon glyphicon-remove"></span>
+                      </button>
+                    </form>
+                  </div>
+                {%- endif %}
+                <span>{{ feature.name }}</span>
+                {% if can_admin_attraction -%}
+                  <a class="btn btn-xs btn-primary"
+                      title="Schedule a new {{ feature.name }} event"
+                      href="event?feature_id={{ feature.id }}">
+                    <span class="glyphicon glyphicon-time"></span>
+                    Schedule Event
+                  </a>
+                {%- endif %}
+              </h3>
+            </div>
+            <div class="feature-body">
+              <div class="feature-description">{{ feature.description|linebreaksbr }}</div>
+              {%- set events_by_location_by_day = feature.events_by_location_by_day -%}
+              {% if events_by_location_by_day %}
+                {% set col_count = [events_by_location_by_day|length, 2]|sort|first %}
+                {% set col_width = 12 // (col_count if col_count > 0 else 1) %}
+                {% for location, events_by_day in events_by_location_by_day.items() %}
+                  {%- set is_multi_day = events_by_day|length > 1 -%}
+                  {% if (loop.index0 % col_count) == 0 %}<div class="row">{% endif %}
                     <div class="col-md-{{ col_width }}">
                       <div class="room-col">
                         <div class="room-title">
@@ -693,79 +695,93 @@
                           {%- endif %}
                         </div>
                         <div class="room-body">
-                          {% for event in events %}
-                            <div class="event {% if event.remaining_slots > 0 %} info-block{% else %} success-block{% endif%}"
-                                style="min-height: {{ (event.duration // 90) - 6 }}px">
-                              {% if can_admin_attraction -%}
-                                <div class="controls pull-right">
-                                  <a class="btn btn-xs btn-primary btn-fade"
-                                      title="Edit this event"
-                                      href="event?id={{ event.id }}">
-                                    <span class="glyphicon glyphicon-cog"></span>
-                                  </a>
-                                  <button type="submit" class="btn btn-xs btn-danger btn-fade" data-event-id="{{ event.id }}" data-event-label="{{ event.label }}">
-                                    <span class="glyphicon glyphicon-remove"></span>
-                                  </button>
-                                </div>
-                              {%- endif %}
-                              <div class="event-body">
-                                <div>
-                                  {{ event.time_span_label }}
-                                  <em class="text-nowrap text-muted">{{ event.duration_label }}</em>
-                                </div>
-                                <div>
-                                  {% if event.is_sold_out %}
-                                    <span class="text-success">
-                                      <b class="slots">FULL</b> all
-                                      <em class="slots">{{ event.slots }}</em> slot{{ event.remaining_slots|pluralize }} taken
-                                    </span>
+                          {% for day, events in events_by_day.items() %}
+                            {% if not loop.first %}<hr>{% endif %}
+                            {% if is_multi_day %}
+                              <div class="pull-right">
+                                {% for jump_day in events_by_day.keys() %}
+                                  {% if jump_day == day %}
+                                    {{ jump_day[:3] }}
                                   {% else %}
-                                    <em class="slots">{{ event.remaining_slots }}</em> out of
-                                    <em class="slots">{{ event.slots }}</em> slot{{ event.remaining_slots|pluralize }} available
+                                    <a href="#{{ feature.id }}_{{ location }}_{{ jump_day }}">{{ jump_day[:3] }}</a>
                                   {% endif %}
+                                {% endfor %}
+                              </div>
+                            {% endif %}
+                            <h2 id="{{ feature.id }}_{{ location }}_{{ day }}">{{ day }}</h2>
+                            {% for event in events %}
+                              <div class="event {% if event.remaining_slots > 0 %} info-block{% else %} success-block{% endif%}"
+                                  style="min-height: {{ (event.duration // 90) - 6 }}px">
+                                {% if can_admin_attraction -%}
+                                  <div class="controls pull-right">
+                                    <a class="btn btn-xs btn-primary btn-fade"
+                                        title="Edit this event"
+                                        href="event?id={{ event.id }}">
+                                      <span class="glyphicon glyphicon-cog"></span>
+                                    </a>
+                                    <button type="submit" class="btn btn-xs btn-danger btn-fade" data-event-id="{{ event.id }}" data-event-label="{{ event.label }}">
+                                      <span class="glyphicon glyphicon-remove"></span>
+                                    </button>
+                                  </div>
+                                {%- endif %}
+                                <div class="event-body">
+                                  <div>
+                                    {{ event.time_span_label }}
+                                    <em class="text-nowrap text-muted">{{ event.duration_label }}</em>
+                                  </div>
+                                  <div>
+                                    {% if event.is_sold_out %}
+                                      <span class="text-success">
+                                        <b class="slots">FULL</b> all
+                                        <em class="slots">{{ event.slots }}</em> slot{{ event.remaining_slots|pluralize }} taken
+                                      </span>
+                                    {% else %}
+                                      <em class="slots">{{ event.remaining_slots }}</em> out of
+                                      <em class="slots">{{ event.slots }}</em> slot{{ event.remaining_slots|pluralize }} available
+                                    {% endif %}
+                                  </div>
                                 </div>
                               </div>
-                            </div>
-                            {% if not loop.last %}
-                              {% set overlap = event.overlap(events[loop.index]) %}
-                              {% if overlap > 0 %}
-                                <div class="event-spacer text-center overlap">
-                                  {%- if can_admin_attraction -%}<a href="#" data-event-id="{{ event.id }}" data-overlap="{{ overlap }}">{% endif %}
-                                    <span class="glyphicon glyphicon-time"></span>
-                                    {{ humanize_timedelta(seconds=overlap, separator=' ') }} overlap
-                                  {% if can_admin_attraction -%}</a>{%- endif -%}
-                                </div>
-                              {% elif overlap < 0 %}
-                                <div class="event-spacer text-center gap" style="line-height: {{ [[(overlap // -180) + 6, 16]|sort|last, 100]|sort|first }}px">
-                                  {%- if can_admin_attraction -%}<a href="#" data-event-id="{{ event.id }}" data-overlap="{{ overlap }}">{% endif %}
-                                    <span class="glyphicon glyphicon-time"></span>
-                                    {{ humanize_timedelta(seconds=overlap, separator=' ') }} available
-                                  {% if can_admin_attraction -%}</a>{%- endif -%}
-                                </div>
-                              {% else %}
-                                <div class="event-spacer text-center">
-                                  {%- if can_admin_attraction -%}<a href="#" data-event-id="{{ event.id }}" data-overlap="{{ overlap }}">
-                                    <span class="glyphicon glyphicon-time"></span>
-                                  </a>{%- endif -%}
-                                </div>
+                              {% if not loop.last %}
+                                {% set overlap = event.overlap(events[loop.index]) %}
+                                {% if overlap > 0 %}
+                                  <div class="event-spacer text-center overlap">
+                                    {%- if can_admin_attraction -%}<a href="#" data-event-id="{{ event.id }}" data-overlap="{{ overlap }}">{% endif %}
+                                      <span class="glyphicon glyphicon-time"></span>
+                                      {{ humanize_timedelta(seconds=overlap, separator=' ') }} overlap
+                                    {% if can_admin_attraction -%}</a>{%- endif -%}
+                                  </div>
+                                {% elif overlap < 0 %}
+                                  <div class="event-spacer text-center gap" style="line-height: {{ [[(overlap // -180) + 6, 16]|sort|last, 100]|sort|first }}px">
+                                    {%- if can_admin_attraction -%}<a href="#" data-event-id="{{ event.id }}" data-overlap="{{ overlap }}">{% endif %}
+                                      <span class="glyphicon glyphicon-time"></span>
+                                      {{ humanize_timedelta(seconds=overlap, separator=' ') }} available
+                                    {% if can_admin_attraction -%}</a>{%- endif -%}
+                                  </div>
+                                {% else %}
+                                  <div class="event-spacer text-center">
+                                    {%- if can_admin_attraction -%}<a href="#" data-event-id="{{ event.id }}" data-overlap="{{ overlap }}">
+                                      <span class="glyphicon glyphicon-time"></span>
+                                    </a>{%- endif -%}
+                                  </div>
+                                {% endif %}
                               {% endif %}
-                            {% endif %}
+                            {% endfor %}
                           {% endfor %}
                         </div>
                       </div>
                     </div>
-                    {% if loop.last or (loop.index0 % col_count) == (col_count - 1) %}</div>{% endif %}
-                  {% endfor %}
-                {% else %}
-                  <hr>
-                  <div class="empty-message">
-                    No events have been scheduled for the <b>{{ feature.name }}</b> feature yet.
-                  </div>
-                {% endif %}
-              </div>
+                  {% if loop.last or (loop.index0 % col_count) == (col_count - 1) %}</div>{% endif %}
+                {% endfor %}
+              {% else %}
+                <hr>
+                <div class="empty-message">
+                  No events have been scheduled for the <b>{{ feature.name }}</b> feature yet.
+                </div>
+              {% endif %}
             </div>
-          {% endfor %}
-        {% endif %}
+          </div>
+        {% endfor %}
       </div>
     </div>
   </div>
