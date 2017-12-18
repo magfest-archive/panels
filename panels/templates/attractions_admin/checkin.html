@@ -108,9 +108,7 @@
         }
       },
       onComplete: function(barcode, qty) {
-        resetSignups();
         getBadgeNumFromBarcode(barcode, function(response) {
-          $badgeNum.val('');
           $badgeNum.focus();
           if(response) {
             if(response['error']) {
