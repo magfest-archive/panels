@@ -96,11 +96,19 @@
     $(document).scannerDetection({
       timeBeforeScanTest: 100,
       avgTimeByChar: 30,
-      endChar: [9,13],
-      startChar: ['~'],
+      endChar: [9, 13, '\\'],
+      startChar: ['~', '\\'],
       preventDefault: false,
+      onReceive: function(event) {
+        if(event.key === '~' || event.key === '\\') {
+          $badgeNum.blur();
+        }
+      },
       onComplete: function(barcode, qty) {
+        resetSignups();
         getBadgeNumFromBarcode(barcode, function(response) {
+          $badgeNum.val('');
+          $badgeNum.focus();
           if(response) {
             if(response['error']) {
               toastr.error(response['error'], '', {timeOut: 3000});
@@ -155,6 +163,7 @@
       resetSignups();
 
       if (!badgeNum) {
+        $badgeNum.focus();
         return;
       }
 
@@ -198,9 +207,11 @@
           } else {
             setEmpty();
           }
+          $badgeNum.focus();
         },
         error: function(response, status, statusText) {
           toastr.error('There was an error checking in: ' + statusText, '', {timeOut: 3000});
+          $badgeNum.focus();
         }
       });
     };
