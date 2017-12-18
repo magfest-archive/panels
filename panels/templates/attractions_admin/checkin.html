@@ -99,6 +99,9 @@
       endChar: [9, 13, '\\'],
       startChar: ['~', '\\'],
       preventDefault: false,
+      onError: function() {
+        $badgeNum.focus();
+      },
       onReceive: function(event) {
         if(event.key === '~' || event.key === '\\') {
           $badgeNum.blur();
