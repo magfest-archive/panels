@@ -1,6 +1,6 @@
 {% extends "preregistration/preregbase.html" %}
 {% block title %}Attractions{% endblock %}
-{% import 'attractions/attractions_macros.html' as attractions_macros with context %}
+{% import 'attractions_macros.html' as attractions_macros with context %}
 
 {% block content %}
 {% include 'attractions/attractions_common.html' %}
@@ -20,7 +20,7 @@
       <div id="attractions">
         {% for attraction in attractions %}
           <div class="attraction hover-btn">
-            <a class="btn btn-success btn-next pull-right" href="features?id={{ attraction.id }}">
+            <a class="btn btn-success btn-next pull-right" href="{{ attraction.slug }}">
               <span class="glyphicon glyphicon-chevron-right"></span>
             </a>
             <div class="hover-btn-title">

@@ -38,27 +38,56 @@ def _model_for_id(session, model, id, options=None):
 @check_post_con
 class Root:
 
+    @cherrypy.expose
+    def default(self, *args, **kwargs):
+        if args:
+            if kwargs.get('feature', None):
+                return self.events(
+                    slug=sluggify(args[0]),
+                    feature=sluggify(kwargs['feature']))
+            else:
+                return self.features(slug=sluggify(args[0]))
+        else:
+            raise HTTPRedirect('index')
+
     def index(self, session, **params):
         attractions = session.query(Attraction).options(
             subqueryload(Attraction.features)).order_by(Attraction.name).all()
         return {'attractions': attractions}
 
-    def features(self, session, id=None, **params):
-        attraction = _model_for_id(
-            session, Attraction, id,
-            subqueryload(Attraction.features)
-                .subqueryload(AttractionFeature.events)
-                    .subqueryload(AttractionEvent.attendees))
+    def features(self, session, id=None, slug=None, **params):
+        options = subqueryload(Attraction.features) \
+            .subqueryload(AttractionFeature.events) \
+                .subqueryload(AttractionEvent.attendees)
+
+        if slug:
+            attraction = session.query(Attraction).filter(
+                Attraction.slug.startswith(slug)).options(options).first()
+        else:
+            attraction = _model_for_id(session, Attraction, id, options)
 
         if not attraction:
             raise HTTPRedirect('index')
-        return {'attraction': attraction}
+        return {
+            'attraction': attraction,
+            'show_all': params.get('show_all')}
 
-    def events(self, session, id=None, **params):
-        feature = _model_for_id(
-            session, AttractionFeature, id,
-            subqueryload(AttractionFeature.events)
-                .subqueryload(AttractionEvent.attendees))
+    def events(self, session, id=None, slug=None, feature=None, **params):
+        options = subqueryload(AttractionFeature.events) \
+            .subqueryload(AttractionEvent.attendees)
+
+        if slug and feature:
+            attraction = session.query(Attraction).filter(
+                Attraction.slug.startswith(slug)).first()
+            if attraction:
+                feature = session.query(AttractionFeature).filter(
+                    AttractionFeature.attraction_id == attraction.id,
+                    AttractionFeature.slug.startswith(feature)) \
+                    .options(options).first()
+            else:
+                feature = None
+        else:
+            feature = _model_for_id(session, AttractionFeature, id, options)
 
         if not feature:
             raise HTTPRedirect('index')

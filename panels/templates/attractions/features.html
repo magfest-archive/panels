@@ -1,6 +1,6 @@
 {% extends "preregistration/preregbase.html" %}
 {% block title %}{{ attraction.name }}{% endblock %}
-{% import 'attractions/attractions_macros.html' as attractions_macros with context %}
+{% import 'attractions_macros.html' as attractions_macros with context %}
 
 {% block content %}
 {% include 'attractions/attractions_common.html' %}
@@ -21,11 +21,13 @@
 <div class="panel panel-default">
   <div class="panel-body">
     {% block body %}
-      <a class="btn btn-success btn-back" href="index">
-        <span class="glyphicon glyphicon-chevron-left"></span>
-        <span class="hidden-xs">All Attractions</span>
-        <span class="visible-xs-inline">Back</span>
-      </a>
+      {% if show_all %}
+        <a class="btn btn-success btn-back" href="index">
+          <span class="glyphicon glyphicon-chevron-left"></span>
+          <span class="hidden-xs">All Attractions</span>
+          <span class="visible-xs-inline">Back</span>
+        </a>
+      {% endif %}
       <h1 class="text-center">{{ attraction.name }}</h1>
       <p class="text-center">
         {{ attraction.description|linebreaksbr }}
@@ -37,7 +39,7 @@
               data-feature-id="{{ feature.id }}"
               data-feature-name="{{ feature.name }}">
             <div class="hover-btn-title">
-              <a class="btn btn-success btn-next pull-right" href="events?id={{ feature.id }}">
+              <a class="btn btn-success btn-next pull-right" href="{{ attraction.slug }}?feature={{ feature.slug }}">
                 <span class="glyphicon glyphicon-chevron-right"></span>
               </a>
               <h2><span class="bling-icon"></span> {{ feature.name }}</h2>

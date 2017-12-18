@@ -1,7 +1,7 @@
 {% extends "base.html" %}{% set admin_area=True %}
 {% block title %}Attraction Event{% endblock %}
 
-{% import 'attractions_admin/attractions_macros.html' as attractions_macros with context %}
+{% import 'attractions_macros.html' as attractions_macros with context %}
 
 {% block content %}
 <style type="text/css">
@@ -37,42 +37,64 @@
     text-align: right;
     white-space: nowrap;
   }
+
+  .checked-in-hidden { display: inline-block; }
+  .checked-in .checked-in-hidden { display: none; }
+  .checked-in-visible { display: none; }
+  .checked-in .checked-in-visible { display: inline-block; }
 </style>
+
+{% include 'attractions_checkin.html' %}
 
 <script>
   $(function() {
-    var cancelSignup = function(signupId, callback) {
-      callback = callback || function() {}
-      $.ajax({
-        method: 'POST',
-        url: 'cancel_signup',
-        data: {
-          id: signupId,
-          csrf_token: csrf_token
-        },
-        success: function(response, status) {
-          if (response && response['error']) {
-            callback('There was an error cancelling the signup: ' + response['error']);
-          } else {
-            callback();
-          }
-        },
-        error: function(response, status, statusText) {
-          callback('There was an error cancelling the signup: ' + statusText);
+    var $attendeesTable = $('#attendees-table');
+
+    $attendeesTable.on('click', '.btn-success', function(event) {
+      event.preventDefault();
+      var $button = $(this),
+          signupId = $button.data('signupId');
+      checkinSignup(signupId, function(response) {
+        if(response && response['error']) {
+          toastr.error(response['error'], '', {timeOut: 3000});
+        } else {
+          var $checkinTd = $button.closest('td'),
+              $cancelButton = $checkinTd.closest('tr').find('.controls button'),
+              $checkinTime = $checkinTd.children('.checkin_time');
+          $cancelButton.prop('disabled', true);
+          $checkinTime.text(moment(response['result']).format('dddd, MMM D [at] h:mma'));
+          $checkinTd.addClass('checked-in');
         }
       });
-    };
+    });
 
-    var $attendeesTable = $('#attendees-table');
+    $attendeesTable.on('click', '.btn-warning', function(event) {
+      event.preventDefault();
+      var $button = $(this),
+          signupId = $button.data('signupId');
+      undoCheckinSignup(signupId, function(response) {
+        if(response && response['error']) {
+          toastr.error(response['error'], '', {timeOut: 3000});
+        } else {
+          var $checkinTd = $button.closest('td'),
+              $cancelButton = $checkinTd.closest('tr').find('.controls button'),
+              $checkinTime = $checkinTd.children('.checkin_time');
+          $cancelButton.prop('disabled', false);
+          $checkinTime.text('');
+          $checkinTd.removeClass('checked-in');
+        }
+      });
+    });
+
     $attendeesTable.on('click', '.btn-danger', function(event) {
       event.preventDefault();
-      var $button = $(this);
+      var $button = $(this),
           signupId = $button.data('signupId'),
           attendeeName = $button.data('attendeeName');
 
-      var callback = function(error) {
-        if(error) {
-          toastr.error(error, '', {timeOut: 3000});
+      var callback = function(response) {
+        if(response && response['error']) {
+          toastr.error(response['error'], '', {timeOut: 3000});
         } else {
           var $signupRow = $button.closest('tr');
           $signupRow.fadeOut(function() {
@@ -199,25 +221,34 @@
     </thead>
     <tbody>
       {% for signup in event.signups %}
-        <tr>
+        <tr id="{{ signup.id }}">
           <td>{{ signup.attendee|form_link }}</td>
           <td>#{{ signup.attendee.badge_num }}</td>
           <td>{{ signup.signup_time|datetime_local('%A, %b %-e at %-I:%M%p') }}</td>
-          <td>
-            {% if signup.checkin_time %}
-              {{ signup.checkin_time|datetime_local('%A, %b %-e at %-I:%M%p') }}
-            {% else %}
-              <em>Not checked in</em>
-            {% endif %}
-          </td>
-          <td class="controls"
-              {%- if signup.checkin_time %} title="You cannot cancel a signup that has already checked in"{% endif %}>
-            <button class="btn btn-xs btn-danger"
-                {%- if signup.checkin_time %} disabled="disabled"{% endif %}
-                data-signup-id="{{ signup.id }}"
-                data-attendee-name="{{ signup.attendee.full_name }}">
-              <span class="glyphicon glyphicon-remove"></span>
+          <td class="checkin {% if signup.checkin_time %} checked-in{% endif %}" data-order="{{ signup.checkin_time }}">
+            <button class="btn btn-warning btn-xs checked-in-visible" data-signup-id="{{ signup.id }}">
+              <span class="glyphicon glyphicon-check"></span>
+              Undo
             </button>
+            <span class="checkin_time checked-in-visible">
+              {{ signup.checkin_time|datetime_local('%A, %b %-e at %-I:%M%p') }}
+            </span>
+            <button class="btn btn-success btn-xs checked-in-hidden" data-signup-id="{{ signup.id }}">
+              <span class="glyphicon glyphicon-check"></span>
+              Check In Now
+            </button>
+          </td>
+          <td class="controls">
+            <span {% if signup.checkin_time -%}
+                title="You cannot cancel a signup that has already checked in" {% endif -%}
+                style="display: inline-block;">
+              <button class="btn btn-xs btn-danger"
+                  {%- if signup.checkin_time %} disabled="disabled"{% endif %}
+                  data-signup-id="{{ signup.id }}"
+                  data-attendee-name="{{ signup.attendee.full_name }}">
+                <span class="glyphicon glyphicon-remove"></span>
+              </button>
+            </span>
           </td>
         </tr>
       {% endfor %}
