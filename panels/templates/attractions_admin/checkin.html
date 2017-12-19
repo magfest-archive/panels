@@ -104,6 +104,7 @@
       },
       onReceive: function(event) {
         if(event.key === '~' || event.key === '\\') {
+          event.preventDefault();
           $badgeNum.blur();
         }
       },
