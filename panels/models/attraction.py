@@ -333,6 +333,10 @@ class AttractionEvent(MagModel):
         return self.end_time.astimezone(c.EVENT_TIMEZONE)
 
     @property
+    def start_day_local(self):
+        return self.start_time_local.strftime('%A')
+
+    @property
     def start_time_local(self):
         return self.start_time.astimezone(c.EVENT_TIMEZONE)
 

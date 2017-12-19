@@ -93,17 +93,6 @@ class Root:
             'message': message,
         }
 
-    def checkin(self, session, message='', **params):
-        attraction_id = params.get('id')
-        if not attraction_id or attraction_id == 'None':
-            raise HTTPRedirect('index')
-
-        attraction = session.query(Attraction) \
-            .filter_by(id=attraction_id) \
-            .order_by(Attraction.id).one()
-
-        return {'attraction': attraction, 'message': message}
-
     @csrf_protected
     def delete(self, session, id, message=''):
         if cherrypy.request.method == 'POST':
@@ -279,11 +268,12 @@ class Root:
 
         if gap is not None and cherrypy.request.method == 'POST':
             ref_event = session.query(AttractionEvent).get(id)
+            events_for_day = ref_event.feature.events_by_location_by_day[ref_event.location][ref_event.start_day_local]
             attraction_id = ref_event.feature.attraction_id
 
             delta = None
             prev_event = None
-            for event in ref_event.feature.events_by_location[ref_event.location]:
+            for event in events_for_day:
                 if prev_event == ref_event:
                     prev_gap = (event.start_time - prev_event.end_time).total_seconds()
                     delta = timedelta(seconds=(gap - prev_gap))
@@ -325,6 +315,42 @@ class Root:
             return {'error': message}
 
     @ajax
+    def cancel_signup(self, session, id):
+        message = ''
+        if cherrypy.request.method == 'POST':
+            signup = session.query(AttractionSignup).get(id)
+            attraction_id = signup.event.feature.attraction_id
+            attraction = session.query(Attraction).get(attraction_id)
+            if not session.admin_attendee().can_admin_attraction(attraction):
+                message = "You cannot cancel a signup for an attraction you don't own"
+            elif signup.checkin_time:
+                message = "You cannot cancel a signup that has already checked in"
+            else:
+                session.delete(signup)
+                session.commit()
+        if message:
+            return {'error': message}
+
+    @only_renderable(c.STUFF, c.PEOPLE, c.REG_AT_CON)
+    def checkin(self, session, message='', **params):
+        id = params.get('id')
+        if not id:
+            raise HTTPRedirect('index')
+
+        try:
+            uuid.UUID(id)
+            filters = [Attraction.id == id]
+        except Exception:
+            filters = [Attraction.slug.startswith(sluggify(id))]
+
+        attraction = session.query(Attraction).filter(*filters).first()
+        if not attraction:
+            raise HTTPRedirect('index')
+
+        return {'attraction': attraction, 'message': message}
+
+    @only_renderable(c.STUFF, c.PEOPLE, c.REG_AT_CON)
+    @ajax
     def get_signups(self, session, badge_num, attraction_id=None):
         if cherrypy.request.method == 'POST':
             attendee = _attendee_for_badge_num(
@@ -362,23 +388,7 @@ class Root:
                 }
             }
 
-    @ajax
-    def cancel_signup(self, session, id):
-        message = ''
-        if cherrypy.request.method == 'POST':
-            signup = session.query(AttractionSignup).get(id)
-            attraction_id = signup.event.feature.attraction_id
-            attraction = session.query(Attraction).get(attraction_id)
-            if not session.admin_attendee().can_admin_attraction(attraction):
-                message = "You cannot cancel a signup for an attraction you don't own"
-            elif signup.checkin_time:
-                message = "You cannot cancel a signup that has already checked in"
-            else:
-                session.delete(signup)
-                session.commit()
-        if message:
-            return {'error': message}
-
+    @only_renderable(c.STUFF, c.PEOPLE, c.REG_AT_CON)
     @ajax
     def checkin_signup(self, session, id):
         message = ''
@@ -393,6 +403,7 @@ class Root:
         if message:
             return {'error': message}
 
+    @only_renderable(c.STUFF, c.PEOPLE, c.REG_AT_CON)
     @ajax
     def undo_checkin_signup(self, session, id):
         if cherrypy.request.method == 'POST':
