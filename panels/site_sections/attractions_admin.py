@@ -331,7 +331,7 @@ class Root:
         if message:
             return {'error': message}
 
-    @only_renderable(c.STUFF, c.PEOPLE, c.REG_AT_CON)
+    @renderable_override(c.STUFF, c.PEOPLE, c.REG_AT_CON)
     def checkin(self, session, message='', **params):
         id = params.get('id')
         if not id:
@@ -349,7 +349,7 @@ class Root:
 
         return {'attraction': attraction, 'message': message}
 
-    @only_renderable(c.STUFF, c.PEOPLE, c.REG_AT_CON)
+    @renderable_override(c.STUFF, c.PEOPLE, c.REG_AT_CON)
     @ajax
     def get_signups(self, session, badge_num, attraction_id=None):
         if cherrypy.request.method == 'POST':
@@ -388,7 +388,7 @@ class Root:
                 }
             }
 
-    @only_renderable(c.STUFF, c.PEOPLE, c.REG_AT_CON)
+    @renderable_override(c.STUFF, c.PEOPLE, c.REG_AT_CON)
     @ajax
     def checkin_signup(self, session, id):
         message = ''
@@ -403,7 +403,7 @@ class Root:
         if message:
             return {'error': message}
 
-    @only_renderable(c.STUFF, c.PEOPLE, c.REG_AT_CON)
+    @renderable_override(c.STUFF, c.PEOPLE, c.REG_AT_CON)
     @ajax
     def undo_checkin_signup(self, session, id):
         if cherrypy.request.method == 'POST':
