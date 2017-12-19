@@ -30,9 +30,9 @@
               <p>
                 {{ attraction.description|linebreaksbr }}
               </p>
-              {% if attraction.features %}
+              {% if attraction.public_features %}
                 <ul>
-                  {% for feature in attraction.features[:4] %}
+                  {% for feature in attraction.public_features[:4] %}
                     <li>
                       {% if loop.index0 > 2 %}
                         And more...

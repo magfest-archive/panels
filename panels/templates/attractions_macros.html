@@ -149,21 +149,38 @@
       type='textarea',
       is_required=True,
       help="This description will be displayed to attendees when they're signing up.") }}
-  {% if admin_account.attendee.assigned_depts %}
-    <div class="form-group">
-      <label class="col-sm-3 control-label">Belongs to Department</label>
-      <div class="col-sm-6">
-        <select name="department_id" class="form-control">
-          <option value="">This attraction doesn't belong to any department</option>
-          {{ options(admin_account.attendee.assigned_depts_opts, attraction.department_id) }}
-        </select>
-      </div>
-      <div class="col-sm-offset-3 col-sm-9 help-block">
-        If the attraction belongs to a department, then department heads can
-        also edit it.
-      </div>
+  <div class="form-group">
+    <div class="col-sm-offset-3 col-sm-9">
+      <label class="checkbox-label">
+        <input type="checkbox" name="is_public" value="1"
+            {%- if not is_class and attraction.is_public %} checked="checked"{% endif %}/>
+        Open to the public
+      </label>
+      <p class="help-block">
+        This attraction will not be visible to attendees for signup until it is marked as open to the public.
+      </p>
     </div>
-  {% endif %}
+  </div>
+  <div class="form-group">
+    <label class="col-sm-3 control-label">Belongs to Department</label>
+    <div class="col-sm-6">
+      <select name="department_id" class="form-control">
+        <option value="">This attraction doesn't belong to any department</option>
+        {% if not is_class
+              and attraction.department_id
+              and attraction.department_id not in admin_account.attendee.assigned_depts_ids %}
+          <option value="{{ attraction.department_id }}" selected="selected">
+            {{ attraction.department.name }}
+          </option>
+        {% endif %}
+        {{ options(admin_account.attendee.assigned_depts_opts, attraction.department_id) }}
+      </select>
+    </div>
+    <div class="col-sm-offset-3 col-sm-9 help-block">
+      If the attraction belongs to a department, then department heads can
+      also edit it.
+    </div>
+  </div>
   <div class="form-group">
     <label class="col-sm-3 control-label">Attendance Restriction</label>
     <div class="col-sm-6">

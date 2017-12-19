@@ -9,7 +9,7 @@ from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import backref
 from sqlalchemy.schema import ForeignKey, UniqueConstraint
 from sqlalchemy.sql import text
-from sqlalchemy.types import Integer
+from sqlalchemy.types import Boolean, Integer
 
 from uber.config import c
 from uber.custom_tags import humanize_timedelta
@@ -30,7 +30,7 @@ RE_SLUG = re.compile(r'[\W_]+')
 
 
 def sluggify(s):
-    return RE_SLUG.sub('-', s).lower()
+    return RE_SLUG.sub('-', s).lower().strip('-')
 
 
 @Session.model_mixin
@@ -106,6 +106,7 @@ class Attraction(MagModel):
     name = Column(UnicodeText, unique=True)
     slug = Column(UnicodeText, unique=True)
     description = Column(UnicodeText)
+    is_public = Column(Boolean, default=False)
     notifications = Column(JSON, default=[], server_default='[]')
     required_checkin = Column(Integer, default=0)  # In seconds
     restriction = Column(Choice(RESTRICTION_OPTS), default=NONE)
@@ -131,6 +132,13 @@ class Attraction(MagModel):
     features = relationship(
         'AttractionFeature',
         backref='attraction',
+        order_by='[AttractionFeature.name, AttractionFeature.id]')
+    public_features = relationship(
+        'AttractionFeature',
+        primaryjoin='and_('
+                    'AttractionFeature.attraction_id == Attraction.id,'
+                    'AttractionFeature.is_public == True)',
+        viewonly=True,
         order_by='[AttractionFeature.name, AttractionFeature.id]')
     events = relationship(
         'AttractionEvent',
@@ -195,6 +203,7 @@ class AttractionFeature(MagModel):
     name = Column(UnicodeText)
     slug = Column(UnicodeText)
     description = Column(UnicodeText)
+    is_public = Column(Boolean, default=False)
     attraction_id = Column(UUID, ForeignKey('attraction.id'))
 
     events = relationship(

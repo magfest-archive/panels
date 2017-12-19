@@ -34,7 +34,7 @@
       </p>
       <hr>
       <div id="features">
-        {% for feature in attraction.features %}
+        {% for feature in attraction.public_features %}
           <div class="feature hover-btn"
               data-feature-id="{{ feature.id }}"
               data-feature-name="{{ feature.name }}">

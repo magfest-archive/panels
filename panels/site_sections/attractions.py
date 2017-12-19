@@ -19,7 +19,7 @@ def _attendee_for_badge_num(session, badge_num, options=None):
     return query.first()
 
 
-def _model_for_id(session, model, id, options=None):
+def _model_for_id(session, model, id, options=None, filters=[]):
     if not id:
         return None
 
@@ -28,7 +28,7 @@ def _model_for_id(session, model, id, options=None):
     except Exception:
         return None
 
-    query = session.query(model).filter_by(id=id)
+    query = session.query(model).filter(model.id == id, *filters)
     if options:
         query = query.options(options)
     return query.first()
@@ -51,20 +51,24 @@ class Root:
             raise HTTPRedirect('index')
 
     def index(self, session, **params):
-        attractions = session.query(Attraction).options(
-            subqueryload(Attraction.features)).order_by(Attraction.name).all()
+        attractions = session.query(Attraction).filter_by(is_public=True) \
+            .options(subqueryload(Attraction.public_features)) \
+            .order_by(Attraction.name).all()
         return {'attractions': attractions}
 
     def features(self, session, id=None, slug=None, **params):
-        options = subqueryload(Attraction.features) \
+        filters = [Attraction.is_public == True]
+        options = subqueryload(Attraction.public_features) \
             .subqueryload(AttractionFeature.events) \
                 .subqueryload(AttractionEvent.attendees)
 
         if slug:
-            attraction = session.query(Attraction).filter(
-                Attraction.slug.startswith(slug)).options(options).first()
+            attraction = session.query(Attraction) \
+                .filter(Attraction.slug.startswith(slug), *filters) \
+                .options(options).first()
         else:
-            attraction = _model_for_id(session, Attraction, id, options)
+            attraction = _model_for_id(
+                session, Attraction, id, options, filters)
 
         if not attraction:
             raise HTTPRedirect('index')
@@ -73,24 +77,30 @@ class Root:
             'show_all': params.get('show_all')}
 
     def events(self, session, id=None, slug=None, feature=None, **params):
+        filters = [AttractionFeature.is_public == True]
         options = subqueryload(AttractionFeature.events) \
             .subqueryload(AttractionEvent.attendees)
 
         if slug and feature:
             attraction = session.query(Attraction).filter(
+                Attraction.is_public == True,
                 Attraction.slug.startswith(slug)).first()
             if attraction:
                 feature = session.query(AttractionFeature).filter(
                     AttractionFeature.attraction_id == attraction.id,
-                    AttractionFeature.slug.startswith(feature)) \
-                    .options(options).first()
+                    AttractionFeature.slug.startswith(feature),
+                    *filters).options(options).first()
             else:
                 feature = None
         else:
-            feature = _model_for_id(session, AttractionFeature, id, options)
+            feature = _model_for_id(
+                session, AttractionFeature, id, options, filters)
 
         if not feature:
-            raise HTTPRedirect('index')
+            if attraction:
+                raise HTTPRedirect(attraction.slug)
+            else:
+                raise HTTPRedirect('index')
         return {'feature': feature}
 
     @ajax
