@@ -596,6 +596,13 @@
   {% else %}
     <p>Attendees will <b>NOT</b> be notified before the start of an {{ attraction.name }} event.</p>
   {% endif %}
+  <p>
+    {% if attraction.is_public %}
+      Open to the <a href="../attractions/{{ attraction.slug }}">public</a>.
+    {% else %}
+      <b>NOT</b> open to the public.
+    {% endif %}
+  </p>
   {% if attraction.department_id -%}
     <p class="help-block">
       <em>The {{ attraction.name }} attraction belongs to the {{ attraction.department|form_link }} department.</em>
@@ -671,7 +678,16 @@
               </h3>
             </div>
             <div class="feature-body">
-              <div class="feature-description">{{ feature.description|linebreaksbr }}</div>
+              <div class="feature-description">
+                <p>{{ feature.description|linebreaksbr }}</p>
+                <p>
+                  {% if feature.is_public %}
+                    Open to the <a href="../attractions/{{ attraction.slug }}?feature={{ feature.slug }}">public</a>.
+                  {% else %}
+                    <b>NOT</b> open to the public.
+                  {% endif %}
+                </p>
+              </div>
               {%- set events_by_location_by_day = feature.events_by_location_by_day -%}
               {% if events_by_location_by_day %}
                 {% set col_count = [events_by_location_by_day|length, 2]|sort|first %}

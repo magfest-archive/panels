@@ -4,19 +4,20 @@
 {% block content %}
   <h1>
     Attractions
-    {% if filtered %}
-      <a class="btn btn-xs btn-plain" href="index">
-    {% else %}
-      <a class="btn btn-xs btn-default" href="index?filtered=1">
-    {% endif %}
-        <span class="glyphicon glyphicon-filter"></span>
-        Show only my attractions
-      </a>
+    <small><a href="../attractions">View Public Schedule</a></small>
     <a href="new" class="btn btn-primary pull-right">
       <span class="glyphicon glyphicon-plus"></span>
       Create Attraction
     </a>
   </h1>
+  {% if filtered %}
+    <a class="btn btn-xs btn-plain" href="index">
+  {% else %}
+    <a class="btn btn-xs btn-default" href="index?filtered=1">
+  {% endif %}
+      <span class="glyphicon glyphicon-filter"></span>
+      Show only my attractions
+    </a>
 
   {% if attractions -%}
     <div class="table-responsive">
@@ -27,6 +28,7 @@
           <tr>
             <th>Name</th>
             <th>Description</th>
+            <th>Public</th>
             <th>Department</th>
             <th>Owner</th>
           </tr>
@@ -36,6 +38,7 @@
             <tr>
               <td>{{ attraction|form_link }}</td>
               <td>{{ attraction.description|linebreaksbr }}</td>
+              <td>{{ attraction.is_public|yesno('Yes,No') }}</td>
               <td>{{ attraction.department|form_link }}</td>
               <td>{{ attraction.owner.attendee|form_link }}</td>
             </tr>
