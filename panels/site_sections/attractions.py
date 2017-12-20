@@ -23,7 +23,7 @@ def _attendee_for_info(session, first_name, last_name, email, zip_code):
     return session.query(Attendee).filter(
         func.lower(Attendee.first_name) == first_name.lower(),
         func.lower(Attendee.last_name) == last_name.lower(),
-        func.lower(Attendee.email) == email.lower(),
+        Attendee.normalized_email == Attendee.normalize_email(email),
         Attendee.zip_code == zip_code
     ).first()
 
