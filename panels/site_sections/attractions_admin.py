@@ -397,7 +397,7 @@ class Root:
             if signup.checkin_time:
                 message = "You cannot check in a signup that has already checked in"
             else:
-                signup.checkin_time = datetime.utcnow().replace(tzinfo=pytz.UTC)
+                signup.checkin_time = datetime.now(pytz.UTC)
                 session.commit()
                 return {'result': signup.checkin_time.astimezone(c.EVENT_TIMEZONE)}
         if message:

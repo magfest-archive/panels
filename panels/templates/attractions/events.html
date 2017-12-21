@@ -424,11 +424,11 @@
                   <span class="visible-soldout-inline text-danger">
                     <b class="slots">SOLD OUT</b> all
                     <em class="slots">{{ event.slots }}</em>
-                    slot{{ event.remaining_slots|pluralize }} taken
+                    slot{{ event.slots|pluralize }} taken
                   </span>
                   <span class="hidden-soldout">
                     <em class="slots remaining-slots">{{ event.remaining_slots }}</em> out of
-                    <em class="slots total-slots">{{ event.slots }}</em> slot{{ event.remaining_slots|pluralize }} available
+                    <em class="slots total-slots">{{ event.slots }}</em> slot{{ event.slots|pluralize }} available
                   </span>
                 </p>
                 <p class="visible-signedup-inline"><em class="text-success">You are signed up for this event!</em></p>

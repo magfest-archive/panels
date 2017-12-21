@@ -6,7 +6,7 @@ from panels.site_sections import schedule
 from uber.tests.conftest import *
 
 
-UTCNOW = datetime.utcnow().replace(tzinfo=pytz.UTC)
+UTCNOW = datetime.now(pytz.UTC)
 UTC20DAYSLATER = UTCNOW + timedelta(days=20)
 
 

@@ -1,0 +1,217 @@
+{% extends "preregistration/preregbase.html" %}
+{% block title %}My Signups{% endblock %}
+{% import 'attractions_macros.html' as attractions_macros with context %}
+
+{% block content %}
+{% include 'attractions_checkin.html' %}
+{% include 'attractions/attractions_common.html' %}
+
+<style>
+  #filter {
+    margin: 0 0 10px 10px;
+  }
+
+  .header {
+    display: inline-block;
+  }
+
+  .signup {
+    border: 1px solid transparent;
+    border-radius: 3px;
+    padding: 10px;
+    margin-bottom: 20px;
+  }
+
+  .signup:last-child {
+    margin-bottom: 0;
+  }
+
+  .signup:hover {
+    background-color: #f8f8f8;
+    border-color: #b0b0b0;
+  }
+
+  .signup-title {
+    margin-bottom: 5px;
+  }
+
+  .signup-title h2 {
+    display: inline;
+    font-size: 1.125em;
+    margin: 0;
+  }
+
+  .signup-body {
+    padding-left: 0.75em;
+  }
+
+  .signup-body p {
+    margin: 0;
+  }
+
+  .slots {
+    font-size: 1.2em;
+    vertical-align: middle;
+  }
+
+  .checkin_time {
+    font-size: 1.125em;
+    text-align: center;
+  }
+
+  .checkin_time b {
+    font-style: italic;
+  }
+
+  .checked-in { display: none; }
+  .show-checked-in .checked-in { display: block; }
+
+  .checked-in-hidden { display: inline-block; }
+  .checked-in .checked-in-hidden { display: none; }
+  .checked-in-visible { display: none; }
+  .checked-in .checked-in-visible { display: inline-block; }
+</style>
+
+<script>
+  $(function() {
+    var $container = $('#container'),
+        $showCheckedInButton = $('#filter');
+
+    var toggleShowCheckedIn = function(isShowing) {
+      $showCheckedInButton.toggleClass('btn-plain', !isShowing);
+      $showCheckedInButton.toggleClass('btn-default', isShowing);
+      $container.toggleClass('show-checked-in', !isShowing);
+    };
+    toggleShowCheckedIn({{ has_unchecked_in|string|lower }});
+
+    $showCheckedInButton.on('click', function(event) {
+      event.preventDefault();
+      toggleShowCheckedIn($showCheckedInButton.hasClass('btn-plain'));
+    });
+
+    $container.on('click', '.btn-danger', function(event) {
+      event.preventDefault();
+      var $button = $(this),
+          signupId = $button.data('signupId'),
+          eventLabel = $button.data('eventLabel');
+
+      var callback = function(response) {
+        if(response && response['error']) {
+          toastr.error(response['error'], '', {timeOut: 3000});
+        } else {
+          var $signup = $button.closest('.signup');
+          $signup.fadeOut();
+          toastr.success('Signup for ' + eventLabel + ' successfully cancelled', '', {timeOut: 3000});
+        }
+      };
+
+      bootbox.confirm({
+        backdrop: true,
+        message: '<p>Are you sure you want to cancel your signup for ' + eventLabel + '?</p>',
+        buttons: {
+          confirm: { label: 'Cancel Signup', className: 'btn-danger' },
+          cancel: { label: 'Nevermind', className: 'btn-default' }
+        },
+        callback: function (result) {
+          if (result) {
+            $.ajax({
+              method: 'POST',
+              url: 'cancel_signup',
+              data: {
+                attendee_id: '{{ attendee.id }}',
+                id: signupId,
+                csrf_token: csrf_token
+              },
+              success: function(response, status) {
+                callback(response);
+              },
+              error: function(response, status, statusText) {
+                callback({'error': 'There was an error cancelling the signup: ' + statusText});
+              }
+            });
+          }
+        }
+      });
+    });
+  });
+</script>
+
+<div class="masthead"></div>
+<div class="panel panel-default">
+  <div class="panel-body">
+    {% block body %}
+      {% include 'attractions_tabs.html' with context %}
+      <div id="container">
+        {% if signups %}
+          <button id="filter" class="btn btn-xs btn-xs btn-default pull-right">
+            <span class="glyphicon glyphicon-filter"></span>
+            Show Already Checked In
+          </button>
+          <div class="header">
+            <p>
+              <a href="index"><span class="glyphicon glyphicon-check"></span> Sign up for more events!</a>
+            </p>
+            <label>
+              You are signed up for the following events:
+            </label>
+          </div>
+          <div id="signups">
+            {% for signup in signups %}
+              {%- set is_soldout = signup.event.is_sold_out -%}
+              <div class="signup{% if signup.is_checked_in %} checked-in{% endif %}{% if is_soldout %} soldout{% endif %}">
+                <div class="signup-title">
+                  <button class="btn btn-sm btn-danger pull-right checked-in-hidden"
+                      data-signup-id="{{ signup.id }}"
+                      data-event-label="{{ signup.event.feature.attraction.name }} – {{ signup.event.label }}">
+                    <span class="glyphicon glyphicon-remove"></span>
+                    Cancel Signup
+                  </button>
+                  <h2>
+                    <span class="bling-icon"></span>
+                    {{ signup.event.feature.attraction.name }} – {{ signup.event.feature.name }}
+                  </h2>
+                </div>
+                <div class="signup-body">
+                  <p class="event-label">
+                    <span class="text-hilite">{{ signup.event.time_span_label }}</span>
+                    <em class="text-nowrap text-muted">{{ signup.event.duration_label }}</em>
+                  </p>
+                  <p class="event-location">
+                    {{ format_location(signup.event.location, separator=' ', spacer='', text_class='') }}
+                  </p>
+                  <p>
+                    <span class="visible-soldout-inline">
+                      <em class="slots">SOLD OUT</em> all
+                      <em class="slots">{{ signup.event.slots }}</em>
+                      slot{{ signup.event.slots|pluralize }} taken
+                    </span>
+                    <span class="hidden-soldout">
+                      <em class="slots remaining-slots">{{ signup.event.remaining_slots }}</em> out of
+                      <em class="slots total-slots">{{ signup.event.slots }}</em>
+                      slot{{ signup.event.slots|pluralize }} available
+                    </span>
+                  </p>
+                  {% if not signup.is_checked_in %}
+                    <p class="checkin_time required_checkin_time">
+                      Checkin is at <b>{{ signup.event.required_checkin_time_label }}</b>
+                    </p>
+                  {% else %}
+                    <p class="checkin_time text-success">
+                      Checked in at {{ signup.checkin_time_label }}
+                    </p>
+                  {% endif %}
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="text-center">
+            <p class="help-block"><em>You are not signed up for any events!</em></p>
+            <p>Click <a href="index">here to browse attractions</a> and sign up for events!</p>
+          </div>
+        {% endif %}
+      </div>
+    {% endblock %}
+  </div>
+</div>
+{% endblock %}
