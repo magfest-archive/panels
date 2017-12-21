@@ -75,6 +75,7 @@
   $(function() {
     var $modals = $('.modal'),
         $signupModal = $('#signup_modal'),
+        $altSignupModal = $('#alt_signup_modal'),
         $doneModal = $('#done_modal'),
         $btnShowSoldout = $('#btn_show_soldout');
 
@@ -107,15 +108,14 @@
       $signupModal.modal('show');
     });
 
-    var signupForEvent = function(eventId, badgeNum, callback) {
+    var signupForEvent = function(eventId, extraParams, callback) {
       $.ajax({
         method: 'POST',
         url: 'signup_for_event',
-        data: {
-          badge_num: badgeNum,
+        data: $.extend({
           id: eventId,
           csrf_token: csrf_token
-        },
+        }, extraParams),
         success: function(response, status) {
           if (response && response['event_id']) {
             $modals.toggleClass('soldout', response['is_sold_out']);
@@ -134,13 +134,18 @@
       });
     };
 
+    $signupModal.find('.modal-footer .btn.modal-form-switch').on('click', function (event) {
+      $signupModal.modal('hide');
+      $altSignupModal.modal('show');
+    });
+
     $signupModal.find('.confirm-row .btn-success').on('click', function (event) {
       event.preventDefault();
       var eventId = $signupModal.data('eventId'),
           $badgeNum = $signupModal.find('input[name=badge_num]'),
           badgeNum = $badgeNum.val();
 
-      signupForEvent(eventId, badgeNum, function(response) {
+      signupForEvent(eventId, {badge_num: badgeNum}, function(response) {
         if (response) {
           updateGreeting(response['first_name'], response['badge_num'], $doneModal.find('.modal-title'));
           $doneModal.data('badgeNum', badgeNum);
@@ -155,7 +160,7 @@
       var eventId = $doneModal.data('eventId'),
           $badgeNum = $doneModal.find('input[name=badge_num]');
 
-      signupForEvent(eventId, $badgeNum.val(), function(response) {
+      signupForEvent(eventId, {badge_num: $badgeNum.val()}, function(response) {
         if (response) {
           var $attendee = $doneModal.find('.confirm-row .attendee'),
               $eventLabel = $('#' + eventId + ' .event-label'),
@@ -171,12 +176,45 @@
       });
     });
 
+    $altSignupModal.find('.modal-footer .btn-success').on('click', function () {
+      event.preventDefault();
+      var eventId = $signupModal.data('eventId');
+      var params = {
+        first_name: $.val('first_name'),
+        last_name: $.val('last_name'),
+        email: $.val('email'),
+        zip_code: $.val('zip_code')
+      };
+      signupForEvent(eventId, params, function (response) {
+        if (response) {
+          $altSignupModal.modal('hide');
+          $doneModal.data('hideForm', true);
+          $doneModal.modal('show');
+        }
+      });
+    });
+
     $modals.on('show.bs.modal', function (event) {
       resetBadgeNum($(this));
     });
 
     $modals.on('shown.bs.modal', function (event) {
       focusBadgeNum($(this));
+    });
+
+    $doneModal.on('shown.bs.modal', function () {
+        if ($doneModal.data('hideForm')) {
+            $doneModal.find('.hidden-soldout').addClass('hidden-modal-form');
+        } else {
+            $doneModal.find('.hidden-soldout').removeClass('hidden-modal-form');
+        }
+    });
+    $doneModal.on('hide.bs.modal', function () {
+        $doneModal.removeData('hideForm');
+    });
+
+    $altSignupModal.on('shown.bs.modal', function () {
+      $altSignupModal.find('input[name=first_name]').focus();
     });
   });
 </script>
@@ -210,7 +248,70 @@
         {{ attractions_macros.badge_num_form('All we need is your badge number!') }}
       </div>
       <div class="modal-footer">
+        <button class="btn btn-default btn-lg btn-xl modal-form-switch">I don't have my badge yet</button>
         <button class="btn btn-default btn-lg btn-xl" data-dismiss="modal">Nevermind</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="alt_signup_modal" class="modal fade" tabindex="-1" role="dialog" style="display: none"
+    aria-labelledby="alt_signup_modal_title">
+  <div class="modal-dialog modal-md" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+        <h4 class="modal-title">
+          <span class="bling-icon"></span> <span class="signup-event-label"></span>
+        </h4>
+      </div>
+      <div class="modal-body">
+        <p>Enter your personal information to sign up.  You must already be registered to sign up for this event.</p>
+        <form class="form-horizontal badge-num-form" method="post" action="sign" role="form">
+          <div class="form-group">
+            <div class="col-sm-offset-2 col-sm-8">
+              <div class="row">
+                <div class="attendee-info-row row">
+                  <input class="form-control input-lg info-field"
+                      type="text"
+                      name="first_name"
+                      placeholder="First Name"
+                      required="required" />
+                </div>
+                <div class="attendee-info-row row">
+                  <input class="form-control input-lg info-field"
+                      type="text"
+                      name="last_name"
+                      placeholder="Last Name"
+                      required="required" />
+                </div>
+                <div class="attendee-info-row row">
+                  <input class="form-control input-lg info-field"
+                      type="text"
+                      name="email"
+                      placeholder="Email Address"
+                      required="required" />
+                </div>
+                <div class="attendee-info-row row">
+                  <input class="form-control input-lg info-field"
+                      type="number"
+                      name="zip_code"
+                      placeholder="Zip Code"
+                      required="required" />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </form>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-default btn-lg btn-xl" data-dismiss="modal">Nevermind</button>
+        <button class="btn btn-default btn-lg btn-xl btn-success">
+            <span class="glyphicon glyphicon-ok"></span> Sign up
+        </button>
       </div>
     </div>
   </div>

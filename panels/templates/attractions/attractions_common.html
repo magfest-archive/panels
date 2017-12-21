@@ -20,6 +20,10 @@
     .visible-xs-inline { display: none !important; }
     .visible-xs-inline-block { display: none !important; }
     .hidden-xs { display: initial !important; }
+    .attendee-info-row input {
+      width: 15em;
+      margin-left: 2em;
+    }
   }
 
   @media(max-width: 499px) {
@@ -206,6 +210,10 @@
   .signedup .visible-signedup-inline-block,
   .loggedin .visible-loggedin-inline-block {
     display: inline-block;
+  }
+
+  .hidden-soldout.hidden-modal-form {
+    display: none;
   }
 
   .btn-back {

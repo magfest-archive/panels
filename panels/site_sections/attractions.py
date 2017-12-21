@@ -19,6 +19,13 @@ def _attendee_for_badge_num(session, badge_num, options=None):
     return query.first()
 
 
+def _attendee_for_info(session, first_name, last_name, email, zip_code):
+    try:
+        return session.lookup_attendee(first_name, last_name, email, zip_code)
+    except:
+        return None
+
+
 def _model_for_id(session, model, id, options=None, filters=[]):
     if not id:
         return None
@@ -114,10 +121,19 @@ class Root:
             'badge_num': attendee.badge_num}
 
     @ajax
-    def signup_for_event(self, session, badge_num, id, **params):
-        attendee = _attendee_for_badge_num(session, badge_num)
-        if not attendee:
-            return {'error': 'Unrecognized badge number: {}'.format(badge_num)}
+    def signup_for_event(self, session, id, badge_num='', first_name='',
+                               last_name='', email='', zip_code='', **params):
+        if badge_num:
+            attendee = _attendee_for_badge_num(session, badge_num)
+            if not attendee:
+                return {
+                    'error': 'Unrecognized badge number: {}'.format(badge_num)
+                }
+        else:
+            attendee = _attendee_for_info(session, first_name, last_name,
+                                                   email, zip_code)
+            if not attendee:
+                return {'error': 'No attendee is registered with that info'}
 
         event = _model_for_id(session, AttractionEvent, id)
         if not event:
