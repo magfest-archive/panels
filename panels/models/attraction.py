@@ -4,6 +4,7 @@ import re
 from collections import OrderedDict
 from datetime import datetime, timedelta
 
+from sideboard.lib import listify
 from sideboard.lib.sa import JSON, CoerceUTF8 as UnicodeText, UTCDateTime, UUID
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import backref
@@ -33,6 +34,30 @@ def sluggify(s):
     return RE_SLUG.sub('-', s).lower().strip('-')
 
 
+def treeify(items, keys, value_key=None):
+    if not keys:
+        return items
+    keys = listify(keys)
+    last_key = keys[-1]
+    treeified = OrderedDict()
+    for item in items:
+        current = treeified
+        for key in keys:
+            attr = key(item) if callable(key) else getattr(item, key)
+            if attr not in current:
+                current[attr] = [] if key is last_key else OrderedDict()
+            current = current[attr]
+        if value_key:
+            if callable(value_key):
+                value = value_key(item)
+            else:
+                value = getattr(item, value_key)
+        else:
+            value = item
+        current.append(value)
+    return treeified
+
+
 @Session.model_mixin
 class Attendee:
     attraction_signups = relationship(
@@ -47,6 +72,15 @@ class Attendee:
     @property
     def attractions(self):
         return list({e.feature.attraction for e in self.attraction_events})
+
+    @property
+    def signups_by_attraction_by_feature(self):
+        signups = sorted(self.attraction_signups, key=lambda s: (
+            s.event.feature.attraction.name,
+            s.event.feature.name))
+        return treeify(signups, [
+            lambda s: s.event.feature.attraction,
+            lambda s: s.event.feature])
 
     def is_signed_up_for_attraction(self, attraction):
         return attraction in self.attractions
@@ -193,10 +227,7 @@ class Attraction(MagModel):
 
     @property
     def locations_by_feature_id(self):
-        locations_by_feature_id = OrderedDict()
-        for feature in self.features:
-            locations_by_feature_id[feature.id] = feature.locations
-        return locations_by_feature_id
+        return treeify(self.features, 'id', lambda f: f.locations)
 
 
 class AttractionFeature(MagModel):
@@ -234,27 +265,14 @@ class AttractionFeature(MagModel):
         events = sorted(
             self.events,
             key=lambda e: (c.EVENT_LOCATIONS[e.location], e.start_time))
-        events_by_location = OrderedDict()
-        for event in events:
-            if event.location not in events_by_location:
-                events_by_location[event.location] = []
-            events_by_location[event.location].append(event)
-        return events_by_location
+        return treeify(events, 'location')
 
     @property
     def events_by_location_by_day(self):
         events = sorted(
             self.events,
             key=lambda e: (c.EVENT_LOCATIONS[e.location], e.start_time))
-        events_by_location = OrderedDict()
-        for event in events:
-            if event.location not in events_by_location:
-                events_by_location[event.location] = OrderedDict()
-            day = event.start_time_local.strftime('%A')
-            if day not in events_by_location[event.location]:
-                events_by_location[event.location][day] = []
-            events_by_location[event.location][day].append(event)
-        return events_by_location
+        return treeify(events, ['location', 'start_day_local'])
 
     @property
     def available_events(self):
@@ -284,13 +302,7 @@ class AttractionFeature(MagModel):
 
     @property
     def available_events_by_day(self):
-        events_by_day = OrderedDict()
-        for event in self.available_events:
-            day = event.start_time_local.strftime('%A')
-            if day not in events_by_day:
-                events_by_day[day] = []
-            events_by_day[day].append(event)
-        return events_by_day
+        return treeify(self.available_events, 'start_day_local')
 
 
 # =====================================================================
@@ -347,16 +359,24 @@ class AttractionEvent(MagModel):
         return 'unknown start time'
 
     @property
-    def checkin_time(self):
-        required_checkin = self.attraction.required_checkin
+    def required_checkin_time(self):
+        required_checkin = self.feature.attraction.required_checkin
         if required_checkin < 0:
-            return self.end_time_local
+            return self.end_time
         else:
-            return self.start_time_local - timedelta(seconds=required_checkin)
+            return self.start_time - timedelta(seconds=required_checkin)
+
+    @property
+    def required_checkin_time_local(self):
+        return self.required_checkin_time.astimezone(c.EVENT_TIMEZONE)
+
+    @property
+    def required_checkin_time_label(self):
+        return self.required_checkin_time_local.strftime('%-I:%M %p %A')
 
     @property
     def is_checkin_over(self):
-        return self.checkin_time < datetime.utcnow().replace(tzinfo=pytz.UTC)
+        return self.required_checkin_time < datetime.now(pytz.UTC)
 
     @property
     def is_sold_out(self):
@@ -364,7 +384,7 @@ class AttractionEvent(MagModel):
 
     @property
     def is_started(self):
-        return self.start_time < datetime.utcnow().replace(tzinfo=pytz.UTC)
+        return self.start_time < datetime.now(pytz.UTC)
 
     @property
     def remaining_slots(self):
@@ -428,12 +448,20 @@ class AttractionSignup(MagModel):
     __mapper_args__ = {'confirm_deleted_rows': False}
     __table_args__ = (UniqueConstraint('attraction_event_id', 'attendee_id'),)
 
+    @property
+    def checkin_time_local(self):
+        return self.checkin_time.astimezone(c.EVENT_TIMEZONE)
 
-Attraction.required = [('name', 'Name'), ('description', 'Description')]
-AttractionFeature.required = [('name', 'Name'), ('description', 'Description')]
+    @property
+    def checkin_time_label(self):
+        if self.checkin_time:
+            return self.checkin_time_local.strftime('%-I:%M %p %A')
+        return 'Not checked in'
 
+    @hybrid_property
+    def is_checked_in(self):
+        return bool(self.checkin_time)
 
-@validation.AttractionEvent
-def at_least_one_slot(event):
-    if event.slots < 1:
-        return 'Events must have at least one slot.'
+    @is_checked_in.expression
+    def is_checked_in(cls):
+        return cls.checkin_time != None

@@ -92,18 +92,6 @@
           signupId = $button.data('signupId'),
           attendeeName = $button.data('attendeeName');
 
-      var callback = function(response) {
-        if(response && response['error']) {
-          toastr.error(response['error'], '', {timeOut: 3000});
-        } else {
-          var $signupRow = $button.closest('tr');
-          $signupRow.fadeOut(function() {
-            $attendeesTable.DataTable().row($signupRow).remove().draw();
-          });
-          toastr.success('Signup for ' + attendeeName + ' successfully cancelled', '', {timeOut: 3000});
-        }
-      };
-
       bootbox.confirm({
         backdrop: true,
         message: '<p>Are you sure you want to cancel the signup for ' + attendeeName + '?</p>',
@@ -113,7 +101,17 @@
         },
         callback: function (result) {
           if (result) {
-            cancelSignup(signupId, callback);
+            cancelSignup(signupId, function(response) {
+              if(response && response['error']) {
+                toastr.error(response['error'], '', {timeOut: 3000});
+              } else {
+                var $signupRow = $button.closest('tr');
+                $signupRow.fadeOut(function() {
+                  $attendeesTable.DataTable().row($signupRow).remove().draw();
+                });
+                toastr.success('Signup for ' + attendeeName + ' successfully cancelled', '', {timeOut: 3000});
+              }
+            });
           }
         }
       });

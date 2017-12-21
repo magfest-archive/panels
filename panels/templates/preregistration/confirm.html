@@ -1,0 +1,7 @@
+{% extends "preregistration/confirm.html" %}
+
+{% block panel_top %}
+  {% if attendee.attraction_signups %}
+    {% include 'attractions_tabs.html' with context %}
+  {% endif %}
+{% endblock %}

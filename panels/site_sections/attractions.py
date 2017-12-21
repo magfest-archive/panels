@@ -110,6 +110,25 @@ class Root:
                 raise HTTPRedirect('index')
         return {'feature': feature}
 
+    def manage(self, session, id=None, **params):
+        attendee = _model_for_id(session, Attendee, id, subqueryload(
+            Attendee.attraction_signups)
+                .subqueryload(AttractionSignup.event)
+                    .subqueryload(AttractionEvent.feature)
+                        .subqueryload(AttractionFeature.attraction))
+        if not attendee:
+            raise HTTPRedirect('index')
+        if attendee.amount_unpaid:
+            raise HTTPRedirect(
+                '../preregistration/attendee_donation_form?id={}', attendee.id)
+        return {
+            'attendee': attendee,
+            'has_unchecked_in': any(
+                not s.checkin_time for s in attendee.attraction_signups),
+            'signups': sorted(
+                attendee.attraction_signups,
+                key=lambda s: s.event.required_checkin_time)}
+
     @ajax
     def verify_badge_num(self, session, badge_num, **params):
         attendee = _attendee_for_badge_num(session, badge_num)
@@ -134,6 +153,9 @@ class Root:
                                                    email, zip_code)
             if not attendee:
                 return {'error': 'No attendee is registered with that info'}
+
+        if attendee.amount_unpaid:
+            return {'error': 'That attendee is not fully paid up'}
 
         event = _model_for_id(session, AttractionEvent, id)
         if not event:
@@ -167,3 +189,18 @@ class Root:
             'is_sold_out': event.is_sold_out,
             'remaining_slots': event.remaining_slots,
             'old_remaining_slots': old_remaining_slots}
+
+    @ajax
+    def cancel_signup(self, session, attendee_id, id):
+        message = ''
+        if cherrypy.request.method == 'POST':
+            signup = session.query(AttractionSignup).get(id)
+            if signup.attendee_id != attendee_id:
+                message = "You cannot cancel someone else's signup"
+            elif signup.checkin_time:
+                message = "You cannot cancel a signup after you've checked in"
+            else:
+                session.delete(signup)
+                session.commit()
+        if message:
+            return {'error': message}

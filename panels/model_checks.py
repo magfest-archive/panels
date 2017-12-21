@@ -89,3 +89,13 @@ def specify_table_needs(app):
 def specify_cost_details(app):
     if app.has_cost and not app.cost_desc:
         return 'Please describe the materials you will provide and how much you will charge attendees for them.'
+
+
+Attraction.required = [('name', 'Name'), ('description', 'Description')]
+AttractionFeature.required = [('name', 'Name'), ('description', 'Description')]
+
+
+@validation.AttractionEvent
+def at_least_one_slot(event):
+    if event.slots < 1:
+        return 'Events must have at least one slot.'
