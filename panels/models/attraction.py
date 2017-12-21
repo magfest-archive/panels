@@ -24,7 +24,7 @@ from uber.utils import ceil_datetime, floor_datetime, noon_datetime, \
 
 __all__ = [
     'Attraction', 'AttractionFeature', 'AttractionEvent', 'AttractionSignup',
-    'sluggify']
+    'groupify', 'sluggify']
 
 
 RE_SLUG = re.compile(r'[\W_]+')
@@ -34,28 +34,157 @@ def sluggify(s):
     return RE_SLUG.sub('-', s).lower().strip('-')
 
 
-def treeify(items, keys, value_key=None):
+def groupify(items, keys, val_key=None):
+    """
+    Groups a list of items into nested OrderedDicts based on the given keys.
+
+    `keys` may be a string, a callable, or a list thereof.
+
+    `val_key` may be `None`, a string, or a callable. Defaults to `None`.
+
+    Examples::
+
+        >>> from json import dumps
+        >>>
+        >>> class Reminder:
+        ...   def __init__(self, when, where, what):
+        ...     self.when = when
+        ...     self.where = where
+        ...     self.what = what
+        ...   def __repr__(self):
+        ...     return 'Reminder({0.when}, {0.where}, {0.what})'.format(self)
+        ...
+        >>> reminders = [
+        ...   Reminder('Fri', 'Home', 'Eat cereal'),
+        ...   Reminder('Fri', 'Work', 'Feed Ivan'),
+        ...   Reminder('Sat', 'Home', 'Sleep in'),
+        ...   Reminder('Sat', 'Home', 'Play Zelda'),
+        ...   Reminder('Sun', 'Home', 'Sleep in'),
+        ...   Reminder('Sun', 'Work', 'Reset database')]
+        >>>
+        >>> print(dumps(groupify(reminders, None), indent=2, default=repr))
+        ... [
+        ...   "Reminder(Fri, Home, Eat cereal)",
+        ...   "Reminder(Fri, Work, Feed Ivan)",
+        ...   "Reminder(Sat, Home, Sleep in)",
+        ...   "Reminder(Sat, Home, Play Zelda)",
+        ...   "Reminder(Sun, Home, Sleep in)",
+        ...   "Reminder(Sun, Work, Reset database)"
+        ... ]
+        >>>
+        >>> print(dumps(groupify(reminders, 'when'), indent=2, default=repr))
+        ... {
+        ...   "Fri": [
+        ...     "Reminder(Fri, Home, Eat cereal)",
+        ...     "Reminder(Fri, Work, Feed Ivan)"
+        ...   ],
+        ...   "Sat": [
+        ...     "Reminder(Sat, Home, Sleep in)",
+        ...     "Reminder(Sat, Home, Play Zelda)"
+        ...   ],
+        ...   "Sun": [
+        ...     "Reminder(Sun, Home, Sleep in)",
+        ...     "Reminder(Sun, Work, Reset database)"
+        ...   ]
+        ... }
+        >>>
+        >>> print(dumps(groupify(reminders, ['when', 'where']),
+        ...             indent=2, default=repr))
+        ... {
+        ...   "Fri": {
+        ...     "Home": [
+        ...       "Reminder(Fri, Home, Eat cereal)"
+        ...     ],
+        ...     "Work": [
+        ...       "Reminder(Fri, Work, Feed Ivan)"
+        ...     ]
+        ...   },
+        ...   "Sat": {
+        ...     "Home": [
+        ...       "Reminder(Sat, Home, Sleep in)",
+        ...       "Reminder(Sat, Home, Play Zelda)"
+        ...     ]
+        ...   },
+        ...   "Sun": {
+        ...     "Home": [
+        ...       "Reminder(Sun, Home, Sleep in)"
+        ...     ],
+        ...     "Work": [
+        ...       "Reminder(Sun, Work, Reset database)"
+        ...     ]
+        ...   }
+        ... }
+        >>>
+        >>> print(dumps(groupify(reminders, ['when', 'where'], 'what'),
+        ...             indent=2))
+        ... {
+        ...   "Fri": {
+        ...     "Home": [
+        ...       "Eat cereal"
+        ...     ],
+        ...     "Work": [
+        ...       "Feed Ivan"
+        ...     ]
+        ...   },
+        ...   "Sat": {
+        ...     "Home": [
+        ...       "Sleep in",
+        ...       "Play Zelda"
+        ...     ]
+        ...   },
+        ...   "Sun": {
+        ...     "Home": [
+        ...       "Sleep in"
+        ...     ],
+        ...     "Work": [
+        ...       "Reset database"
+        ...     ]
+        ...   }
+        ... }
+        >>>
+        >>> print(dumps(groupify(reminders,
+        ...                      lambda r: '{0.when} - {0.where}'.format(r),
+        ...                      'what'), indent=2))
+        ... {
+        ...   "Fri - Home": [
+        ...     "Eat cereal"
+        ...   ],
+        ...   "Fri - Work": [
+        ...     "Feed Ivan"
+        ...   ],
+        ...   "Sat - Home": [
+        ...     "Sleep in",
+        ...     "Play Zelda"
+        ...   ],
+        ...   "Sun - Home": [
+        ...     "Sleep in"
+        ...   ],
+        ...   "Sun - Work": [
+        ...     "Reset database"
+        ...   ]
+        ... }
+        >>>
+
+    """
     if not keys:
         return items
     keys = listify(keys)
     last_key = keys[-1]
-    treeified = OrderedDict()
+    call_val_key = callable(val_key)
+    groupified = OrderedDict()
     for item in items:
-        current = treeified
+        current = groupified
         for key in keys:
             attr = key(item) if callable(key) else getattr(item, key)
             if attr not in current:
                 current[attr] = [] if key is last_key else OrderedDict()
             current = current[attr]
-        if value_key:
-            if callable(value_key):
-                value = value_key(item)
-            else:
-                value = getattr(item, value_key)
+        if val_key:
+            value = val_key(item) if call_val_key else getattr(item, val_key)
         else:
             value = item
         current.append(value)
-    return treeified
+    return groupified
 
 
 @Session.model_mixin
@@ -78,7 +207,7 @@ class Attendee:
         signups = sorted(self.attraction_signups, key=lambda s: (
             s.event.feature.attraction.name,
             s.event.feature.name))
-        return treeify(signups, [
+        return groupify(signups, [
             lambda s: s.event.feature.attraction,
             lambda s: s.event.feature])
 
@@ -227,7 +356,7 @@ class Attraction(MagModel):
 
     @property
     def locations_by_feature_id(self):
-        return treeify(self.features, 'id', lambda f: f.locations)
+        return groupify(self.features, 'id', lambda f: f.locations)
 
 
 class AttractionFeature(MagModel):
@@ -265,14 +394,14 @@ class AttractionFeature(MagModel):
         events = sorted(
             self.events,
             key=lambda e: (c.EVENT_LOCATIONS[e.location], e.start_time))
-        return treeify(events, 'location')
+        return groupify(events, 'location')
 
     @property
     def events_by_location_by_day(self):
         events = sorted(
             self.events,
             key=lambda e: (c.EVENT_LOCATIONS[e.location], e.start_time))
-        return treeify(events, ['location', 'start_day_local'])
+        return groupify(events, ['location', 'start_day_local'])
 
     @property
     def available_events(self):
@@ -302,7 +431,7 @@ class AttractionFeature(MagModel):
 
     @property
     def available_events_by_day(self):
-        return treeify(self.available_events, 'start_day_local')
+        return groupify(self.available_events, 'start_day_local')
 
 
 # =====================================================================
