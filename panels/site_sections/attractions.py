@@ -20,12 +20,10 @@ def _attendee_for_badge_num(session, badge_num, options=None):
 
 
 def _attendee_for_info(session, first_name, last_name, email, zip_code):
-    return session.query(Attendee).filter(
-        func.lower(Attendee.first_name) == first_name.lower(),
-        func.lower(Attendee.last_name) == last_name.lower(),
-        Attendee.normalized_email == Attendee.normalize_email(email),
-        Attendee.zip_code == zip_code
-    ).first()
+    try:
+        return session.lookup_attendee(first_name, last_name, email, zip_code)
+    except:
+        return None
 
 
 def _model_for_id(session, model, id, options=None, filters=[]):

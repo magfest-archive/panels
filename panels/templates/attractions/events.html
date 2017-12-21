@@ -75,7 +75,7 @@
   $(function() {
     var $modals = $('.modal'),
         $signupModal = $('#signup_modal'),
-        $earlySignupModal = $('#early_signup_modal'),
+        $altSignupModal = $('#alt_signup_modal'),
         $doneModal = $('#done_modal'),
         $btnShowSoldout = $('#btn_show_soldout');
 
@@ -136,7 +136,7 @@
 
     $signupModal.find('.modal-footer .btn.modal-form-switch').on('click', function (event) {
       $signupModal.modal('hide');
-      $earlySignupModal.modal('show');
+      $altSignupModal.modal('show');
     });
 
     $signupModal.find('.confirm-row .btn-success').on('click', function (event) {
@@ -176,7 +176,7 @@
       });
     });
 
-    $earlySignupModal.find('.modal-footer .btn-success').on('click', function () {
+    $altSignupModal.find('.modal-footer .btn-success').on('click', function () {
       event.preventDefault();
       var eventId = $signupModal.data('eventId');
       var params = {
@@ -187,8 +187,9 @@
       };
       signupForEvent(eventId, params, function (response) {
         if (response) {
-          $earlySignupModal.modal('hide');
-          toastr.info('Signup succeeded.');
+          $altSignupModal.modal('hide');
+          $doneModal.data('hideForm', true);
+          $doneModal.modal('show');
         }
       });
     });
@@ -201,8 +202,19 @@
       focusBadgeNum($(this));
     });
 
-    $earlySignupModal.on('shown.bs.modal', function () {
-      $earlySignupModal.find('input[name=first_name]').focus();
+    $doneModal.on('shown.bs.modal', function () {
+        if ($doneModal.data('hideForm')) {
+            $doneModal.find('.hidden-soldout').addClass('hidden-modal-form');
+        } else {
+            $doneModal.find('.hidden-soldout').removeClass('hidden-modal-form');
+        }
+    });
+    $doneModal.on('hide.bs.modal', function () {
+        $doneModal.removeData('hideForm');
+    });
+
+    $altSignupModal.on('shown.bs.modal', function () {
+      $altSignupModal.find('input[name=first_name]').focus();
     });
   });
 </script>
@@ -243,8 +255,8 @@
   </div>
 </div>
 
-<div id="early_signup_modal" class="modal fade" tabindex="-1" role="dialog" style="display: none"
-    aria-labelledby="early_signup_modal_title">
+<div id="alt_signup_modal" class="modal fade" tabindex="-1" role="dialog" style="display: none"
+    aria-labelledby="alt_signup_modal_title">
   <div class="modal-dialog modal-md" role="document">
     <div class="modal-content">
       <div class="modal-header">
