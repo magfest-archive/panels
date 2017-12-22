@@ -305,6 +305,8 @@
     };
 
     $(function(){
+        $('#mainContainer').css('display', 'none');
+
         //console.log(new Date(), new Date().getMilliseconds(), "document.onReady");
         var $scheduleRooms = $("#schedule_rooms");
         var $scheduleRoomsHead = $scheduleRooms.find("thead tr");
@@ -372,6 +374,8 @@
         setUpMenu();
         //console.log(new Date(), new Date().getMilliseconds(), "empty table initialized");
         renderAll();
+
+        $('#mainContainer').css('display', '');
     });
 </script>
 
