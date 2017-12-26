@@ -3,34 +3,34 @@
   html, body { font-size: 14px; }
   h1 { font-size: 30px; }
   h2 { font-size: 25px; }
-  @media(min-width: 500px) {
+  @media (min-width: 500px) {
     html, body { font-size: 14px; }
     h1 { font-size: 36px; }
     h2 { font-size: 30px; }
   }
 
-  .visible-xs-block { display: none !important; }
-  .visible-xs-inline { display: none !important; }
-  .visible-xs-inline-block { display: none !important; }
-  .hidden-xs { display: initial !important; }
+  .visible-xxs-block { display: none !important; }
+  .visible-xxs-inline { display: none !important; }
+  .visible-xxs-inline-block { display: none !important; }
+  .hidden-xxs { display: initial !important; }
 
-  /* override the default *-xs width */
-  @media (max-width: 767px) {
-    .visible-xs-block { display: none !important; }
-    .visible-xs-inline { display: none !important; }
-    .visible-xs-inline-block { display: none !important; }
-    .hidden-xs { display: initial !important; }
-    .attendee-info-row input {
-      width: 15em;
-      margin-left: 2em;
-    }
+  @media (max-width: 499px) {
+    .visible-xxs-block { display: block !important; }
+    .visible-xxs-inline { display: inline !important; }
+    .visible-xxs-inline-block { display: inline-block !important; }
+    .hidden-xxs { display: none !important; }
   }
 
-  @media(max-width: 499px) {
-    .visible-xs-block { display: block !important; }
-    .visible-xs-inline { display: inline !important; }
-    .visible-xs-inline-block { display: inline-block !important; }
-    .hidden-xs { display: none !important; }
+  .attendee-info-row input {
+    border-radius: 0;
+  }
+
+  .attendee-info-row:first-child input {
+    border-radius: 6px 6px 0 0;
+  }
+
+  .attendee-info-row:last-child input {
+    border-radius: 0 0 6px 6px;
   }
 
   .label-danger-empty {
@@ -297,16 +297,20 @@
 <script>
   var updateGreeting = function(firstName, badgeNum, parent) {
     var $parent = $(parent || document);
-    if (firstName && badgeNum) {
+    if (firstName) {
       $parent.find('.greeting').css('display', '');
       $parent.find('.attendee').css('display', '');
       $parent.find('.attendee .name').text(firstName);
-      $parent.find('.attendee .badge-num').text('#' + badgeNum);
     } else {
       $parent.find('.greeting').css('display', 'none');
       $parent.find('.attendee').css('display', 'none');
       $parent.find('.attendee .name').text('');
-      $parent.find('.attendee .badge-num').text('#');
+    }
+
+    if (badgeNum) {
+      $parent.find('.attendee .badge-num').text('#' + badgeNum);
+    } else {
+      $parent.find('.attendee .badge-num').text('No Badge');
     }
   };
 

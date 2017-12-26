@@ -1,15 +1,21 @@
+import math
 import pytz
 import re
 
-from collections import OrderedDict
+from collections import OrderedDict, defaultdict
 from datetime import datetime, timedelta
 
 from sideboard.lib import listify
 from sideboard.lib.sa import JSON, CoerceUTF8 as UnicodeText, UTCDateTime, UUID
+from sqlalchemy import and_, exists, func, or_, select, text, union, not_, cast, alias
+from sqlalchemy.ext.associationproxy import association_proxy
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import backref
-from sqlalchemy.schema import ForeignKey, UniqueConstraint
+from sqlalchemy.orm.query import Query
+from sqlalchemy.schema import ForeignKey, ForeignKeyConstraint, Index, \
+    UniqueConstraint
 from sqlalchemy.sql import text
+from sqlalchemy.sql.expression import bindparam
 from sqlalchemy.types import Boolean, Integer
 
 from uber.config import c
@@ -17,21 +23,14 @@ from uber.custom_tags import humanize_timedelta
 from uber.decorators import presave_adjustment, validation
 from uber.models import MagModel, Session
 from uber.models.types import default_relationship as relationship, Choice, \
-    DefaultColumn as Column, utcnow
-from uber.utils import ceil_datetime, floor_datetime, noon_datetime, \
-    evening_datetime
+    DefaultColumn as Column, utcmin, utcnow
+from uber.utils import noon_datetime, evening_datetime
 
 
 __all__ = [
     'Attraction', 'AttractionFeature', 'AttractionEvent', 'AttractionSignup',
-    'groupify', 'sluggify']
-
-
-RE_SLUG = re.compile(r'[\W_]+')
-
-
-def sluggify(s):
-    return RE_SLUG.sub('-', s).lower().strip('-')
+    'AttractionNotification', 'AttractionNotificationReply', 'groupify',
+    'sluggify']
 
 
 def groupify(items, keys, val_key=None):
@@ -187,12 +186,45 @@ def groupify(items, keys, val_key=None):
     return groupified
 
 
+def mask(s, mask_char='*', min_unmask=1, max_unmask=2):
+    s_len = len(s)
+    if s_len <= min_unmask:
+        return s
+    elif s_len <= (2 * max_unmask):
+        unmask = max(min_unmask, math.ceil(s_len / 2) - 1)
+        return s[:unmask] + (mask_char * (s_len - unmask))
+    return s[:max_unmask] + (mask_char * (s_len - max_unmask))
+
+
+RE_NONDIGIT = re.compile(r'\D+')
+RE_SLUG = re.compile(r'[\W_]+')
+
+
+def sluggify(s):
+    return RE_SLUG.sub('-', s).lower().strip('-')
+
+
 @Session.model_mixin
 class Attendee:
+    NOTIFICATION_EMAIL = 0
+    NOTIFICATION_TEXT = 1
+    NOTIFICATION_NONE = 2
+    NOTIFICATION_PREF_OPTS = [
+        (NOTIFICATION_EMAIL, 'Email'),
+        (NOTIFICATION_TEXT, 'Text'),
+        (NOTIFICATION_NONE, 'None')]
+
+    notification_pref = Column(
+        Choice(NOTIFICATION_PREF_OPTS), default=NOTIFICATION_EMAIL)
+
+    attractions_opt_out = Column(Boolean, default=False)
+
     attraction_signups = relationship(
         'AttractionSignup',
         backref='attendee',
         order_by='AttractionSignup.signup_time')
+
+    attraction_event_signups = association_proxy('attraction_signups', 'event')
 
     @property
     def attraction_features(self):
@@ -201,6 +233,26 @@ class Attendee:
     @property
     def attractions(self):
         return list({e.feature.attraction for e in self.attraction_events})
+
+    @property
+    def masked_email(self):
+        name, _, domain = self.email.partition('@')
+        sub_domain, _, tld = domain.rpartition('.')
+        return '{}@{}.{}'.format(mask(name), mask(sub_domain), tld)
+
+    @property
+    def masked_cellphone(self):
+        cellphone = RE_NONDIGIT.sub(' ', self.cellphone).strip()
+        digits = cellphone.replace(' ', '')
+        return '*' * (len(cellphone) - 4) + digits[-4:]
+
+    @property
+    def masked_notification_pref(self):
+        if self.notification_pref == self.NOTIFICATION_EMAIL:
+            return self.masked_email
+        elif self.notification_pref == self.NOTIFICATION_TEXT:
+            return self.masked_cellphone or self.masked_email
+        return ''
 
     @property
     def signups_by_attraction_by_feature(self):
@@ -245,7 +297,7 @@ class Attraction(MagModel):
     )]
     RESTRICTIONS = dict(RESTRICTION_OPTS)
 
-    REQUIRED_CHECKIN_OPTS = [
+    ADVANCE_CHECKIN_OPTS = [
         (-1, 'Anytime during event'),
         (0, 'When the event starts'),
         (300, '5 minutes before'),
@@ -256,22 +308,22 @@ class Attraction(MagModel):
         (2700, '45 minutes before'),
         (3600, '1 hour before')]
 
-    NOTIFICATIONS_OPTS = [
+    ADVANCE_NOTICES_OPTS = [
         ('', 'Never'),
-        (0, 'When the event starts'),
-        (300, '5 minutes before'),
-        (900, '15 minutes before'),
-        (1800, '30 minutes before'),
-        (3600, '1 hour before'),
-        (7200, '2 hours before'),
-        (86400, '1 day before')]
+        (0, 'When checkin starts'),
+        (300, '5 minutes before checkin'),
+        (900, '15 minutes before checkin'),
+        (1800, '30 minutes before checkin'),
+        (3600, '1 hour before checkin'),
+        (7200, '2 hours before checkin'),
+        (86400, '1 day before checkin')]
 
     name = Column(UnicodeText, unique=True)
     slug = Column(UnicodeText, unique=True)
     description = Column(UnicodeText)
     is_public = Column(Boolean, default=False)
-    notifications = Column(JSON, default=[], server_default='[]')
-    required_checkin = Column(Integer, default=0)  # In seconds
+    advance_notices = Column(JSON, default=[], server_default='[]')
+    advance_checkin = Column(Integer, default=0)  # In seconds
     restriction = Column(Choice(RESTRICTION_OPTS), default=NONE)
     department_id = Column(UUID, ForeignKey('department.id'), nullable=True)
     owner_id = Column(UUID, ForeignKey('admin_account.id'))
@@ -284,6 +336,12 @@ class Attraction(MagModel):
             cascade='all,delete-orphan',
             uselist=True,
             order_by='Attraction.name'))
+    owner_attendee = relationship(
+        'Attendee',
+        cascade='save-update,merge',
+        secondary='admin_account',
+        uselist=False,
+        viewonly=True)
     department = relationship(
         'Department',
         cascade='save-update,merge',
@@ -305,13 +363,17 @@ class Attraction(MagModel):
         order_by='[AttractionFeature.name, AttractionFeature.id]')
     events = relationship(
         'AttractionEvent',
-        cascade='save-update,merge',
-        secondary='attraction_feature',
+        backref='attraction',
         viewonly=True,
         order_by='[AttractionEvent.start_time, AttractionEvent.id]')
+    signups = relationship(
+        'AttractionSignup',
+        backref='attraction',
+        viewonly=True,
+        order_by='[AttractionSignup.checkin_time, AttractionSignup.id]')
 
     @presave_adjustment
-    def sluggify_name(self):
+    def _sluggify_name(self):
         self.slug = sluggify(self.name)
 
     @property
@@ -334,11 +396,11 @@ class Attraction(MagModel):
         return [(l, s) for l, s in c.EVENT_LOCATION_OPTS if l not in locs]
 
     @property
-    def required_checkin_label(self):
-        if self.required_checkin < 0:
+    def advance_checkin_label(self):
+        if self.advance_checkin < 0:
             return 'anytime during the event'
         return humanize_timedelta(
-            seconds=self.required_checkin,
+            seconds=self.advance_checkin,
             separator=' ',
             now='by the time the event starts',
             prefix='at least ',
@@ -358,6 +420,61 @@ class Attraction(MagModel):
     def locations_by_feature_id(self):
         return groupify(self.features, 'id', lambda f: f.locations)
 
+    def signups_requiring_notification(
+            self, session, from_time, to_time, options=None):
+        """
+        Returns a dict of AttractionSignups that require notification.
+
+        The keys of the returned dict are the amount of advanced notice, given
+        in seconds. A key of -1 indicates confirmation notices after a signup.
+
+        The query generated by this method looks horrific, but is surprisingly
+        efficient.
+        """
+        advance_checkin = max(0, self.advance_checkin)
+        subqueries = []
+        for advance_notice in sorted(set([-1] + self.advance_notices)):
+            event_filters = [AttractionEvent.attraction_id == self.id]
+            if advance_notice == -1:
+                notice_ident = cast(
+                    AttractionSignup.attraction_event_id, UnicodeText)
+                notice_param = bindparam(
+                    'confirm_notice', advance_notice).label('advance_notice')
+            else:
+                advance_notice = max(0, advance_notice) + advance_checkin
+                notice_delta = timedelta(seconds=advance_notice)
+                event_filters += [
+                    AttractionEvent.start_time >= from_time + notice_delta,
+                    AttractionEvent.start_time < to_time + notice_delta]
+                notice_ident = func.concat(
+                    AttractionSignup.attraction_event_id,
+                    '_{}'.format(advance_notice))
+                notice_param = bindparam(
+                    'advance_notice_{}'.format(advance_notice),
+                    advance_notice).label('advance_notice')
+
+            subquery = session.query(AttractionSignup, notice_param).filter(
+                AttractionSignup.is_unchecked_in,
+                AttractionSignup.attraction_event_id.in_(
+                    session.query(AttractionEvent.id).filter(*event_filters)),
+                not_(exists().where(and_(
+                    AttractionNotification.ident == notice_ident,
+                    AttractionNotification.attraction_event_id
+                        == AttractionSignup.attraction_event_id,
+                    AttractionNotification.attendee_id
+                        == AttractionSignup.attendee_id)))).with_labels()
+            subqueries.append(subquery)
+
+        query = subqueries[0].union(*subqueries[1:])
+        if options:
+            query = query.options(options)
+        query.order_by(AttractionSignup.id)
+
+        signups = defaultdict(list)
+        for signup, advance_notice in query:
+            signups[advance_notice].append(signup)
+        return query, signups
+
 
 class AttractionFeature(MagModel):
     name = Column(UnicodeText)
@@ -373,10 +490,11 @@ class AttractionFeature(MagModel):
 
     __table_args__ = (
         UniqueConstraint('name', 'attraction_id'),
-        UniqueConstraint('slug', 'attraction_id'),)
+        UniqueConstraint('slug', 'attraction_id'),
+    )
 
     @presave_adjustment
-    def sluggify_name(self):
+    def _sluggify_name(self):
         self.slug = sluggify(self.name)
 
     @property
@@ -444,6 +562,8 @@ class AttractionFeature(MagModel):
 # =====================================================================
 class AttractionEvent(MagModel):
     attraction_feature_id = Column(UUID, ForeignKey('attraction_feature.id'))
+    attraction_id = Column(UUID, ForeignKey('attraction.id'), index=True)
+
     location = Column(Choice(c.EVENT_LOCATION_OPTS))
     start_time = Column(UTCDateTime, default=c.EPOCH)
     duration = Column(Integer, default=900)  # In seconds
@@ -452,7 +572,19 @@ class AttractionEvent(MagModel):
     signups = relationship(
         'AttractionSignup',
         backref='event',
-        order_by='AttractionSignup.signup_time')
+        order_by='AttractionSignup.checkin_time')
+
+    attendee_signups = association_proxy('signups', 'attendee')
+
+    notifications = relationship(
+        'AttractionNotification',
+        backref='event',
+        order_by='AttractionNotification.sent_time')
+
+    notification_replies = relationship(
+        'AttractionNotificationReply',
+        backref='event',
+        order_by='AttractionNotificationReply.received_time')
 
     attendees = relationship(
         'Attendee',
@@ -460,6 +592,11 @@ class AttractionEvent(MagModel):
         cascade='save-update,merge,refresh-expire,expunge',
         secondary='attraction_signup',
         order_by='attraction_signup.c.signup_time')
+
+    @presave_adjustment
+    def _fix_attraction_id(self):
+        if not self.attraction_id and self.feature:
+            self.attraction_id = self.feature.attraction_id
 
     @hybrid_property
     def end_time(self):
@@ -488,24 +625,24 @@ class AttractionEvent(MagModel):
         return 'unknown start time'
 
     @property
-    def required_checkin_time(self):
-        required_checkin = self.feature.attraction.required_checkin
-        if required_checkin < 0:
+    def advance_checkin_time(self):
+        advance_checkin = self.attraction.advance_checkin
+        if advance_checkin < 0:
             return self.end_time
         else:
-            return self.start_time - timedelta(seconds=required_checkin)
+            return self.start_time - timedelta(seconds=advance_checkin)
 
     @property
-    def required_checkin_time_local(self):
-        return self.required_checkin_time.astimezone(c.EVENT_TIMEZONE)
+    def advance_checkin_time_local(self):
+        return self.advance_checkin_time.astimezone(c.EVENT_TIMEZONE)
 
     @property
-    def required_checkin_time_label(self):
-        return self.required_checkin_time_local.strftime('%-I:%M %p %A')
+    def advance_checkin_time_label(self):
+        return self.advance_checkin_time_local.strftime('%-I:%M %p %A')
 
     @property
     def is_checkin_over(self):
-        return self.required_checkin_time < datetime.now(pytz.UTC)
+        return self.advance_checkin_time < datetime.now(pytz.UTC)
 
     @property
     def is_sold_out(self):
@@ -569,28 +706,106 @@ class AttractionEvent(MagModel):
 
 class AttractionSignup(MagModel):
     attraction_event_id = Column(UUID, ForeignKey('attraction_event.id'))
+    attraction_id = Column(UUID, ForeignKey('attraction.id'))
     attendee_id = Column(UUID, ForeignKey('attendee.id'))
 
-    signup_time = Column(UTCDateTime, server_default=utcnow())
-    checkin_time = Column(UTCDateTime, nullable=True)
+    signup_time = Column(UTCDateTime, default=lambda: datetime.now(pytz.UTC))
+    checkin_time = Column(
+        UTCDateTime, default=lambda: utcmin.datetime, index=True)
+
+    notifications = relationship(
+        'AttractionNotification',
+        primaryjoin='and_('
+                    'AttractionSignup.attendee_id'
+                    ' == foreign(AttractionNotification.attendee_id),'
+                    'AttractionSignup.attraction_event_id'
+                    ' == foreign(AttractionNotification.attraction_event_id))',
+        order_by='AttractionNotification.sent_time')
 
     __mapper_args__ = {'confirm_deleted_rows': False}
     __table_args__ = (UniqueConstraint('attraction_event_id', 'attendee_id'),)
 
+    def __init__(self, attendee=None, event=None, **kwargs):
+        super(AttractionSignup, self).__init__(**kwargs)
+        if attendee:
+            self.attendee = attendee
+        if event:
+            self.event = event
+        if not self.attraction_id and self.event:
+            self.attraction_id = self.event.attraction_id
+
+    @presave_adjustment
+    def _fix_attraction_id(self):
+        if not self.attraction_id and self.event:
+            self.attraction_id = self.event.attraction_id
+
     @property
     def checkin_time_local(self):
-        return self.checkin_time.astimezone(c.EVENT_TIMEZONE)
+        if self.is_checked_in:
+            return self.checkin_time.astimezone(c.EVENT_TIMEZONE)
+        return None
 
     @property
     def checkin_time_label(self):
-        if self.checkin_time:
+        if self.is_checked_in:
             return self.checkin_time_local.strftime('%-I:%M %p %A')
         return 'Not checked in'
 
+    @property
+    def email(self):
+        return self.attendee.email
+
+    @property
+    def email_model_name(self):
+        return 'signup'
+
     @hybrid_property
     def is_checked_in(self):
-        return bool(self.checkin_time)
+        return self.checkin_time > utcmin.datetime
 
     @is_checked_in.expression
     def is_checked_in(cls):
-        return cls.checkin_time != None
+        return cls.checkin_time > utcmin.datetime
+
+    @hybrid_property
+    def is_unchecked_in(self):
+        return self.checkin_time <= utcmin.datetime
+
+    @is_unchecked_in.expression
+    def is_unchecked_in(cls):
+        return cls.checkin_time <= utcmin.datetime
+
+
+class AttractionNotification(MagModel):
+    attraction_event_id = Column(UUID, ForeignKey('attraction_event.id'))
+    attraction_id = Column(UUID, ForeignKey('attraction.id'))
+    attendee_id = Column(UUID, ForeignKey('attendee.id'))
+
+    type = Column(Choice(Attendee.NOTIFICATION_PREF_OPTS))
+    ident = Column(UnicodeText, index=True)
+    sid = Column(UnicodeText)
+    sent_time = Column(UTCDateTime, default=lambda: datetime.now(pytz.UTC))
+    subject = Column(UnicodeText)
+    body = Column(UnicodeText)
+
+    @presave_adjustment
+    def _fix_attraction_id(self):
+        if not self.attraction_id and self.event:
+            self.attraction_id = self.event.attraction_id
+
+
+class AttractionNotificationReply(MagModel):
+    attraction_event_id = Column(UUID, ForeignKey('attraction_event.id'))
+    attraction_id = Column(UUID, ForeignKey('attraction.id'))
+    attendee_id = Column(UUID, ForeignKey('attendee.id'))
+
+    type = Column(Choice(Attendee.NOTIFICATION_PREF_OPTS))
+    sid = Column(UnicodeText)
+    received_time = Column(UTCDateTime, default=lambda: datetime.now(pytz.UTC))
+    subject = Column(UnicodeText)
+    body = Column(UnicodeText)
+
+    @presave_adjustment
+    def _fix_attraction_id(self):
+        if not self.attraction_id and self.event:
+            self.attraction_id = self.event.attraction_id

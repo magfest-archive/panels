@@ -5,10 +5,12 @@
   <h1>
     Attractions
     <small><a href="../attractions">View Public Schedule</a></small>
-    <a href="new" class="btn btn-primary pull-right">
-      <span class="glyphicon glyphicon-plus"></span>
-      Create Attraction
-    </a>
+    {% if c.STUFF in admin_account.access_ints %}
+      <a href="new" class="btn btn-primary pull-right">
+        <span class="glyphicon glyphicon-plus"></span>
+        Create Attraction
+      </a>
+    {% endif %}
   </h1>
   {% if filtered %}
     <a class="btn btn-xs btn-plain" href="index">
@@ -36,9 +38,22 @@
         <tbody>
           {%- for attraction in attractions -%}
             <tr>
-              <td>{{ attraction|form_link }}</td>
+              <td>
+                {% if c.STUFF in admin_account.access_ints %}
+                  {{ attraction|form_link }}
+                {% else %}
+                  {{ attraction.name }}
+                {% endif %}
+                (<a href="checkin?id={{ attraction.slug }}">Check In Attendees</a>)
+              </td>
               <td>{{ attraction.description|linebreaksbr }}</td>
-              <td>{{ attraction.is_public|yesno('Yes,No') }}</td>
+              <td>
+                {% if attraction.is_public %}
+                  <a href="../attractions/{{ attraction.slug }}">Yes</a>
+                {% else %}
+                  No
+                {% endif %}
+              </td>
               <td>{{ attraction.department|form_link }}</td>
               <td>{{ attraction.owner.attendee|form_link }}</td>
             </tr>
