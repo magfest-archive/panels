@@ -150,7 +150,7 @@ def upgrade():
     sa.Column('attraction_event_id', sideboard.lib.sa.UUID(), nullable=False),
     sa.Column('attraction_id', sideboard.lib.sa.UUID(), nullable=False),
     sa.Column('attendee_id', sideboard.lib.sa.UUID(), nullable=False),
-    sa.Column('type', sa.Integer(), nullable=False),
+    sa.Column('notification_type', sa.Integer(), nullable=False),
     sa.Column('ident', sa.Unicode(), server_default='', nullable=False),
     sa.Column('sid', sa.Unicode(), server_default='', nullable=False),
     sa.Column('sent_time', sideboard.lib.sa.UTCDateTime(), nullable=False),
@@ -165,22 +165,26 @@ def upgrade():
 
     op.create_table('attraction_notification_reply',
     sa.Column('id', sideboard.lib.sa.UUID(), nullable=False),
-    sa.Column('attraction_event_id', sideboard.lib.sa.UUID(), nullable=False),
-    sa.Column('attraction_id', sideboard.lib.sa.UUID(), nullable=False),
-    sa.Column('attendee_id', sideboard.lib.sa.UUID(), nullable=False),
-    sa.Column('type', sa.Integer(), nullable=False),
+    sa.Column('attraction_event_id', sideboard.lib.sa.UUID(), nullable=True),
+    sa.Column('attraction_id', sideboard.lib.sa.UUID(), nullable=True),
+    sa.Column('attendee_id', sideboard.lib.sa.UUID(), nullable=True),
+    sa.Column('notification_type', sa.Integer(), nullable=False),
+    sa.Column('from_phonenumber', sa.Unicode(), server_default='', nullable=False),
+    sa.Column('to_phonenumber', sa.Unicode(), server_default='', nullable=False),
     sa.Column('sid', sa.Unicode(), server_default='', nullable=False),
     sa.Column('received_time', sideboard.lib.sa.UTCDateTime(), nullable=False),
-    sa.Column('subject', sa.Unicode(), server_default='', nullable=False),
+    sa.Column('sent_time', sideboard.lib.sa.UTCDateTime(), nullable=False),
     sa.Column('body', sa.Unicode(), server_default='', nullable=False),
     sa.ForeignKeyConstraint(['attendee_id'], ['attendee.id'], name=op.f('fk_attraction_notification_reply_attendee_id_attendee')),
     sa.ForeignKeyConstraint(['attraction_event_id'], ['attraction_event.id'], name=op.f('fk_attraction_notification_reply_attraction_event_id_attraction_event')),
     sa.ForeignKeyConstraint(['attraction_id'], ['attraction.id'], name=op.f('fk_attraction_notification_reply_attraction_id_attraction')),
     sa.PrimaryKeyConstraint('id', name=op.f('pk_attraction_notification_reply'))
     )
+    op.create_index(op.f('ix_attraction_notification_reply_sid'), 'attraction_notification_reply', ['sid'], unique=False)
 
 
 def downgrade():
+    op.drop_index(op.f('ix_attraction_notification_reply_sid'), table_name='attraction_notification_reply')
     op.drop_table('attraction_notification_reply')
     op.drop_index(op.f('ix_attraction_notification_ident'), table_name='attraction_notification')
     op.drop_table('attraction_notification')

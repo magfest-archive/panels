@@ -133,7 +133,7 @@ class Root:
                 s.is_unchecked_in for s in attendee.attraction_signups),
             'signups': sorted(
                 attendee.attraction_signups,
-                key=lambda s: s.event.advance_checkin_time)}
+                key=lambda s: s.event.checkin_time)}
 
     @ajax
     def verify_badge_num(self, session, badge_num, **params):

@@ -522,8 +522,8 @@
                     </span>
                   </p>
                   {% if not signup.is_checked_in %}
-                    <p class="checkin_time advance_checkin_time">
-                      Checkin is at <b>{{ signup.event.advance_checkin_time_label }}</b>
+                    <p class="checkin_time checkin_time">
+                      Checkin is at <b>{{ signup.event.checkin_time_label }}</b>
                     </p>
                   {% else %}
                     <p class="checkin_time text-success">

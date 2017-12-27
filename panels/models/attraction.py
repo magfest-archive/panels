@@ -19,7 +19,8 @@ from sqlalchemy.sql.expression import bindparam
 from sqlalchemy.types import Boolean, Integer
 
 from uber.config import c
-from uber.custom_tags import humanize_timedelta
+from uber.custom_tags import humanize_timedelta, location_event_name, \
+    location_room_name
 from uber.decorators import presave_adjustment, validation
 from uber.models import MagModel, Session
 from uber.models.types import default_relationship as relationship, Choice, \
@@ -225,6 +226,11 @@ class Attendee:
         order_by='AttractionSignup.signup_time')
 
     attraction_event_signups = association_proxy('attraction_signups', 'event')
+
+    attraction_notifications = relationship(
+        'AttractionNotification',
+        backref='attendee',
+        order_by='AttractionNotification.sent_time')
 
     @property
     def attraction_features(self):
@@ -467,13 +473,9 @@ class Attraction(MagModel):
 
         query = subqueries[0].union(*subqueries[1:])
         if options:
-            query = query.options(options)
+            query = query.options(*listify(options))
         query.order_by(AttractionSignup.id)
-
-        signups = defaultdict(list)
-        for signup, advance_notice in query:
-            signups[advance_notice].append(signup)
-        return query, signups
+        return groupify(query, lambda x: x[0], lambda x: x[1])
 
 
 class AttractionFeature(MagModel):
@@ -584,7 +586,7 @@ class AttractionEvent(MagModel):
     notification_replies = relationship(
         'AttractionNotificationReply',
         backref='event',
-        order_by='AttractionNotificationReply.received_time')
+        order_by='AttractionNotificationReply.sid')
 
     attendees = relationship(
         'Attendee',
@@ -597,6 +599,12 @@ class AttractionEvent(MagModel):
     def _fix_attraction_id(self):
         if not self.attraction_id and self.feature:
             self.attraction_id = self.feature.attraction_id
+
+    @classmethod
+    def get_ident(cls, id, advance_notice):
+        if advance_notice == -1:
+            return str(id)
+        return '{}_{}'.format(id, advance_notice)
 
     @hybrid_property
     def end_time(self):
@@ -625,24 +633,37 @@ class AttractionEvent(MagModel):
         return 'unknown start time'
 
     @property
-    def advance_checkin_time(self):
+    def checkin_time(self):
         advance_checkin = self.attraction.advance_checkin
         if advance_checkin < 0:
-            return self.end_time
+            return self.start_time
         else:
             return self.start_time - timedelta(seconds=advance_checkin)
 
     @property
-    def advance_checkin_time_local(self):
-        return self.advance_checkin_time.astimezone(c.EVENT_TIMEZONE)
+    def checkin_time_local(self):
+        return self.checkin_time.astimezone(c.EVENT_TIMEZONE)
 
     @property
-    def advance_checkin_time_label(self):
-        return self.advance_checkin_time_local.strftime('%-I:%M %p %A')
+    def checkin_time_label(self):
+        checkin = self.checkin_time_local
+        today = datetime.now(c.EVENT_TIMEZONE).strftime('%a')
+        if checkin.strftime('%a') == today:
+            return checkin.strftime('%-I:%M %p')
+        return checkin.strftime('%-I:%M %p %a')
+
+    @property
+    def time_remaining_to_checkin(self):
+        return self.checkin_time - datetime.now(pytz.UTC)
+
+    @property
+    def time_remaining_to_checkin_label(self):
+        return humanize_timedelta(self.time_remaining_to_checkin,
+                                  granularity='minutes', separator=' ')
 
     @property
     def is_checkin_over(self):
-        return self.advance_checkin_time < datetime.now(pytz.UTC)
+        return self.checkin_time < datetime.now(pytz.UTC)
 
     @property
     def is_sold_out(self):
@@ -680,6 +701,14 @@ class AttractionEvent(MagModel):
         return 'unknown duration'
 
     @property
+    def location_event_name(self):
+        return location_event_name(self.location)
+
+    @property
+    def location_room_name(self):
+        return location_room_name(self.location)
+
+    @property
     def name(self):
         return self.feature.name
 
@@ -715,12 +744,18 @@ class AttractionSignup(MagModel):
 
     notifications = relationship(
         'AttractionNotification',
+        backref=backref(
+            'signup',
+            cascade='save-update,merge',
+            uselist=False,
+            viewonly=True),
         primaryjoin='and_('
                     'AttractionSignup.attendee_id'
                     ' == foreign(AttractionNotification.attendee_id),'
                     'AttractionSignup.attraction_event_id'
                     ' == foreign(AttractionNotification.attraction_event_id))',
-        order_by='AttractionNotification.sent_time')
+        order_by='AttractionNotification.sent_time',
+        viewonly=True)
 
     __mapper_args__ = {'confirm_deleted_rows': False}
     __table_args__ = (UniqueConstraint('attraction_event_id', 'attendee_id'),)
@@ -781,7 +816,7 @@ class AttractionNotification(MagModel):
     attraction_id = Column(UUID, ForeignKey('attraction.id'))
     attendee_id = Column(UUID, ForeignKey('attendee.id'))
 
-    type = Column(Choice(Attendee.NOTIFICATION_PREF_OPTS))
+    notification_type = Column(Choice(Attendee.NOTIFICATION_PREF_OPTS))
     ident = Column(UnicodeText, index=True)
     sid = Column(UnicodeText)
     sent_time = Column(UTCDateTime, default=lambda: datetime.now(pytz.UTC))
@@ -795,14 +830,17 @@ class AttractionNotification(MagModel):
 
 
 class AttractionNotificationReply(MagModel):
-    attraction_event_id = Column(UUID, ForeignKey('attraction_event.id'))
-    attraction_id = Column(UUID, ForeignKey('attraction.id'))
-    attendee_id = Column(UUID, ForeignKey('attendee.id'))
+    attraction_event_id = Column(
+        UUID, ForeignKey('attraction_event.id'), nullable=True)
+    attraction_id = Column(UUID, ForeignKey('attraction.id'), nullable=True)
+    attendee_id = Column(UUID, ForeignKey('attendee.id'), nullable=True)
 
-    type = Column(Choice(Attendee.NOTIFICATION_PREF_OPTS))
-    sid = Column(UnicodeText)
+    notification_type = Column(Choice(Attendee.NOTIFICATION_PREF_OPTS))
+    from_phonenumber = Column(UnicodeText)
+    to_phonenumber = Column(UnicodeText)
+    sid = Column(UnicodeText, index=True)
     received_time = Column(UTCDateTime, default=lambda: datetime.now(pytz.UTC))
-    subject = Column(UnicodeText)
+    sent_time = Column(UTCDateTime, default=lambda: datetime.now(pytz.UTC))
     body = Column(UnicodeText)
 
     @presave_adjustment

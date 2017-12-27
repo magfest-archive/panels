@@ -10,8 +10,7 @@ AutomatedEmail.queries[PanelApplication] = lambda session: session \
 
 _attendee_query = AutomatedEmail.queries[Attendee]
 AutomatedEmail.queries[Attendee] = lambda session: _attendee_query(session) \
-    .options(subqueryload(Attendee.assigned_panelists),
-             subqueryload(Attendee.attraction_signups))
+    .options(subqueryload(Attendee.assigned_panelists))
 
 
 class PanelAppEmail(AutomatedEmail):
@@ -58,11 +57,3 @@ AutomatedEmail(Attendee, 'Your {EVENT_NAME} Event Schedule', 'panelist_schedule.
                lambda a: a.badge_type != c.GUEST_BADGE and a.assigned_panelists,
                ident='event_schedule',
                sender=c.PANELS_EMAIL)
-
-AutomatedEmail(Attendee, 'Welcome to {EVENT_NAME} Attractions', 'attractions_welcome.html',
-               lambda a: bool(a.attraction_signups),
-               ident='attractions_welcome',
-               sender='MAGFest Attractions <attractions@magfest.org>',
-               needs_approval=False,
-               allow_during_con=True,
-               post_con=False)
