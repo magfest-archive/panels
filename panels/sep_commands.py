@@ -159,6 +159,7 @@ if c.DEV_BOX:
 
 if c.DEV_BOX:
     from panels.notifications import send_attraction_notifications
+
     @entry_point
     def attraction_notifications():
         assert c.DEV_BOX, 'attraction_notifications is only available on dev boxes'
