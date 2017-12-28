@@ -93,36 +93,11 @@
         $showCheckedInButton = $('#filter'),
         $attendee = $('#attendee');
 
-    $(document).scannerDetection({
-      timeBeforeScanTest: 100,
-      avgTimeByChar: 30,
-      endChar: [9, 13, '\\'],
-      startChar: ['~', '\\'],
-      preventDefault: false,
-      onError: function() {
-        $badgeNum.focus();
-      },
-      onReceive: function(event) {
-        if(event.key === '~' || event.key === '\\') {
-          event.preventDefault();
-          $badgeNum.blur();
-        }
-      },
-      onComplete: function(barcode, qty) {
-        getBadgeNumFromBarcode(barcode, function(response) {
-          $badgeNum.focus();
-          if(response) {
-            if(response['error']) {
-              toastr.error(response['error'], '', {timeOut: 3000});
-            } else if(response['badge_num']) {
-              var badgeNum = response['badge_num'];
-              $badgeNum.val(badgeNum);
-              getSignups(badgeNum);
-            }
-          }
-        });
-      }
-    });
+      {% set detect_barcode_scan = True %}
+
+      var useBarcode = function (badgeNum) {
+          getSignups(badgeNum)
+      };
 
     var updateAttendee = function(attendee) {
       $container.toggleClass('has-attendee', !!attendee);
