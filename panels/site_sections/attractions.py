@@ -216,6 +216,7 @@ class Root:
                 session.commit()
         if message:
             return {'error': message}
+        return {}
 
     @ajax
     def opt_out(self, session, id, attractions_opt_out):
@@ -223,6 +224,7 @@ class Root:
             attendee = session.query(Attendee).get(id)
             attendee.attractions_opt_out = attractions_opt_out
             session.commit()
+        return {}
 
     @ajax
     def notification_pref(self, session, id, notification_pref):
@@ -230,3 +232,4 @@ class Root:
             attendee = session.query(Attendee).get(id)
             attendee.notification_pref = notification_pref
             session.commit()
+        return {}

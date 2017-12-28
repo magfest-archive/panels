@@ -188,6 +188,44 @@ def groupify(items, keys, val_key=None):
 
 
 def mask(s, mask_char='*', min_unmask=1, max_unmask=2):
+    """
+    Masks the trailing portion of the given string with asterisks.
+
+    The number of unmasked characters will never be less than `min_unmask` or
+    greater than `max_unmask`. Within those bounds, the number of unmasked
+    characters always be smaller than half the length of `s`.
+
+    Example::
+
+        >>> for i in range(0, 12):
+        ...     mask('A' * i, min_unmask=1, max_unmask=4)
+        ... ''
+        ... 'A'
+        ... 'A*'
+        ... 'A**'
+        ... 'A***'
+        ... 'AA***'
+        ... 'AA****'
+        ... 'AAA****'
+        ... 'AAA*****'
+        ... 'AAAA*****'
+        ... 'AAAA******'
+        ... 'AAAA*******'
+        >>>
+
+    Arguments:
+        s (str): The string to be masked.
+        mask_char (str): The character that should be used as the mask.
+            Defaults to an asterisk "*".
+        min_unmask (int): Defines the minimum number of characters that are
+            allowed to be unmasked. If the length of `s` is less than or equal
+            to `min_unmask`, then `s` is returned unmodified. Defaults to 1.
+        max_unmask (int): Defines the maximum number of characters that are
+            allowed to be unmasked. Defaults to 2.
+
+    Returns:
+        str: A copy of `s` with a portion of the string masked by `mask_char`.
+    """
     s_len = len(s)
     if s_len <= min_unmask:
         return s
@@ -615,16 +653,8 @@ class AttractionEvent(MagModel):
         return cls.start_time + (cls.duration * text("interval '1 second'"))
 
     @property
-    def end_time_local(self):
-        return self.end_time.astimezone(c.EVENT_TIMEZONE)
-
-    @property
     def start_day_local(self):
         return self.start_time_local.strftime('%A')
-
-    @property
-    def start_time_local(self):
-        return self.start_time.astimezone(c.EVENT_TIMEZONE)
 
     @property
     def start_time_label(self):
@@ -639,10 +669,6 @@ class AttractionEvent(MagModel):
             return self.start_time
         else:
             return self.start_time - timedelta(seconds=advance_checkin)
-
-    @property
-    def checkin_time_local(self):
-        return self.checkin_time.astimezone(c.EVENT_TIMEZONE)
 
     @property
     def checkin_time_label(self):

@@ -1,10 +1,9 @@
 import uuid
-
 from panels.models import *
 
 
 # =============================================================================
-# DEVELOPMENT TOOLS - DEVELOPMENT TOOLS - DEVELOPMENT TOOLS - DEVELOPMENT TOOLS
+# DEV TOOLS - DUMPSTER FIRE - DEV TOOLS - DUMPSTER FIRE - DEV TOOLS - DUMPSTER
 # vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
 
 from sqlalchemy.engine.default import DefaultDialect
@@ -61,10 +60,6 @@ def literalquery(statement):
         compile_kwargs={'literal_binds': True},
     ).string
     return RE_INTERVAL.sub(r"interval '\1 seconds'", s)
-
-# ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-# DEVELOPMENT TOOLS - DEVELOPMENT TOOLS - DEVELOPMENT TOOLS - DEVELOPMENT TOOLS
-# =============================================================================
 
 
 if c.DEV_BOX:
@@ -170,3 +165,7 @@ if c.DEV_BOX:
         Session.initialize_db(initialize=True)
         with Session() as session:
             send_attraction_notifications(session)
+
+# ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+# DEV TOOLS - DUMPSTER FIRE - DEV TOOLS - DUMPSTER FIRE - DEV TOOLS - DUMPSTER
+# =============================================================================
