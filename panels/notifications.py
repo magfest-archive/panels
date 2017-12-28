@@ -12,7 +12,7 @@ from panels.models import *
 
 TASK_INTERVAL = 180  # Check every three minutes
 
-ATTRACTION_TPL = (
+TEXT_TPL = (
     'Checkin for {signup.event.name} {checkin}, '
     '{signup.event.location_room_name}. '
     'Reply N to drop out')
@@ -107,46 +107,50 @@ def send_attraction_notifications(session):
                     past_suffix=' ago')
 
             ident = AttractionEvent.get_ident(event.id, advance_notice)
-            if use_text:
-                type_ = Attendee.NOTIFICATION_TEXT
-                body = ATTRACTION_TPL.format(signup=signup, checkin=checkin)
-                subject = ''
-                sid = send_sms(attendee.cellphone, body)
-            else:
-                type_ = Attendee.NOTIFICATION_EMAIL
-                if is_first_signup:
-                    template = 'emails/attractions_welcome.html'
-                    subject = 'Welcome to {} Attractions'.format(c.EVENT_NAME)
+            try:
+                if use_text:
+                    type_ = Attendee.NOTIFICATION_TEXT
+                    body = TEXT_TPL.format(signup=signup, checkin=checkin)
+                    subject = ''
+                    sid = send_sms(attendee.cellphone, body)
                 else:
-                    template = 'emails/attractions_notification.html'
-                    subject = 'Checkin for {} is at {}'.format(
-                        event.name, event.checkin_time_label)
+                    type_ = Attendee.NOTIFICATION_EMAIL
+                    if is_first_signup:
+                        template = 'emails/attractions_welcome.html'
+                        subject = 'Welcome to {} Attractions'.format(
+                            c.EVENT_NAME)
+                    else:
+                        template = 'emails/attractions_notification.html'
+                        subject = 'Checkin for {} is at {}'.format(
+                            event.name, event.checkin_time_label)
 
-                body = render(template, {
-                    'signup': signup,
-                    'checkin': checkin,
-                    'c': c}).decode('utf-8')
-                sid = ident
-                send_email(
-                    c.ATTRACTIONS_EMAIL,
-                    attendee.email,
+                    body = render(template, {
+                        'signup': signup,
+                        'checkin': checkin,
+                        'c': c}).decode('utf-8')
+                    sid = ident
+                    send_email(
+                        c.ATTRACTIONS_EMAIL,
+                        attendee.email,
+                        subject=subject,
+                        body=body,
+                        format='html',
+                        model=attendee,
+                        ident=ident)
+            except:
+                log.error('Error sending notification', exc_info=True)
+            else:
+                session.add(AttractionNotification(
+                    attraction_event_id=event.id,
+                    attraction_id=event.attraction_id,
+                    attendee_id=attendee.id,
+                    notification_type=type_,
+                    ident=ident,
+                    sid=sid,
+                    sent_time=datetime.now(pytz.UTC),
                     subject=subject,
-                    body=body,
-                    format='html',
-                    model=attendee,
-                    ident=ident)
-
-            session.add(AttractionNotification(
-                attraction_event_id=event.id,
-                attraction_id=event.attraction_id,
-                attendee_id=attendee.id,
-                notification_type=type_,
-                ident=ident,
-                sid=sid,
-                sent_time=datetime.now(pytz.UTC),
-                subject=subject,
-                body=body))
-            session.commit()
+                    body=body))
+                session.commit()
 
 
 def check_attraction_notification_replies(session):
