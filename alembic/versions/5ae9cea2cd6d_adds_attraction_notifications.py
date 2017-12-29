@@ -74,6 +74,7 @@ attraction_signup_table = table(
     sa.Column('id', sideboard.lib.sa.UUID()),
     sa.Column('attraction_id', sideboard.lib.sa.UUID()),
     sa.Column('attraction_event_id', sideboard.lib.sa.UUID()),
+    sa.Column('checkin_time', sideboard.lib.sa.UTCDateTime()),
 )
 
 
