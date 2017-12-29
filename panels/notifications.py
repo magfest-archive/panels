@@ -195,6 +195,9 @@ def send_attraction_notifications(session):
 
 
 def check_attraction_notification_replies(session):
+    if not twilio_client:
+        return
+
     messages = twilio_client.messages.list(to=c.PANELS_TWILIO_NUMBER)
     sids = set(m.sid for m in messages)
     existing_sids = set(
