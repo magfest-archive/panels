@@ -1,7 +1,12 @@
 from panels import *
 
-AutomatedEmail.queries[PanelApplication] = lambda session: session.query(PanelApplication) \
-    .options(subqueryload(PanelApplication.applicants).subqueryload(PanelApplicant.attendee))
+
+AutomatedEmail.queries[PanelApplication] = lambda session: session \
+    .query(PanelApplication) \
+    .options(
+        subqueryload(PanelApplication.applicants)
+            .subqueryload(PanelApplicant.attendee)) \
+    .order_by(PanelApplication.id)
 
 _attendee_query = AutomatedEmail.queries[Attendee]
 AutomatedEmail.queries[Attendee] = lambda session: _attendee_query(session) \

@@ -145,7 +145,7 @@
 
     var updateSignupTemplate = function($signup, signup) {
       $signup.data('signupId', signup.id);
-      $signup.toggleClass('checked-in', !!signup.checkin_time);
+      $signup.toggleClass('checked-in', signup.is_checked_in);
       $signup.find('.feature_name').text(signup.event.feature.name);
       $signup.find('.event_time_span_label').text(signup.event.time_span_label);
       $signup.find('.event_location_label').text(signup.event.location_label);
@@ -197,7 +197,7 @@
                 updateSignupTemplate($signup, signup);
                 $signups.append($signup);
 
-                if(!signup.checkin_time) {
+                if(!signup.is_checked_in) {
                   hasUncheckedIn = true;
                 }
               }
@@ -212,7 +212,7 @@
           $badgeNum.focus();
         },
         error: function(response, status, statusText) {
-          toastr.error('There was an error checking in: ' + statusText, '', {timeOut: 3000});
+          toastr.error('Error searching badge number: ' + statusText, '', {timeOut: 3000});
           $badgeNum.focus();
         }
       });

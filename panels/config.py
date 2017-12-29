@@ -86,15 +86,15 @@ if getattr(c, 'ALT_SCHEDULE_URL', ''):
         schedule_name = 'View Schedule Externally'
     schedule_menu = [
         MenuItem(name=schedule_name, href='../schedule/'),
-        MenuItem(name='View Schedule Internally', href='../schedule/internal')]
+        MenuItem(name='View Schedule Internally', access=c.STUFF, href='../schedule/internal')]
 else:
-    schedule_menu = [MenuItem(name='View Schedule', href='../schedule/internal')]
+    schedule_menu = [MenuItem(name='View Schedule', access=c.STUFF, href='../schedule/internal')]
 
 schedule_menu.extend([
-    MenuItem(name='Edit Schedule', href='../schedule/edit'),
+    MenuItem(name='Edit Schedule', access=c.STUFF, href='../schedule/edit'),
     MenuItem(name='Attractions', href='../attractions_admin/')])
 
-c.MENU.submenu.insert(2, MenuItem(name='Schedule', access=c.STUFF, submenu=schedule_menu))
+c.MENU.submenu.insert(2, MenuItem(name='Schedule', access=[c.STUFF, c.PEOPLE, c.REG_AT_CON], submenu=schedule_menu))
 
 from panels.models import Attraction  # noqa: E402
 custom_tags.form_link_site_sections[Attraction] = 'attractions_admin'

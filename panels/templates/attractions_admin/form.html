@@ -573,22 +573,22 @@
     <p>{{ attraction.RESTRICTIONS[attraction.restriction].split('–')|last|trim }}.</p>
   {%- endif %}
 
-  {% if attraction.required_checkin > -1 -%}
+  {% if attraction.advance_checkin > -1 -%}
     <p>
       Attendees must check in
-      {{ humanize_timedelta(seconds=attraction.required_checkin, now='when', prefix='at least ', suffix=' before') }}
+      {{ humanize_timedelta(seconds=attraction.advance_checkin, now='when', prefix='at least ', suffix=' before') }}
       the event starts.
     </p>
   {%- endif %}
 
-  {% if attraction.notifications %}
-    {% if attraction.notifications|length == 1 %}
+  {% if attraction.advance_notices %}
+    {% if attraction.advance_notices|length == 1 %}
       <p>Attendees will be notified about {{ attraction.name }} events
-      {{ humanize_timedelta(seconds=attraction.notifications|first, now='when the event starts', suffix=' before') }}.</p>
+      {{ humanize_timedelta(seconds=attraction.advance_notices|first, now='when the event starts', suffix=' before') }}.</p>
     {% else %}
       Attendees will be notified about {{ attraction.name }} events:
       <ul>
-        {% for notification in attraction.notifications %}
+        {% for notification in attraction.advance_notices %}
           <li>{{ humanize_timedelta(seconds=notification, now='when the event starts', suffix=' before') }}</li>
         {% endfor %}
       </ul>
@@ -735,7 +735,7 @@
                                         href="event?id={{ event.id }}">
                                       <span class="glyphicon glyphicon-cog"></span>
                                     </a>
-                                    <button type="submit" class="btn btn-xs btn-danger btn-fade" data-event-id="{{ event.id }}" data-event-label="{{ event.label }}">
+                                    <button type="submit" class="btn btn-xs btn-danger btn-fade" data-event-id="{{ event.id }}" data-event-label="{{ feature.name }} at {{ event.start_time_label }}">
                                       <span class="glyphicon glyphicon-remove"></span>
                                     </button>
                                   </div>
@@ -749,11 +749,11 @@
                                     {% if event.is_sold_out %}
                                       <span class="text-success">
                                         <b class="slots">FULL</b> all
-                                        <em class="slots">{{ event.slots }}</em> slot{{ event.remaining_slots|pluralize }} taken
+                                        <em class="slots">{{ event.slots }}</em> slot{{ event.slots|pluralize }} taken
                                       </span>
                                     {% else %}
                                       <em class="slots">{{ event.remaining_slots }}</em> out of
-                                      <em class="slots">{{ event.slots }}</em> slot{{ event.remaining_slots|pluralize }} available
+                                      <em class="slots">{{ event.slots }}</em> slot{{ event.slots|pluralize }} available
                                     {% endif %}
                                   </div>
                                 </div>

@@ -1,4 +1,39 @@
+<style type="text/css">
+  .badge-num-form {
+    margin-top: 20px;
+  }
+
+  .badge-num-form .form-group {
+    margin-bottom: 0;
+  }
+
+  .confirm-row .attendee {
+    display: inline-block;
+  }
+
+  .confirm-row .attendee {
+    font-size: 1.5em;
+  }
+
+  .slide-box {
+    position: relative;
+    height: 3.125em;
+  }
+
+  .slide-box .row {
+    position: absolute;
+    height: 2.8125em;
+    width: 100%;
+    top: 0;
+    left: 15px;
+  }
+</style>
+
 <script>
+
+  var resetInputs = function($parent) {
+    $parent.find('input').val('');
+  };
 
   var resetBadgeNum = function($parent) {
     $parent.find('input[name=badge_num]').val('');
@@ -48,11 +83,21 @@
         return;
       }
 
-      if (badgeNum === $form.closest('.modal').data('badgeNum')) {
+      var attendeeData = $form.closest('.modal').data('attendee');
+      if (attendeeData && ('' + badgeNum) === ('' + attendeeData['badge_num'])) {
         toastr.warning("Hey, that's you!", '', {timeOut: 3000});
         $badgeNum.focus();
         return;
       }
+
+      var errorMessage = function(response) {
+        if (response && response['error']) {
+          toastr.error(response['error'], '', {timeOut: 3000});
+        } else {
+          toastr.error('Unrecognized badge number: ' + badgeNum, '', {timeOut: 3000});
+        }
+        $badgeNum.focus();
+      };
 
       $.ajax({
         method: 'POST',
@@ -66,13 +111,11 @@
             updateGreeting(response['first_name'], response['badge_num'], $form.find('.confirm-row'));
             showBadgeNumConfirm($form);
           } else {
-            toastr.error('Unrecognized badge number: ' + badgeNum, '', {timeOut: 3000});
-            $badgeNum.focus();
+            errorMessage(response);
           }
         },
         error: function(response, status, statusText) {
-          toastr.error('Unrecognized badge number: ' + badgeNum, '', {timeOut: 3000});
-          $badgeNum.focus();
+          errorMessage(response);
         }
       });
     });

@@ -5,10 +5,11 @@ from panels.site_sections.attractions import _attendee_for_badge_num
 
 @all_renderable(c.STUFF)
 class Root:
+    @renderable_override(c.STUFF, c.PEOPLE, c.REG_AT_CON)
     def index(self, session, filtered=False, message='', **params):
+        admin_account = session.current_admin_account()
         if filtered:
-            admin_account_id = cherrypy.session['account_id']
-            attraction_filter = [Attraction.owner_id == admin_account_id]
+            attraction_filter = [Attraction.owner_id == admin_account.id]
         else:
             attraction_filter = []
 
@@ -20,6 +21,7 @@ class Root:
             .order_by(Attraction.name).all()
 
         return {
+            'admin_account': admin_account,
             'filtered': filtered,
             'message': message,
             'attractions': attractions
@@ -31,9 +33,9 @@ class Root:
             raise HTTPRedirect('index')
 
         if cherrypy.request.method == 'POST':
-            if 'notifications' in params:
-                ns = listify(params.get('notifications', []))
-                params['notifications'] = [int(n) for n in ns if n != '']
+            if 'advance_notices' in params:
+                ns = listify(params.get('advance_notices', []))
+                params['advance_notices'] = [int(n) for n in ns if n != '']
 
             attraction = session.attraction(
                 params,
@@ -68,9 +70,9 @@ class Root:
         if params.get('id', 'None') != 'None':
             raise HTTPRedirect('form?id={}', params['id'])
 
-        if 'notifications' in params:
-            ns = listify(params.get('notifications', []))
-            params['notifications'] = [int(n) for n in ns if n != '']
+        if 'advance_notices' in params:
+            ns = listify(params.get('advance_notices', []))
+            params['advance_notices'] = [int(n) for n in ns if n != '']
 
         admin_account = session.current_admin_account()
         attraction = session.attraction(
@@ -211,6 +213,7 @@ class Root:
             delay = 0
 
         if cherrypy.request.method == 'POST':
+            event.attraction_id = attraction_id
             message = check(event)
             if not message:
                 is_new = event.is_new
@@ -234,6 +237,7 @@ class Root:
             attraction_id = previous.feature.attraction_id
             event.feature = previous.feature
             event.attraction_feature_id = previous.attraction_feature_id
+            event.attraction_id = attraction_id
             event.location = previous.location
             event.start_time = previous.end_time + timedelta(seconds=delay)
             event.duration = previous.duration
@@ -242,6 +246,7 @@ class Root:
             events_by_location = feature.events_by_location
             location = next(reversed(events_by_location))
             recent = events_by_location[location][-1]
+            event.attraction_id = recent.attraction_id
             event.location = recent.location
             event.start_time = recent.end_time + timedelta(seconds=delay)
             event.duration = recent.duration
@@ -323,7 +328,7 @@ class Root:
             attraction = session.query(Attraction).get(attraction_id)
             if not session.admin_attendee().can_admin_attraction(attraction):
                 message = "You cannot cancel a signup for an attraction you don't own"
-            elif signup.checkin_time:
+            elif signup.is_checked_in:
                 message = "You cannot cancel a signup that has already checked in"
             else:
                 session.delete(signup)
@@ -354,8 +359,7 @@ class Root:
     def get_signups(self, session, badge_num, attraction_id=None):
         if cherrypy.request.method == 'POST':
             attendee = _attendee_for_badge_num(
-                session,
-                badge_num,
+                session, badge_num,
                 subqueryload(Attendee.attraction_signups)
                     .subqueryload(AttractionSignup.event)
                         .subqueryload(AttractionEvent.feature))
@@ -370,6 +374,7 @@ class Root:
             read_spec = {
                 'signup_time': True,
                 'checkin_time': True,
+                'is_checked_in': True,
                 'event': {
                     'location': True,
                     'location_label': True,
@@ -394,7 +399,7 @@ class Root:
         message = ''
         if cherrypy.request.method == 'POST':
             signup = session.query(AttractionSignup).get(id)
-            if signup.checkin_time:
+            if signup.is_checked_in:
                 message = "You cannot check in a signup that has already checked in"
             else:
                 signup.checkin_time = datetime.now(pytz.UTC)
@@ -408,5 +413,5 @@ class Root:
     def undo_checkin_signup(self, session, id):
         if cherrypy.request.method == 'POST':
             signup = session.query(AttractionSignup).get(id)
-            signup.checkin_time = None
+            signup.checkin_time = utcmin.datetime
             session.commit()
