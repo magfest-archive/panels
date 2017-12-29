@@ -76,6 +76,25 @@ def send_attraction_notifications(session):
 
         for signup, advance_notices in signups.items():
             attendee = signup.attendee
+            if not attendee.first_name or not attendee.email:
+                try:
+                    log.error(
+                        'ERROR: Unassigned attendee signed up for an '
+                        'attraction, deleting signup:\n'
+                        '\tAttendee.id: {}\n'
+                        '\tAttraction.id: {}\n'
+                        '\tAttractionEvent.id: {}\n'
+                        '\tAttractionSignup.id: {}'.format(
+                            attendee.id,
+                            signup.attraction_id,
+                            signup.attraction_event_id,
+                            signup.id))
+                    session.delete(signup)
+                    session.commit()
+                except:
+                    log.error('ERROR: Failed to delete signup with '
+                              'unassigned attendee', exc_info=True)
+                continue
 
             is_first_signup = not(attendee.attraction_notifications)
 
