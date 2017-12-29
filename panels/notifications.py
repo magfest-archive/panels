@@ -191,21 +191,20 @@ def check_attraction_notification_replies(session):
         attraction_event_id = None
         attraction_id = None
         attendee_id = None
-        attendees = attendees_by_phone.get(normalize(message.from_))
-        if attendees:
-            for attendee in attendees:
-                notifications = sorted(filter(
-                    lambda s: s.notification_type == Attendee.NOTIFICATION_TEXT,
-                    attendee.attraction_notifications),
-                    key=lambda s: s.sent_time)
-                if notifications:
-                    notification = notifications[-1]
-                    attraction_event_id = notification.attraction_event_id
-                    attraction_id = notification.attraction_id
-                    attendee_id = notification.attendee_id
-                    if 'N' in message.body.upper() and notification.signup:
-                        session.delete(notification.signup)
-                    break
+        attendees = attendees_by_phone.get(normalize(message.from_), [])
+        for attendee in attendees:
+            notifications = sorted(filter(
+                lambda s: s.notification_type == Attendee.NOTIFICATION_TEXT,
+                attendee.attraction_notifications),
+                key=lambda s: s.sent_time)
+            if notifications:
+                notification = notifications[-1]
+                attraction_event_id = notification.attraction_event_id
+                attraction_id = notification.attraction_id
+                attendee_id = notification.attendee_id
+                if 'N' in message.body.upper() and notification.signup:
+                    session.delete(notification.signup)
+                break
 
         session.add(AttractionNotificationReply(
             attraction_event_id=attraction_event_id,
