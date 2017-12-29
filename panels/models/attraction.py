@@ -673,8 +673,8 @@ class AttractionEvent(MagModel):
     @property
     def checkin_time_label(self):
         checkin = self.checkin_time_local
-        today = datetime.now(c.EVENT_TIMEZONE).strftime('%a')
-        if checkin.strftime('%a') == today:
+        today = datetime.now(c.EVENT_TIMEZONE)
+        if checkin.date() == today.date():
             return checkin.strftime('%-I:%M %p')
         return checkin.strftime('%-I:%M %p %a')
 
@@ -707,14 +707,11 @@ class AttractionEvent(MagModel):
     def time_span_label(self):
         if self.start_time:
             end_time = self.end_time.astimezone(c.EVENT_TIMEZONE)
-            end_day = end_time.strftime('%A')
             start_time = self.start_time.astimezone(c.EVENT_TIMEZONE)
-            start_day = start_time.strftime('%A')
-            if start_day == end_day:
-                return '{} – {} {}'.format(
+            if start_time.date() == end_time.date():
+                return '{} – {}'.format(
                     start_time.strftime('%-I:%M %p'),
-                    end_time.strftime('%-I:%M %p'),
-                    end_day)
+                    end_time.strftime('%-I:%M %p %A'))
             return '{} – {}'.format(
                 start_time.strftime('%-I:%M %p %A'),
                 end_time.strftime('%-I:%M %p %A'))
