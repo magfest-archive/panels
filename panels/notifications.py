@@ -152,14 +152,14 @@ def send_attraction_notifications(session):
                     '\tsubject: {}\n'
                     '\tbody: {}\n'
                     '\ttype: {}\n'
-                    '\tmodel: {}\n'
+                    '\tattendee: {}\n'
                     '\tident: {}\n'.format(
                         from_,
                         to_,
                         subject,
                         body,
                         type_str,
-                        model,
+                        attendee.id,
                         ident), exc_info=True)
             else:
                 session.add(AttractionNotification(
