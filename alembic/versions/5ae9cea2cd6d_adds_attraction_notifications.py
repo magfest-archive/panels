@@ -114,6 +114,14 @@ def upgrade():
             )
         )
 
+        connection.execute(
+            attraction_signup_table.update().where(
+                attraction_signup_table.c.checkin_time == None
+            ).values(
+                checkin_time="timezone('utc', '0001-01-01 00:00')"
+            )
+        )
+
     if is_sqlite:
         with op.batch_alter_table('attraction_event', reflect_kwargs=sqlite_reflect_kwargs) as batch_op:
             batch_op.alter_column('attraction_id', nullable=False)
