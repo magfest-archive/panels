@@ -770,6 +770,7 @@ class AttractionSignup(MagModel):
 
     notifications = relationship(
         'AttractionNotification',
+        cascade='all',
         backref=backref(
             'signup',
             cascade='save-update,merge',
