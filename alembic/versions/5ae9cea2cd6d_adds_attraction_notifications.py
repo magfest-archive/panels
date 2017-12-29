@@ -74,7 +74,7 @@ attraction_signup_table = table(
     sa.Column('id', sideboard.lib.sa.UUID()),
     sa.Column('attraction_id', sideboard.lib.sa.UUID()),
     sa.Column('attraction_event_id', sideboard.lib.sa.UUID()),
-    sa.Column('checkin_time', sideboard.lib.sa.UTCDateTime()),
+    sa.Column('checkin_time', sa.DateTime()),
 )
 
 
@@ -119,7 +119,7 @@ def upgrade():
             attraction_signup_table.update().where(
                 attraction_signup_table.c.checkin_time == None
             ).values(
-                checkin_time="timezone('utc', '0001-01-01 00:00')"
+                checkin_time=text("timezone('utc', '0001-01-01 00:00')")
             )
         )
 
