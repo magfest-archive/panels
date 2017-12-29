@@ -47,6 +47,7 @@ def send_sms(to, body, from_=c.PANELS_TWILIO_NUMBER):
             log.info('We are in dev box mode, so we are not sending {!r} to {!r}', body, to)
         else:
             message = twilio_client.messages.create(to=to, from_=normalize(from_), body=body)
+            sleep(0.1)  # Avoid hitting rate limit, the send_email() implementation already does this
         if message:
             sid = message.sid if not message.error_code else message.error_text
     except TwilioRestException as e:
