@@ -111,11 +111,17 @@ def send_attraction_notifications(session):
             try:
                 if use_text:
                     type_ = Attendee.NOTIFICATION_TEXT
+                    type_str = 'TEXT'
+                    from_ = c.PANELS_TWILIO_NUMBER
+                    to_ = attendee.cellphone
                     body = TEXT_TPL.format(signup=signup, checkin=checkin)
                     subject = ''
-                    sid = send_sms(attendee.cellphone, body)
+                    sid = send_sms(to_, body, from_)
                 else:
                     type_ = Attendee.NOTIFICATION_EMAIL
+                    type_str = 'EMAIL'
+                    from_ = c.ATTRACTIONS_EMAIL
+                    to_ = attendee.email
                     if is_first_signup:
                         template = 'emails/attractions_welcome.html'
                         subject = 'Welcome to {} Attractions'.format(
@@ -131,15 +137,30 @@ def send_attraction_notifications(session):
                         'c': c}).decode('utf-8')
                     sid = ident
                     send_email(
-                        c.ATTRACTIONS_EMAIL,
-                        attendee.email,
+                        from_,
+                        to_,
                         subject=subject,
                         body=body,
                         format='html',
                         model=attendee,
                         ident=ident)
             except:
-                log.error('Error sending notification', exc_info=True)
+                log.error(
+                    'Error sending notification\n'
+                    '\tfrom: {}\n'
+                    '\tto: {}\n'
+                    '\tsubject: {}\n'
+                    '\tbody: {}\n'
+                    '\ttype: {}\n'
+                    '\tmodel: {}\n'
+                    '\tident: {}\n'.format(
+                        from_,
+                        to_,
+                        subject,
+                        body,
+                        type_str,
+                        model,
+                        ident), exc_info=True)
             else:
                 session.add(AttractionNotification(
                     attraction_event_id=event.id,
@@ -171,19 +192,20 @@ def check_attraction_notification_replies(session):
         attraction_id = None
         attendee_id = None
         attendees = attendees_by_phone.get(normalize(message.from_))
-        for attendee in attendees:
-            notifications = sorted(filter(
-                lambda s: s.notification_type == Attendee.NOTIFICATION_TEXT,
-                attendee.attraction_notifications),
-                key=lambda s: s.sent_time)
-            if notifications:
-                notification = notifications[-1]
-                attraction_event_id = notification.attraction_event_id
-                attraction_id = notification.attraction_id
-                attendee_id = notification.attendee_id
-                if 'N' in message.body.upper() and notification.signup:
-                    session.delete(notification.signup)
-                break
+        if attendees:
+            for attendee in attendees:
+                notifications = sorted(filter(
+                    lambda s: s.notification_type == Attendee.NOTIFICATION_TEXT,
+                    attendee.attraction_notifications),
+                    key=lambda s: s.sent_time)
+                if notifications:
+                    notification = notifications[-1]
+                    attraction_event_id = notification.attraction_event_id
+                    attraction_id = notification.attraction_id
+                    attendee_id = notification.attendee_id
+                    if 'N' in message.body.upper() and notification.signup:
+                        session.delete(notification.signup)
+                    break
 
         session.add(AttractionNotificationReply(
             attraction_event_id=attraction_event_id,
