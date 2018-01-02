@@ -82,6 +82,7 @@
   }
 </style>
 
+{% include 'barcode_client.html' %}
 {% include 'attractions_checkin.html' %}
 
 <script>
@@ -93,15 +94,11 @@
         $showCheckedInButton = $('#filter'),
         $attendee = $('#attendee');
 
-      {% set detect_barcode_scan = True %}
-
-      var setBarcodeField = function () {
-          $barcodeField = $('input[name=badge_num]');
-      };
-
-      var useBarcode = function (badgeNum) {
-          getSignups(badgeNum);
-      };
+    $('input[name=badge_num]').barcodeField({
+      blurOnKeys: ['~', '\\'],
+      detectBadgeNum: true,
+      autoSubmitForm: 'form.badge-num-form'
+    });
 
     var updateAttendee = function(attendee) {
       $container.toggleClass('has-attendee', !!attendee);
