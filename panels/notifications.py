@@ -96,14 +96,17 @@ def send_attraction_notifications(session):
                               'unassigned attendee', exc_info=True)
                 continue
 
+            # The first time someone signs up for an attractions, they always
+            # receive the welcome email (even if they've chosen SMS or None
+            # for their notification prefs). If they've chosen to receive SMS
+            # notifications, they'll also get a text message.
             is_first_signup = not(attendee.attraction_notifications)
 
             if not is_first_signup and \
                     attendee.notification_pref == Attendee.NOTIFICATION_NONE:
                 continue
 
-            use_text = not is_first_signup \
-                and twilio_client \
+            use_text = twilio_client \
                 and attendee.cellphone \
                 and attendee.notification_pref == Attendee.NOTIFICATION_TEXT
 
@@ -136,7 +139,8 @@ def send_attraction_notifications(session):
                     body = TEXT_TPL.format(signup=signup, checkin=checkin)
                     subject = ''
                     sid = send_sms(to_, body, from_)
-                else:
+
+                if not use_text or is_first_signup:
                     type_ = Attendee.NOTIFICATION_EMAIL
                     type_str = 'EMAIL'
                     from_ = c.ATTRACTIONS_EMAIL
