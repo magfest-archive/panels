@@ -222,7 +222,8 @@ class Root:
     def opt_out(self, session, id, attractions_opt_out):
         if cherrypy.request.method == 'POST':
             attendee = session.query(Attendee).get(id)
-            attendee.attractions_opt_out = attractions_opt_out
+            opt_out = str(attractions_opt_out).lower()
+            attendee.attractions_opt_out = opt_out == 'true'
             session.commit()
         return {}
 
