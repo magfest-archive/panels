@@ -258,4 +258,4 @@ if c.SEND_SMS:
     DaemonTask(check_notification_replies, interval=TASK_INTERVAL,
                name='panels_check_notification_replies')
 else:
-     log.info('SMS DISABLED for panels')
+    log.info('SMS DISABLED for panels')
