@@ -252,7 +252,8 @@ def check_notification_replies():
         check_attraction_notification_replies(session)
 
 
-DaemonTask(send_notifications, interval=TASK_INTERVAL,
-           name='panels_send_notifications')
-DaemonTask(check_notification_replies, interval=TASK_INTERVAL,
-           name='panels_check_notification_replies')
+if c.SEND_SMS:
+    DaemonTask(send_notifications, interval=TASK_INTERVAL,
+               name='panels_send_notifications')
+    DaemonTask(check_notification_replies, interval=TASK_INTERVAL,
+               name='panels_check_notification_replies')
