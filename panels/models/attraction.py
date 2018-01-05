@@ -666,7 +666,7 @@ class AttractionEvent(MagModel):
     def checkin_time(self):
         advance_checkin = self.attraction.advance_checkin
         if advance_checkin < 0:
-            return self.start_time
+            return self.end_time
         else:
             return self.start_time - timedelta(seconds=advance_checkin)
 
