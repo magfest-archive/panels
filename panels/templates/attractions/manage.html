@@ -523,7 +523,7 @@
                   </p>
                   {% if not signup.is_checked_in %}
                     <p class="checkin_time checkin_time">
-                      Checkin is at <b>{{ signup.event.checkin_time_label }}</b>
+                      Checkin is at <b>{{ signup.event.checkin_start_time_label }}</b>
                     </p>
                   {% else %}
                     <p class="checkin_time text-success">

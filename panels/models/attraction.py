@@ -663,16 +663,32 @@ class AttractionEvent(MagModel):
         return 'unknown start time'
 
     @property
-    def checkin_time(self):
+    def checkin_start_time(self):
         advance_checkin = self.attraction.advance_checkin
         if advance_checkin < 0:
-            return self.end_time
+            return self.start_time
         else:
             return self.start_time - timedelta(seconds=advance_checkin)
 
     @property
-    def checkin_time_label(self):
-        checkin = self.checkin_time_local
+    def checkin_end_time(self):
+        advance_checkin = self.attraction.advance_checkin
+        if advance_checkin < 0:
+            return self.end_time
+        else:
+            return self.start_time
+
+    @property
+    def checkin_start_time_label(self):
+        checkin = self.checkin_start_time_local
+        today = datetime.now(c.EVENT_TIMEZONE)
+        if checkin.date() == today.date():
+            return checkin.strftime('%-I:%M %p')
+        return checkin.strftime('%-I:%M %p %a')
+
+    @property
+    def checkin_end_time_label(self):
+        checkin = self.checkin_end_time_local
         today = datetime.now(c.EVENT_TIMEZONE)
         if checkin.date() == today.date():
             return checkin.strftime('%-I:%M %p')
@@ -680,7 +696,7 @@ class AttractionEvent(MagModel):
 
     @property
     def time_remaining_to_checkin(self):
-        return self.checkin_time - datetime.now(pytz.UTC)
+        return self.checkin_start_time - datetime.now(pytz.UTC)
 
     @property
     def time_remaining_to_checkin_label(self):
@@ -689,7 +705,7 @@ class AttractionEvent(MagModel):
 
     @property
     def is_checkin_over(self):
-        return self.checkin_time < datetime.now(pytz.UTC)
+        return self.checkin_end_time < datetime.now(pytz.UTC)
 
     @property
     def is_sold_out(self):

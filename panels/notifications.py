@@ -118,7 +118,7 @@ def send_attraction_notifications(session):
             # for "when checkin starts".
             advance_notice = min(advance_notices)
             if advance_notice == -1 or advance_notice > 1800:
-                checkin = 'is at {}'.format(event.checkin_time_label)
+                checkin = 'is at {}'.format(event.checkin_start_time_label)
             else:
                 checkin = humanize_timedelta(
                     event.time_remaining_to_checkin,
@@ -152,7 +152,7 @@ def send_attraction_notifications(session):
                     else:
                         template = 'emails/attractions_notification.html'
                         subject = 'Checkin for {} is at {}'.format(
-                            event.name, event.checkin_time_label)
+                            event.name, event.checkin_start_time_label)
 
                     body = render(template, {
                         'signup': signup,
