@@ -676,6 +676,12 @@
                 {% if can_admin_attraction -%}
                   <div class="controls pull-right">
                     <a class="btn btn-xs btn-primary btn-fade"
+                        title="Export signup list for {{ feature.name }}"
+                        href="export_feature?id={{ feature.id }}"
+                        download="download">
+                      <span class="glyphicon glyphicon-download-alt"></span>
+                    </a>
+                    <a class="btn btn-xs btn-primary btn-fade"
                         title="Edit the {{ feature.name }} feature"
                         href="feature?id={{ feature.id }}">
                       <span class="glyphicon glyphicon-cog"></span>

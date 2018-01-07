@@ -172,6 +172,20 @@ class Root:
         else:
             raise HTTPRedirect('form?id={}&message={}', attraction_id, message)
 
+    @csv_file
+    def export_feature(self, out, session, id):
+        from uber.decorators import _set_response_filename
+        feature = session.query(AttractionFeature).get(id)
+        _set_response_filename('{}.csv'.format(filename_safe(feature.name)))
+        out.writerow(['Name', 'Signup Time', 'Checkin Time'])
+        for event in feature.events:
+            for signup in event.signups:
+                out.writerow([
+                    signup.attendee.full_name,
+                    signup.signup_time_label,
+                    signup.checkin_time_label
+                ])
+
     def event(
             self,
             session,

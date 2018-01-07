@@ -1,6 +1,7 @@
 import math
 import pytz
 import re
+import string
 
 from collections import OrderedDict, defaultdict
 from datetime import datetime, timedelta
@@ -30,8 +31,8 @@ from uber.utils import noon_datetime, evening_datetime
 
 __all__ = [
     'Attraction', 'AttractionFeature', 'AttractionEvent', 'AttractionSignup',
-    'AttractionNotification', 'AttractionNotificationReply', 'groupify',
-    'sluggify']
+    'AttractionNotification', 'AttractionNotificationReply', 'filename_safe',
+    'groupify', 'sluggify']
 
 
 def groupify(items, keys, val_key=None):
@@ -241,6 +242,25 @@ RE_SLUG = re.compile(r'[\W_]+')
 
 def sluggify(s):
     return RE_SLUG.sub('-', s).lower().strip('-')
+
+
+def filename_safe(s):
+    """
+    Adapted from https://gist.github.com/seanh/93666
+
+    Take a string and return a valid filename constructed from the string.
+    Uses a whitelist approach: any characters not present in valid_chars are
+    removed. Also spaces are replaced with underscores.
+
+    Note: this method may produce invalid filenames such as ``, `.` or `..`
+    When I use this method I prepend a date string like '2009_01_15_19_46_32_'
+    and append a file extension like '.txt', so I avoid the potential of using
+    an invalid filename.
+
+    """
+    valid_chars = '-_.() {}{}'.format(string.ascii_letters, string.digits)
+    filename = ''.join(c for c in s if c in valid_chars)
+    return filename.replace(' ','_')
 
 
 @Session.model_mixin
@@ -825,6 +845,10 @@ class AttractionSignup(MagModel):
         if self.is_checked_in:
             return self.checkin_time_local.strftime('%-I:%M %p %A')
         return 'Not checked in'
+
+    @property
+    def signup_time_label(self):
+        return self.signup_time_local.strftime('%-I:%M %p %A')
 
     @property
     def email(self):
