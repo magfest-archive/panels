@@ -260,7 +260,7 @@ def filename_safe(s):
     """
     valid_chars = '-_.() {}{}'.format(string.ascii_letters, string.digits)
     filename = ''.join(c for c in s if c in valid_chars)
-    return filename.replace(' ','_')
+    return filename.replace(' ', '_')
 
 
 @Session.model_mixin
