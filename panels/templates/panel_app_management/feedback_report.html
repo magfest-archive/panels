@@ -20,7 +20,7 @@
     {% for event, feedback in events %}
         {% for fb in feedback %}
             <tr>
-                {% if forloop.first %}
+                {% if loop.first %}
                     <td rowspan="{{ feedback|length }}"><a href="panel_feedback?event_id={{ event.id }}">{{ event.name }}</a></td>
                 {% endif %}
                 <td><a href="assigned_to?id={{ fb.attendee_id }}">{{ fb.attendee.full_name }}</a></td>
